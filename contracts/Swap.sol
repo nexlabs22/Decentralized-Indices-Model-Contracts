@@ -24,30 +24,30 @@ contract Swap {
         external
         returns (uint amountOut)
     {
-        TransferHelper.safeTransferFrom(
-            WETH9,
-            msg.sender,
-            address(this),
-            amountIn
-        );
-        TransferHelper.safeApprove(WETH9, address(swapRouter), amountIn);
+        // TransferHelper.safeTransferFrom(
+        //     WETH9,
+        //     msg.sender,
+        //     address(this),
+        //     amountIn
+        // );
+        // TransferHelper.safeApprove(WETH9, address(swapRouter), amountIn);
 
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-        .ExactInputSingleParams({
-            tokenIn: WETH9,
-            tokenOut: _tokenOut,
-            // pool fee 0.3%
-            fee: 3000,
-            recipient: msg.sender,
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            // NOTE: In production, this value can be used to set the limit
-            // for the price the swap will push the pool to,
-            // which can help protect against price impact
-            sqrtPriceLimitX96: 0
-        });
-        amountOut = swapRouter.exactInputSingle(params);
+        // ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+        // .ExactInputSingleParams({
+        //     tokenIn: WETH9,
+        //     tokenOut: _tokenOut,
+        //     // pool fee 0.3%
+        //     fee: 3000,
+        //     recipient: msg.sender,
+        //     deadline: block.timestamp,
+        //     amountIn: amountIn,
+        //     amountOutMinimum: 0,
+        //     // NOTE: In production, this value can be used to set the limit
+        //     // for the price the swap will push the pool to,
+        //     // which can help protect against price impact
+        //     sqrtPriceLimitX96: 0
+        // });
+        // amountOut = swapRouter.exactInputSingle(params);
     }
 
     /// @notice swaps a minimum possible amount of WETH for a fixed amount of DAI.

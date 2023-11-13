@@ -5,6 +5,12 @@ import "../proposable/ProposableOwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "./TokenInterface.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
+// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../interfaces/IWETH.sol";
 
 /// @title Index Token
 /// @author NEX Labs Protocol
@@ -41,7 +47,14 @@ contract IndexToken is
 
     mapping(address => bool) public isRestricted;
 
-    
+    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
+    ISwapRouter public constant swapRouter =
+        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+
+    IWETH public weth = IWETH(WETH9);
+    IQuoter public quoter = IQuoter(QUOTER);
+
     modifier onlyMethodologist() {
         require(msg.sender == methodologist, "IndexToken: caller is not the methodologist");
         _;
@@ -73,6 +86,13 @@ contract IndexToken is
         feeTimestamp = block.timestamp;
     }
 
+   /**
+    * @dev The contract's fallback function that does not allow direct payments to the contract.
+    * @notice Prevents users from sending ether directly to the contract by reverting the transaction.
+    */
+    receive() external payable {
+        // revert DoNotSendFundsDirectlyToTheContract();
+    }
     
     /// @notice External mint function
     /// @dev Mint function can only be called externally by the controller
@@ -224,4 +244,46 @@ contract IndexToken is
         _transfer(from, to, amount);
         return true;
     }
+
+    function _swapSingle(address tokenIn, address tokenOut, uint amountIn) internal returns(uint){
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+        .ExactInputSingleParams({
+            tokenIn: tokenIn,
+            tokenOut: tokenOut,
+            // pool fee 0.3%
+            fee: 3000,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            // NOTE: In production, this value can be used to set the limit
+            // for the price the swap will push the pool to,
+            // which can help protect against price impact
+            sqrtPriceLimitX96: 0
+        });
+        uint amountOut = swapRouter.exactInputSingle(params);
+        return amountOut;
+    }
+
+
+    function mintToken(address tokenIn, uint amountIn) public {
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+
+        IERC20(tokenIn).approve(address(swapRouter), amountIn);
+        _swapSingle(tokenIn, WETH9, amountIn);
+
+        mint(msg.sender, amountIn);
+    }
+
+    function burnToken(address tokenIn, uint amountIn) public {
+        burn(msg.sender, amountIn);
+
+        IERC20(tokenIn).approve(address(swapRouter), amountIn);
+        _swapSingle(WETH9, tokenIn, amountIn);
+
+    }
+
+
+
+    
 }

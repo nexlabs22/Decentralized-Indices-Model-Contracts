@@ -3,7 +3,7 @@
   "paths": {
     "artifacts": "out",
     "build_infos": "out/build-info",
-    "sources": "contracts",
+    "sources": "IndexToken",
     "tests": "test",
     "scripts": "script",
     "libraries": [
@@ -12,49 +12,9 @@
     ]
   },
   "files": {
-    "contracts/Lock.sol": {
-      "lastModificationDate": 1699042967326,
-      "contentHash": "ae66265769cc28ebdaa34881df95bc5e",
-      "sourceName": "contracts/Lock.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": "^0.8.9",
-      "artifacts": {
-        "Lock": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "Lock.sol\\Lock.json"
-        }
-      }
-    },
     "contracts/Swap.sol": {
-      "lastModificationDate": 1699556267256,
-      "contentHash": "d1c19558d486d9f2600e4d5abdd7f8ee",
+      "lastModificationDate": 1699898883906,
+      "contentHash": "32fc94a4bee66fe719063cc27e6986f7",
       "sourceName": "contracts/Swap.sol",
       "solcConfig": {
         "settings": {
@@ -85,7 +45,7 @@
         }
       },
       "imports": [
-        "node_modules/@openzeppelin\\contracts/token/ERC20/IERC20.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
         "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
         "node_modules/@uniswap\\v3-periphery/contracts/interfaces/IQuoter.sol",
         "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
@@ -94,14 +54,14 @@
       "versionRequirement": "^0.8.7",
       "artifacts": {
         "Swap": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "Swap.sol\\Swap.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Swap.sol\\Swap.0.8.17.json"
         }
       }
     },
-    "contracts/proposable/ProposableOwnable.sol": {
-      "lastModificationDate": 1699550796203,
-      "contentHash": "fd52f4762a4e01476424c51dbf7e4090",
-      "sourceName": "contracts/proposable/ProposableOwnable.sol",
+    "contracts/interfaces/IWETH.sol": {
+      "lastModificationDate": 1699903385517,
+      "contentHash": "a27e02b312bf68e815154dcf6893bdb5",
+      "sourceName": "contracts/interfaces/IWETH.sol",
       "solcConfig": {
         "settings": {
           "optimizer": {
@@ -130,14 +90,11 @@
           "libraries": {}
         }
       },
-      "imports": [
-        "node_modules/@openzeppelin\\contracts/access/Ownable.sol",
-        "node_modules/@openzeppelin/contracts/utils/Context.sol"
-      ],
-      "versionRequirement": "=0.8.7",
+      "imports": [],
+      "versionRequirement": "^0.8.7",
       "artifacts": {
-        "ProposableOwnable": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "ProposableOwnable.sol\\ProposableOwnable.json"
+        "IWETH": {
+          "0.8.17+commit.8df45f5f.Windows.msvc": "IWETH.sol\\IWETH.0.8.17.json"
         }
       }
     },
@@ -187,8 +144,8 @@
       }
     },
     "contracts/token/IndexToken.sol": {
-      "lastModificationDate": 1699646685266,
-      "contentHash": "eff0ce511d13fcea58ddcadbc0edd7b1",
+      "lastModificationDate": 1699908669220,
+      "contentHash": "73edc8dd972b89a48e892ed632b9888e",
       "sourceName": "contracts/token/IndexToken.sol",
       "solcConfig": {
         "settings": {
@@ -219,8 +176,10 @@
         }
       },
       "imports": [
-        "contracts\\proposable\\ProposableOwnableUpgradeable.sol",
-        "contracts\\token\\TokenInterface.sol",
+        "contracts/interfaces/IWETH.sol",
+        "contracts/proposable/ProposableOwnableUpgradeable.sol",
+        "contracts/token/TokenInterface.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
         "node_modules/@openzeppelin\\contracts-upgradeable/access/OwnableUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
         "node_modules/@openzeppelin\\contracts-upgradeable/security/PausableUpgradeable.sol",
@@ -228,71 +187,16 @@
         "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
-        "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol"
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
+        "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/IQuoter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol"
       ],
       "versionRequirement": "=0.8.7",
       "artifacts": {
         "IndexToken": {
           "0.8.7+commit.e28d00a7.Windows.msvc": "IndexToken.sol\\IndexToken.json"
-        }
-      }
-    },
-    "contracts/token/RequestNFT.sol": {
-      "lastModificationDate": 1699550700253,
-      "contentHash": "8a0830d35c8f2776b1965f13bc2d7bd6",
-      "sourceName": "contracts/token/RequestNFT.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin\\contracts/access/Ownable.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC4906.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
-        "node_modules/@openzeppelin\\contracts/token/ERC721/extensions/ERC721URIStorage.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
-        "node_modules/@openzeppelin/contracts/utils/Address.sol",
-        "node_modules/@openzeppelin/contracts/utils/Context.sol",
-        "node_modules/@openzeppelin/contracts/utils/Strings.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol",
-        "node_modules/@thirdweb-dev\\contracts/eip/interface/IERC721Supply.sol",
-        "node_modules/base64-sol\\base64.sol"
-      ],
-      "versionRequirement": "^0.8.7",
-      "artifacts": {
-        "RequestNFT": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "RequestNFT.sol\\RequestNFT.json"
         }
       }
     },
@@ -372,7 +276,7 @@
       "versionRequirement": ">=0.5.0",
       "artifacts": {
         "DSTest": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "test.sol\\DSTest.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "test.sol\\DSTest.0.8.17.json"
         }
       }
     },
@@ -415,13 +319,13 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "CommonBase": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "Base.sol\\CommonBase.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Base.sol\\CommonBase.0.8.17.json"
         },
         "ScriptBase": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "Base.sol\\ScriptBase.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Base.sol\\ScriptBase.0.8.17.json"
         },
         "TestBase": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "Base.sol\\TestBase.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Base.sol\\TestBase.0.8.17.json"
         }
       }
     },
@@ -464,7 +368,7 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "StdAssertions": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdAssertions.sol\\StdAssertions.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdAssertions.sol\\StdAssertions.0.8.17.json"
         }
       }
     },
@@ -506,7 +410,7 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "StdChains": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdChains.sol\\StdChains.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdChains.sol\\StdChains.0.8.17.json"
         }
       }
     },
@@ -550,10 +454,10 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "StdCheats": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdCheats.sol\\StdCheats.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdCheats.sol\\StdCheats.0.8.17.json"
         },
         "StdCheatsSafe": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdCheats.sol\\StdCheatsSafe.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdCheats.sol\\StdCheatsSafe.0.8.17.json"
         }
       }
     },
@@ -593,7 +497,7 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "stdError": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdError.sol\\stdError.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdError.sol\\stdError.0.8.17.json"
         }
       }
     },
@@ -633,7 +537,7 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "StdInvariant": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdInvariant.sol\\StdInvariant.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdInvariant.sol\\StdInvariant.0.8.17.json"
         }
       }
     },
@@ -675,7 +579,7 @@
       "versionRequirement": ">=0.6.0, <0.9.0",
       "artifacts": {
         "stdJson": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdJson.sol\\stdJson.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdJson.sol\\stdJson.0.8.17.json"
         }
       }
     },
@@ -715,7 +619,7 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "stdMath": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdMath.sol\\stdMath.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdMath.sol\\stdMath.0.8.17.json"
         }
       }
     },
@@ -757,10 +661,10 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "stdStorage": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdStorage.sol\\stdStorage.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdStorage.sol\\stdStorage.0.8.17.json"
         },
         "stdStorageSafe": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdStorage.sol\\stdStorageSafe.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdStorage.sol\\stdStorageSafe.0.8.17.json"
         }
       }
     },
@@ -802,7 +706,7 @@
       "versionRequirement": ">=0.4.22, <0.9.0",
       "artifacts": {
         "StdStyle": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdStyle.sol\\StdStyle.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdStyle.sol\\StdStyle.0.8.17.json"
         }
       }
     },
@@ -845,7 +749,7 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "StdUtils": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "StdUtils.sol\\StdUtils.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "StdUtils.sol\\StdUtils.0.8.17.json"
         }
       }
     },
@@ -903,7 +807,7 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "Test": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "Test.sol\\Test.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Test.sol\\Test.0.8.17.json"
         }
       }
     },
@@ -943,10 +847,10 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "Vm": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "Vm.sol\\Vm.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Vm.sol\\Vm.0.8.17.json"
         },
         "VmSafe": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "Vm.sol\\VmSafe.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Vm.sol\\VmSafe.0.8.17.json"
         }
       }
     },
@@ -986,7 +890,7 @@
       "versionRequirement": ">=0.4.22, <0.9.0",
       "artifacts": {
         "console": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "console.sol\\console.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "console.sol\\console.0.8.17.json"
         }
       }
     },
@@ -1026,7 +930,7 @@
       "versionRequirement": ">=0.4.22, <0.9.0",
       "artifacts": {
         "console2": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "console2.sol\\console2.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "console2.sol\\console2.0.8.17.json"
         }
       }
     },
@@ -1066,7 +970,7 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "IMulticall3": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "IMulticall3.sol\\IMulticall3.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "IMulticall3.sol\\IMulticall3.0.8.17.json"
         }
       }
     },
@@ -1106,14 +1010,14 @@
       "versionRequirement": ">=0.6.2, <0.9.0",
       "artifacts": {
         "safeconsole": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "safeconsole.sol\\safeconsole.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "safeconsole.sol\\safeconsole.0.8.17.json"
         }
       }
     },
-    "node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1699556146828,
-      "contentHash": "5a20b2cad87ddb61c7a3a6af21289e28",
-      "sourceName": "node_modules/@openzeppelin/contracts/access/Ownable.sol",
+    "node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1699556146703,
+      "contentHash": "3ae5166c6827a9cf1a7a462d1632b464",
+      "sourceName": "node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
         "settings": {
           "optimizer": {
@@ -1143,142 +1047,14 @@
         }
       },
       "imports": [
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
         "node_modules/@openzeppelin/contracts/utils/Context.sol"
       ],
       "versionRequirement": "^0.8.0",
       "artifacts": {
-        "Ownable": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "Ownable.sol\\Ownable.0.8.17.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol": {
-      "lastModificationDate": 1699556146777,
-      "contentHash": "ee9624272968c23d93d4c2e39f06e6e2",
-      "sourceName": "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "IERC165": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "interfaces\\IERC165.sol\\IERC165.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/interfaces/IERC4906.sol": {
-      "lastModificationDate": 1699556146794,
-      "contentHash": "d3f355e15269d1476d86c84730cebb5e",
-      "sourceName": "node_modules/@openzeppelin/contracts/interfaces/IERC4906.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "IERC4906": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC4906.sol\\IERC4906.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/interfaces/IERC721.sol": {
-      "lastModificationDate": 1699556146798,
-      "contentHash": "e6da7798a8c22c5043cc42d64a2a8f80",
-      "sourceName": "node_modules/@openzeppelin/contracts/interfaces/IERC721.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "IERC721": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "interfaces\\IERC721.sol\\IERC721.json"
+        "ERC20": {
+          "0.8.17+commit.8df45f5f.Windows.msvc": "ERC20.sol\\ERC20.0.8.17.json"
         }
       }
     },
@@ -1318,14 +1094,14 @@
       "versionRequirement": "^0.8.0",
       "artifacts": {
         "IERC20": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC20.sol\\IERC20.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC20.sol\\IERC20.0.8.17.json"
         }
       }
     },
-    "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol": {
-      "lastModificationDate": 1699556146728,
-      "contentHash": "95602b04f0b53f1139f4668d123ddeb7",
-      "sourceName": "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol",
+    "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
+      "lastModificationDate": 1699556146786,
+      "contentHash": "909ab67fc5c25033fe6cd364f8c056f9",
+      "sourceName": "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
       "solcConfig": {
         "settings": {
           "optimizer": {
@@ -1355,241 +1131,12 @@
         }
       },
       "imports": [
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
-        "node_modules/@openzeppelin/contracts/utils/Address.sol",
-        "node_modules/@openzeppelin/contracts/utils/Context.sol",
-        "node_modules/@openzeppelin/contracts/utils/Strings.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol"
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol"
       ],
       "versionRequirement": "^0.8.0",
       "artifacts": {
-        "ERC721": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "ERC721.sol\\ERC721.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
-      "lastModificationDate": 1699556146799,
-      "contentHash": "48de4c9a3a4ae5ef66a2aa620843413f",
-      "sourceName": "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "IERC721": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC721.sol\\IERC721.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
-      "lastModificationDate": 1699556146804,
-      "contentHash": "c22d4395e33763de693fd440c6fd10e1",
-      "sourceName": "node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "IERC721Receiver": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC721Receiver.sol\\IERC721Receiver.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol": {
-      "lastModificationDate": 1699556146737,
-      "contentHash": "de368c6a87e159c86544ae5041b58cf3",
-      "sourceName": "node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC4906.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
-        "node_modules/@openzeppelin/contracts/utils/Address.sol",
-        "node_modules/@openzeppelin/contracts/utils/Context.sol",
-        "node_modules/@openzeppelin/contracts/utils/Strings.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "ERC721URIStorage": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "ERC721URIStorage.sol\\ERC721URIStorage.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
-      "lastModificationDate": 1699556146802,
-      "contentHash": "efbc0d15b80a74e34dbe8da0f3e879bb",
-      "sourceName": "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "IERC721Metadata": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC721Metadata.sol\\IERC721Metadata.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1699556146656,
-      "contentHash": "211ffd288c1588ba8c10eae668ca3c66",
-      "sourceName": "node_modules/@openzeppelin/contracts/utils/Address.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": "^0.8.1",
-      "artifacts": {
-        "Address": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "Address.sol\\Address.json"
+        "IERC20Metadata": {
+          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC20Metadata.sol\\IERC20Metadata.0.8.17.json"
         }
       }
     },
@@ -1630,211 +1177,6 @@
       "artifacts": {
         "Context": {
           "0.8.17+commit.8df45f5f.Windows.msvc": "Context.sol\\Context.0.8.17.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/utils/Strings.sol": {
-      "lastModificationDate": 1699556146846,
-      "contentHash": "48686fc32a22a3754b8e63321857dd2a",
-      "sourceName": "node_modules/@openzeppelin/contracts/utils/Strings.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "Strings": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "Strings.sol\\Strings.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol": {
-      "lastModificationDate": 1699556146696,
-      "contentHash": "0e7db055ce108f9da7bb6686a00287c0",
-      "sourceName": "node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "ERC165": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "ERC165.sol\\ERC165.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
-      "lastModificationDate": 1699556146778,
-      "contentHash": "03e6768535ac4da0e9756f1d8a4a018a",
-      "sourceName": "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "IERC165": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC165.sol\\IERC165.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/utils/math/Math.sol": {
-      "lastModificationDate": 1699556146824,
-      "contentHash": "fe63409d8a06818b926cf89e0ea88b1b",
-      "sourceName": "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "Math": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "Math.sol\\Math.json"
-        }
-      }
-    },
-    "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol": {
-      "lastModificationDate": 1699556146843,
-      "contentHash": "9488ebd4daacfee8ad04811600d7d061",
-      "sourceName": "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "SignedMath": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "SignedMath.sol\\SignedMath.json"
         }
       }
     },
@@ -2179,46 +1521,6 @@
         }
       }
     },
-    "node_modules/@thirdweb-dev/contracts/eip/interface/IERC721Supply.sol": {
-      "lastModificationDate": 1699555919568,
-      "contentHash": "adbce4735df9fbfb62269ee21169bca8",
-      "sourceName": "node_modules/@thirdweb-dev/contracts/eip/interface/IERC721Supply.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "IERC721Supply": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IERC721Supply.sol\\IERC721Supply.json"
-        }
-      }
-    },
     "node_modules/@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol": {
       "lastModificationDate": 1699463279261,
       "contentHash": "a8ba2d37b0107911ae0e3b0e123cbd83",
@@ -2255,7 +1557,7 @@
       "versionRequirement": ">=0.5.0",
       "artifacts": {
         "IUniswapV3SwapCallback": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IUniswapV3SwapCallback.sol\\IUniswapV3SwapCallback.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "IUniswapV3SwapCallback.sol\\IUniswapV3SwapCallback.0.8.17.json"
         }
       }
     },
@@ -2295,7 +1597,7 @@
       "versionRequirement": ">=0.7.5",
       "artifacts": {
         "IQuoter": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "IQuoter.sol\\IQuoter.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "IQuoter.sol\\IQuoter.0.8.17.json"
         }
       }
     },
@@ -2337,7 +1639,7 @@
       "versionRequirement": ">=0.7.5",
       "artifacts": {
         "ISwapRouter": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "ISwapRouter.sol\\ISwapRouter.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "ISwapRouter.sol\\ISwapRouter.0.8.17.json"
         }
       }
     },
@@ -2374,19 +1676,19 @@
         }
       },
       "imports": [
-        "node_modules/@openzeppelin\\contracts/token/ERC20/IERC20.sol"
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol"
       ],
       "versionRequirement": ">=0.6.0",
       "artifacts": {
         "TransferHelper": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "TransferHelper.sol\\TransferHelper.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "TransferHelper.sol\\TransferHelper.0.8.17.json"
         }
       }
     },
-    "node_modules/base64-sol/base64.sol": {
-      "lastModificationDate": 1699463279133,
-      "contentHash": "22c37b79b2b97ee9cee2e8a5f4b9cd78",
-      "sourceName": "node_modules/base64-sol/base64.sol",
+    "test/foundry/Fork.t.sol": {
+      "lastModificationDate": 1699907693779,
+      "contentHash": "0167a890fd9b6adcd757c1f771a482ef",
+      "sourceName": "test/foundry/Fork.t.sol",
       "solcConfig": {
         "settings": {
           "optimizer": {
@@ -2415,16 +1717,45 @@
           "libraries": {}
         }
       },
-      "imports": [],
-      "versionRequirement": null,
+      "imports": [
+        "contracts/Swap.sol",
+        "contracts/interfaces/IWETH.sol",
+        "lib/forge-std/lib/ds-test/src\\test.sol",
+        "lib/forge-std/src/Base.sol",
+        "lib/forge-std/src/StdAssertions.sol",
+        "lib/forge-std/src/StdChains.sol",
+        "lib/forge-std/src/StdCheats.sol",
+        "lib/forge-std/src/StdError.sol",
+        "lib/forge-std/src/StdInvariant.sol",
+        "lib/forge-std/src/StdJson.sol",
+        "lib/forge-std/src/StdMath.sol",
+        "lib/forge-std/src/StdStorage.sol",
+        "lib/forge-std/src/StdStyle.sol",
+        "lib/forge-std/src/StdUtils.sol",
+        "lib/forge-std/src\\Test.sol",
+        "lib/forge-std/src/Vm.sol",
+        "lib/forge-std/src/console.sol",
+        "lib/forge-std/src/console2.sol",
+        "lib/forge-std/src/interfaces/IMulticall3.sol",
+        "lib/forge-std/src/safeconsole.sol",
+        "node_modules/@openzeppelin\\contracts/token/ERC20/ERC20.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
+        "node_modules/@openzeppelin/contracts/utils/Context.sol",
+        "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/IQuoter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol"
+      ],
+      "versionRequirement": "^0.8.17",
       "artifacts": {
-        "Base64": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "base64.sol\\Base64.json"
+        "ForkTest": {
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Fork.t.sol\\ForkTest.json"
         }
       }
     },
     "test/foundry/IndexToken.t.sol": {
-      "lastModificationDate": 1699646610633,
+      "lastModificationDate": 1699903625229,
       "contentHash": "7959b0eb4b40eaf4e65934e81d57604a",
       "sourceName": "test/foundry/IndexToken.t.sol",
       "solcConfig": {
@@ -2456,9 +1787,10 @@
         }
       },
       "imports": [
-        "contracts\\proposable\\ProposableOwnableUpgradeable.sol",
-        "contracts\\token\\IndexToken.sol",
-        "contracts\\token\\TokenInterface.sol",
+        "contracts/interfaces/IWETH.sol",
+        "contracts/proposable/ProposableOwnableUpgradeable.sol",
+        "contracts/token/IndexToken.sol",
+        "contracts/token/TokenInterface.sol",
         "lib/forge-std/lib/ds-test/src\\test.sol",
         "lib/forge-std/src/Base.sol",
         "lib/forge-std/src/StdAssertions.sol",
@@ -2477,6 +1809,7 @@
         "lib/forge-std/src/console2.sol",
         "lib/forge-std/src/interfaces/IMulticall3.sol",
         "lib/forge-std/src/safeconsole.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
         "node_modules/@openzeppelin\\contracts-upgradeable/access/OwnableUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
         "node_modules/@openzeppelin\\contracts-upgradeable/security/PausableUpgradeable.sol",
@@ -2484,12 +1817,172 @@
         "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
-        "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol"
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
+        "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/IQuoter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol"
       ],
       "versionRequirement": "^0.8.7",
       "artifacts": {
         "CounterTest": {
           "0.8.7+commit.e28d00a7.Windows.msvc": "IndexToken.t.sol\\CounterTest.json"
+        }
+      }
+    },
+    "test/foundry/IndexTokenFactory.t.sol": {
+      "lastModificationDate": 1699908524020,
+      "contentHash": "77b49a888425ba12d4268acfa4dea8b1",
+      "sourceName": "test/foundry/IndexTokenFactory.t.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "contracts/interfaces/IWETH.sol",
+        "contracts/proposable/ProposableOwnableUpgradeable.sol",
+        "contracts/token/IndexToken.sol",
+        "contracts/token/TokenInterface.sol",
+        "lib/forge-std/lib/ds-test/src\\test.sol",
+        "lib/forge-std/src/Base.sol",
+        "lib/forge-std/src/StdAssertions.sol",
+        "lib/forge-std/src/StdChains.sol",
+        "lib/forge-std/src/StdCheats.sol",
+        "lib/forge-std/src/StdError.sol",
+        "lib/forge-std/src/StdInvariant.sol",
+        "lib/forge-std/src/StdJson.sol",
+        "lib/forge-std/src/StdMath.sol",
+        "lib/forge-std/src/StdStorage.sol",
+        "lib/forge-std/src/StdStyle.sol",
+        "lib/forge-std/src/StdUtils.sol",
+        "lib/forge-std/src\\Test.sol",
+        "lib/forge-std/src/Vm.sol",
+        "lib/forge-std/src/console.sol",
+        "lib/forge-std/src/console2.sol",
+        "lib/forge-std/src/interfaces/IMulticall3.sol",
+        "lib/forge-std/src/safeconsole.sol",
+        "node_modules/@openzeppelin\\contracts/token/ERC20/ERC20.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
+        "node_modules/@openzeppelin/contracts/utils/Context.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/security/PausableUpgradeable.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
+        "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/IQuoter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol"
+      ],
+      "versionRequirement": "^0.8.7",
+      "artifacts": {
+        "CounterTest": {
+          "0.8.7+commit.e28d00a7.Windows.msvc": "IndexTokenFactory.t.sol\\CounterTest.json"
+        }
+      }
+    },
+    "test/foundry/Swap.t.sol": {
+      "lastModificationDate": 1699646873412,
+      "contentHash": "9cd8607542c9d7bafadb988441e45a76",
+      "sourceName": "test/foundry/Swap.t.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "contracts/Swap.sol",
+        "contracts/interfaces/IWETH.sol",
+        "contracts/proposable/ProposableOwnableUpgradeable.sol",
+        "contracts/token/IndexToken.sol",
+        "contracts/token/TokenInterface.sol",
+        "lib/forge-std/lib/ds-test/src\\test.sol",
+        "lib/forge-std/src/Base.sol",
+        "lib/forge-std/src/StdAssertions.sol",
+        "lib/forge-std/src/StdChains.sol",
+        "lib/forge-std/src/StdCheats.sol",
+        "lib/forge-std/src/StdError.sol",
+        "lib/forge-std/src/StdInvariant.sol",
+        "lib/forge-std/src/StdJson.sol",
+        "lib/forge-std/src/StdMath.sol",
+        "lib/forge-std/src/StdStorage.sol",
+        "lib/forge-std/src/StdStyle.sol",
+        "lib/forge-std/src/StdUtils.sol",
+        "lib/forge-std/src\\Test.sol",
+        "lib/forge-std/src/Vm.sol",
+        "lib/forge-std/src/console.sol",
+        "lib/forge-std/src/console2.sol",
+        "lib/forge-std/src/interfaces/IMulticall3.sol",
+        "lib/forge-std/src/safeconsole.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/security/PausableUpgradeable.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
+        "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/IQuoter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol"
+      ],
+      "versionRequirement": "^0.8.7",
+      "artifacts": {
+        "CounterTest": {
+          "0.8.7+commit.e28d00a7.Windows.msvc": "Swap.t.sol\\CounterTest.json"
         }
       }
     }
