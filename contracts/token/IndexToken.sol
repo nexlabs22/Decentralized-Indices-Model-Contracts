@@ -47,6 +47,17 @@ contract IndexToken is
 
     mapping(address => bool) public isRestricted;
 
+    address public SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE;
+    address public constant PEPE = 0x6982508145454Ce325dDbE47a25d4ec3d2311933;
+    address public constant FLOKI = 0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E;
+    address public constant MEME = 0xb131f4A55907B10d1F0A50d8ab8FA09EC342cd74;
+    address public constant BabyDoge = 0xAC57De9C1A09FeC648E93EB98875B212DB0d460B;
+    address public constant BONE = 0x9813037ee2218799597d83D4a5B6F3b6778218d9;
+    address public constant HarryPotterObamaSonic10Inu = 0x72e4f9F808C49A2a61dE9C5896298920Dc4EEEa9;
+    address public constant ELON = 0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3;
+    address public constant WSM = 0xB62E45c3Df611dcE236A6Ddc7A493d79F9DFadEf;
+    address public constant LEASH = 0x27C70Cd1946795B66be9d954418546998b546634;
+
     address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
     ISwapRouter public constant swapRouter =
@@ -93,12 +104,25 @@ contract IndexToken is
     receive() external payable {
         // revert DoNotSendFundsDirectlyToTheContract();
     }
+
+    /// @notice External mint function
+    /// @dev Mint function can only be called externally by the controller
+    /// @param to address
+    /// @param amount uint256
+    function _mintTo(address to, uint256 amount) internal whenNotPaused {
+        require(totalSupply() + amount <= supplyCeiling, "will exceed supply ceiling");
+        require(!isRestricted[to], "to is restricted");
+        require(!isRestricted[msg.sender], "msg.sender is restricted");
+        _mintToFeeReceiver();
+        _mint(to, amount);
+    }
+
     
     /// @notice External mint function
     /// @dev Mint function can only be called externally by the controller
     /// @param to address
     /// @param amount uint256
-    function mint(address to, uint256 amount) external override whenNotPaused onlyMinter {
+    function mint(address to, uint256 amount) public override whenNotPaused onlyMinter {
         require(totalSupply() + amount <= supplyCeiling, "will exceed supply ceiling");
         require(!isRestricted[to], "to is restricted");
         require(!isRestricted[msg.sender], "msg.sender is restricted");
@@ -110,7 +134,7 @@ contract IndexToken is
     /// @dev burn function can only be called externally by the controller
     /// @param from address
     /// @param amount uint256
-    function burn(address from, uint256 amount) external override whenNotPaused onlyMinter {
+    function burn(address from, uint256 amount) public override whenNotPaused onlyMinter {
         require(!isRestricted[from], "from is restricted");
         require(!isRestricted[msg.sender], "msg.sender is restricted");
         _mintToFeeReceiver();
@@ -266,16 +290,27 @@ contract IndexToken is
     }
 
 
-    function mintToken(address tokenIn, uint amountIn) public {
+    function issuanceIndexTokens(address tokenIn, uint amountIn) public {
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
 
         IERC20(tokenIn).approve(address(swapRouter), amountIn);
-        _swapSingle(tokenIn, WETH9, amountIn);
-
-        mint(msg.sender, amountIn);
+        uint wethAmount = _swapSingle(tokenIn, WETH9, amountIn);
+        weth.approve(address(swapRouter), wethAmount);
+        //swap
+        _swapSingle(WETH9, SHIB, wethAmount/10);
+        _swapSingle(WETH9, PEPE, wethAmount/10);
+        // _swapSingle(WETH9, FLOKI, wethAmount/10);
+        _swapSingle(WETH9, MEME, wethAmount/10);
+        // _swapSingle(WETH9, BabyDoge, wethAmount/10);
+        _swapSingle(WETH9, BONE, wethAmount/10);
+        _swapSingle(WETH9, HarryPotterObamaSonic10Inu, wethAmount/10);
+        _swapSingle(WETH9, ELON, wethAmount/10);
+        _swapSingle(WETH9, WSM, wethAmount/10);
+        _swapSingle(WETH9, LEASH, wethAmount/10);
+        _mintTo(msg.sender, wethAmount);
     }
 
-    function burnToken(address tokenIn, uint amountIn) public {
+    function redemption(address tokenIn, uint amountIn) public {
         burn(msg.sender, amountIn);
 
         IERC20(tokenIn).approve(address(swapRouter), amountIn);

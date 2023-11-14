@@ -3,6 +3,7 @@ pragma solidity ^0.8.7;
 
 import "forge-std/Test.sol";
 import "../../contracts/token/IndexToken.sol";
+import "../../contracts/test/TestSwap.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -14,6 +15,8 @@ contract CounterTest is Test {
     uint256 internal constant SCALAR = 1e20;
 
     IndexToken public indexToken;
+    TestSwap public testSwap;
+
     uint256 mainnetFork;
 
     address feeReceiver = vm.addr(1);
@@ -50,6 +53,7 @@ contract CounterTest is Test {
 
     function setUp() public {
         mainnetFork = vm.createFork(MAINNET_RPC_URL);
+        vm.selectFork(mainnetFork);
         indexToken = new IndexToken();
         indexToken.initialize(
             "Anti Inflation",
@@ -64,6 +68,8 @@ contract CounterTest is Test {
         dai = ERC20(DAI);
         weth = IWETH(WETH9);
         quoter = IQuoter(QUOTER);
+
+        testSwap = new TestSwap();
     }
 
     function testInitialized() public {
@@ -102,12 +108,26 @@ contract CounterTest is Test {
         });
 
         uint daiAmount = swapRouter.exactInputSingle(params);
-        console.log(daiAmount);
-        console.log(dai.balanceOf(address(this)));
+        // console.log(daiAmount);
+        // console.log(dai.balanceOf(address(this)));
+        // console.log(weth.balanceOf(address(testSwap)));
+
 
         dai.approve(address(indexToken), dai.balanceOf(address(this)));
-        indexToken.mintToken(DAI, dai.balanceOf(address(this)));
+        indexToken.issuanceIndexTokens(DAI, dai.balanceOf(address(this)));
+        // dai.approve(address(testSwap), dai.balanceOf(address(this)));
+        // testSwap.deposit(dai.balanceOf(address(this)));
+
+        // console.log(dai.balanceOf(address(this)));
+        // console.log(weth.balanceOf(address(testSwap)));
+
     }
+
+
+    function testTSwap() public {
+        // testSwap.deposit{value: 1e16}();
+    }
+
     
 
     
