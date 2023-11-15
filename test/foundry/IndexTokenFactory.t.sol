@@ -83,14 +83,27 @@ contract CounterTest is Test {
         assertEq(indexToken.minter(), minter);
     }
 
-    
-    function testMintWithSwap() public {
-        vm.selectFork(mainnetFork);
-        weth.deposit{value: 1e17}();
-        assertEq(weth.balanceOf(address(this)), 1e17);
-        weth.approve(address(swapRouter), 1e17);
-        
+    enum DexStatus {
+        UNISWAP_V2,
+        UNISWAP_V3
+    }
 
+    function testMintWithSwap() public {
+        uint startAmount = 1e14;
+        vm.selectFork(mainnetFork);
+        weth.deposit{value: startAmount}();
+        assertEq(weth.balanceOf(address(this)), startAmount);
+        weth.approve(address(swapRouter), startAmount);
+        // (address p3, address p2) = indexToken.getPool();
+        // console.log("pool3", p3);
+        // console.log("pool2", p2);
+        // (uint a3, uint a2) = indexToken.getAmounts();
+        // console.log("amount3", a3);
+        // console.log("amount2", a2);
+        // (uint finalAmount, IndexToken.DexStatus status) = indexToken.getAmountOut();
+        // console.log("finalAmount", finalAmount);
+        // console.log("status", uint(status));
+        // return;
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
         .ExactInputSingleParams({
             tokenIn: WETH9,
@@ -99,7 +112,7 @@ contract CounterTest is Test {
             fee: 3000,
             recipient: address(this),
             deadline: block.timestamp,
-            amountIn: 1e17,
+            amountIn: startAmount,
             amountOutMinimum: 0,
             // NOTE: In production, this value can be used to set the limit
             // for the price the swap will push the pool to,

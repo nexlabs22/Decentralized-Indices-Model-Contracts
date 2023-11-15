@@ -6,11 +6,14 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "./TokenInterface.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 // import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IWETH.sol";
+import "../interfaces/IUniswapV2Router02.sol";
+import "../interfaces/IUniswapV2Factory.sol";
 
 /// @title Index Token
 /// @author NEX Labs Protocol
@@ -47,6 +50,11 @@ contract IndexToken is
 
     mapping(address => bool) public isRestricted;
 
+    enum DexStatus {
+        UNISWAP_V2,
+        UNISWAP_V3
+    }
+
     address public SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE;
     address public constant PEPE = 0x6982508145454Ce325dDbE47a25d4ec3d2311933;
     address public constant FLOKI = 0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E;
@@ -58,10 +66,32 @@ contract IndexToken is
     address public constant WSM = 0xB62E45c3Df611dcE236A6Ddc7A493d79F9DFadEf;
     address public constant LEASH = 0x27C70Cd1946795B66be9d954418546998b546634;
 
+    address[] public assetList = [
+        SHIB,
+        PEPE,
+        FLOKI,
+        MEME,
+        BabyDoge,
+        BONE,
+        HarryPotterObamaSonic10Inu,
+        ELON,
+        WSM,
+        LEASH
+    ];
+    
+
     address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-    ISwapRouter public constant swapRouter =
+
+    ISwapRouter public constant swapRouterV3 =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    IUniswapV3Factory public constant factoryV3 =
+        IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
+    
+    IUniswapV2Router02 public constant swapRouterV2 =
+        IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+    IUniswapV2Factory public constant factoryV2 =
+        IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
 
     IWETH public weth = IWETH(WETH9);
     IQuoter public quoter = IQuoter(QUOTER);
@@ -95,6 +125,8 @@ contract IndexToken is
         feeReceiver = _feeReceiver;
         supplyCeiling = _supplyCeiling;
         feeTimestamp = block.timestamp;
+        // 
+
     }
 
    /**
@@ -270,53 +302,170 @@ contract IndexToken is
     }
 
     function _swapSingle(address tokenIn, address tokenOut, uint amountIn) internal returns(uint){
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-        .ExactInputSingleParams({
-            tokenIn: tokenIn,
-            tokenOut: tokenOut,
-            // pool fee 0.3%
-            fee: 3000,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            // NOTE: In production, this value can be used to set the limit
-            // for the price the swap will push the pool to,
-            // which can help protect against price impact
-            sqrtPriceLimitX96: 0
-        });
-        uint amountOut = swapRouter.exactInputSingle(params);
-        return amountOut;
+        (uint amountOut, DexStatus status) = getAmountOut(tokenIn, tokenOut, amountIn);
+        if(amountOut > 0){
+            if(status == DexStatus.UNISWAP_V3){
+                IERC20(tokenIn).approve(address(swapRouterV3), amountIn);
+                ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+                .ExactInputSingleParams({
+                    tokenIn: tokenIn,
+                    tokenOut: tokenOut,
+                    // pool fee 0.3%
+                    fee: 3000,
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    amountIn: amountIn,
+                    amountOutMinimum: 0,
+                    // NOTE: In production, this value can be used to set the limit
+                    // for the price the swap will push the pool to,
+                    // which can help protect against price impact
+                    sqrtPriceLimitX96: 0
+                });
+                uint finalAmountOut = swapRouterV3.exactInputSingle(params);
+                return finalAmountOut;
+            } else{
+                address[] memory path = new address[](2);
+                path[0] = tokenIn;
+                path[1] = tokenOut;
+
+                IERC20(tokenIn).approve(address(swapRouterV2), amountIn);
+                swapRouterV2.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                    amountIn, //amountIn
+                    0, //amountOutMin
+                    path, //path
+                    address(this), //to
+                    block.timestamp //deadline
+                );
+                return amountOut;
+            }
+        }
     }
 
 
     function issuanceIndexTokens(address tokenIn, uint amountIn) public {
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-
-        IERC20(tokenIn).approve(address(swapRouter), amountIn);
+        uint firstPortfolioValue = getPortfolioBalance();
         uint wethAmount = _swapSingle(tokenIn, WETH9, amountIn);
-        weth.approve(address(swapRouter), wethAmount);
         //swap
         _swapSingle(WETH9, SHIB, wethAmount/10);
         _swapSingle(WETH9, PEPE, wethAmount/10);
-        // _swapSingle(WETH9, FLOKI, wethAmount/10);
         _swapSingle(WETH9, MEME, wethAmount/10);
-        // _swapSingle(WETH9, BabyDoge, wethAmount/10);
         _swapSingle(WETH9, BONE, wethAmount/10);
         _swapSingle(WETH9, HarryPotterObamaSonic10Inu, wethAmount/10);
         _swapSingle(WETH9, ELON, wethAmount/10);
         _swapSingle(WETH9, WSM, wethAmount/10);
+
         _swapSingle(WETH9, LEASH, wethAmount/10);
-        _mintTo(msg.sender, wethAmount);
+        _swapSingle(WETH9, FLOKI, wethAmount/10);
+        _swapSingle(WETH9, BabyDoge, wethAmount/10);
+
+       uint amountToMint;
+       if(totalSupply() > 0){
+        amountToMint = (totalSupply()*wethAmount)/firstPortfolioValue;
+       }else{
+        amountToMint = wethAmount;
+       }
+
+        _mintTo(msg.sender, amountToMint);
     }
 
     function redemption(address tokenIn, uint amountIn) public {
+        uint firstPortfolioValue = getPortfolioBalance();
+        uint burnPercent = amountIn*1e18/totalSupply();
+
         burn(msg.sender, amountIn);
 
-        IERC20(tokenIn).approve(address(swapRouter), amountIn);
-        _swapSingle(WETH9, tokenIn, amountIn);
+        uint wethAmount = _swapSingle(tokenIn, WETH9, amountIn);
+        //swap
+        _swapSingle(SHIB, WETH9, (burnPercent*IERC20(SHIB).balanceOf(this))/1e18);
+        _swapSingle(PEPE, WETH9, (burnPercent*IERC20(PEPE).balanceOf(this))/1e18);
+        _swapSingle(MEME, WETH9, (burnPercent*IERC20(MEME).balanceOf(this))/1e18);
+        _swapSingle(BONE, WETH9, (burnPercent*IERC20(BONE).balanceOf(this))/1e18);
+        _swapSingle(HarryPotterObamaSonic10Inu, WETH9, (burnPercent*IERC20(HarryPotterObamaSonic10Inu).balanceOf(this))/1e18);
+        _swapSingle(ELON, WETH9, (burnPercent*IERC20(ELON).balanceOf(this))/1e18);
+        _swapSingle(WSM, WETH9, (burnPercent*IERC20(WSM).balanceOf(this))/1e18);
+
+        _swapSingle(LEASH, WETH9, (burnPercent*IERC20(LEASH).balanceOf(this))/1e18);
+        _swapSingle(FLOKI, WETH9, (burnPercent*IERC20(FLOKI).balanceOf(this))/1e18);
+        _swapSingle(BabyDoge, WETH9, (burnPercent*IERC20(BabyDoge).balanceOf(this))/1e18);
+
+        weth.transfer(msg.sender, weth.balanceOf(address(this)));
 
     }
+
+    function getPool() public returns(address, address) {
+        // return factoryV3.getPool(WETH9, SHIB, 3000);
+        address v3pool = factoryV3.getPool(WETH9, SHIB, 3000);
+       
+        address v2pool = factoryV2.getPair(WETH9, SHIB);
+        
+        return (v3pool, v2pool);
+    }
+
+    function getAmounts() public returns(uint, uint) {
+        // return factoryV3.getPool(WETH9, SHIB, 3000);
+        
+        // uint v3AmountOut = quoter.quoteExactInputSingle(WETH9, SHIB, 3000, 1e18, 0);
+        uint v3AmountOut;
+
+        try quoter.quoteExactInputSingle(WETH9, LEASH, 3000, 1e18, 0) returns (uint _amount){
+            v3AmountOut = _amount;
+        } catch {
+            v3AmountOut = 0;
+        }
+        // uint v3AmountOut = 0;
+
+        address[] memory path = new address[](2);
+        path[0] = WETH9;
+        path[1] = LEASH;
+        
+        
+        uint v2amountOut;
+        try swapRouterV2.getAmountsOut(1e18, path) returns (uint[] memory _amounts){
+            v2amountOut = _amounts[1];
+        } catch {
+            v2amountOut = 0;
+        }
+        return (v3AmountOut, v2amountOut);
+
+    }
+
+
+    function getAmountOut(address tokenIn, address tokenOut, uint amountIn) public returns(uint finalAmountOut, DexStatus dexStatus) {
+        uint v3AmountOut;
+        try quoter.quoteExactInputSingle(tokenIn, tokenOut, 3000, amountIn, 0) returns (uint _amount){
+            v3AmountOut = _amount;
+        } catch {
+            v3AmountOut = 0;
+        }
+
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+        
+        
+        uint v2amountOut;
+        try swapRouterV2.getAmountsOut(amountIn, path) returns (uint[] memory _amounts){
+            v2amountOut = _amounts[1];
+        } catch {
+            v2amountOut = 0;
+        }
+        
+        finalAmountOut = v3AmountOut > v2amountOut ? v3AmountOut : v2amountOut;
+        dexStatus = v3AmountOut > v2amountOut ? DexStatus.UNISWAP_V3 : DexStatus.UNISWAP_V2;
+        
+    }
+
+
+    function getPortfolioBalance() public returns(uint){
+        uint totalValue;
+        for(uint i = 0; i < 10; i++) {
+            uint value = getAmountOut(assetList[i], WETH9, IERC20(assetList[i]).balanceOf(address(this)));
+            totalValue += value;
+        }
+        return totalValue;
+    }
+
 
 
 
