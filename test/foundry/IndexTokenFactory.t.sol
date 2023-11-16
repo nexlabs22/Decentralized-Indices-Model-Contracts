@@ -91,43 +91,47 @@ contract CounterTest is Test {
     function testMintWithSwap() public {
         uint startAmount = 1e14;
         vm.selectFork(mainnetFork);
-        weth.deposit{value: startAmount}();
-        assertEq(weth.balanceOf(address(this)), startAmount);
-        weth.approve(address(swapRouter), startAmount);
-        // (address p3, address p2) = indexToken.getPool();
-        // console.log("pool3", p3);
-        // console.log("pool2", p2);
-        // (uint a3, uint a2) = indexToken.getAmounts();
-        // console.log("amount3", a3);
-        // console.log("amount2", a2);
-        // (uint finalAmount, IndexToken.DexStatus status) = indexToken.getAmountOut();
-        // console.log("finalAmount", finalAmount);
-        // console.log("status", uint(status));
-        // return;
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-        .ExactInputSingleParams({
-            tokenIn: WETH9,
-            tokenOut: DAI,
-            // pool fee 0.3%
-            fee: 3000,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: startAmount,
-            amountOutMinimum: 0,
-            // NOTE: In production, this value can be used to set the limit
-            // for the price the swap will push the pool to,
-            // which can help protect against price impact
-            sqrtPriceLimitX96: 0
-        });
 
-        uint daiAmount = swapRouter.exactInputSingle(params);
+        // indexToken.testSwapGas{value: 10e18}();
+        // weth.deposit{value: startAmount}();
+        // assertEq(weth.balanceOf(address(this)), startAmount);
+        // weth.approve(address(swapRouter), startAmount);
+        
+        // ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+        // .ExactInputSingleParams({
+        //     tokenIn: WETH9,
+        //     tokenOut: DAI,
+        //     // pool fee 0.3%
+        //     fee: 3000,
+        //     recipient: address(this),
+        //     deadline: block.timestamp,
+        //     amountIn: startAmount,
+        //     amountOutMinimum: 0,
+        //     // NOTE: In production, this value can be used to set the limit
+        //     // for the price the swap will push the pool to,
+        //     // which can help protect against price impact
+        //     sqrtPriceLimitX96: 0
+        // });
+
+        // uint daiAmount = swapRouter.exactInputSingle(params);
         // console.log(daiAmount);
         // console.log(dai.balanceOf(address(this)));
         // console.log(weth.balanceOf(address(testSwap)));
 
 
-        dai.approve(address(indexToken), dai.balanceOf(address(this)));
-        indexToken.issuanceIndexTokens(DAI, dai.balanceOf(address(this)));
+        // dai.approve(address(indexToken), dai.balanceOf(address(this)));
+        // indexToken.issuanceIndexTokens(DAI, dai.balanceOf(address(this)));
+        ////
+        indexToken.issuanceIndexTokensWithEth{value: 1e18}();
+        
+        // console.log(weth.balanceOf(address(this)));
+        // console.log(indexToken.balanceOf(address(this)));
+        // console.log(indexToken.getPortfolioBalance());
+        // indexToken.redemption(WETH9, indexToken.balanceOf(address(this)));
+        // console.log(weth.balanceOf(address(this)));
+        // console.log(indexToken.balanceOf(address(this)));
+        // console.log(indexToken.getPortfolioBalance());
+
         // dai.approve(address(testSwap), dai.balanceOf(address(this)));
         // testSwap.deposit(dai.balanceOf(address(this)));
 

@@ -166,6 +166,18 @@ contract IndexToken is
     /// @dev burn function can only be called externally by the controller
     /// @param from address
     /// @param amount uint256
+    function _burnTo(address from, uint256 amount) internal whenNotPaused {
+        require(!isRestricted[from], "from is restricted");
+        require(!isRestricted[msg.sender], "msg.sender is restricted");
+        _mintToFeeReceiver();
+        _burn(from, amount);
+    }
+
+
+    /// @notice External burn function
+    /// @dev burn function can only be called externally by the controller
+    /// @param from address
+    /// @param amount uint256
     function burn(address from, uint256 amount) public override whenNotPaused onlyMinter {
         require(!isRestricted[from], "from is restricted");
         require(!isRestricted[msg.sender], "msg.sender is restricted");
@@ -303,6 +315,8 @@ contract IndexToken is
 
     function _swapSingle(address tokenIn, address tokenOut, uint amountIn) internal returns(uint){
         (uint amountOut, DexStatus status) = getAmountOut(tokenIn, tokenOut, amountIn);
+        // uint amountOut = 1;
+        // DexStatus status = DexStatus.UNISWAP_V3;
         if(amountOut > 0){
             if(status == DexStatus.UNISWAP_V3){
                 IERC20(tokenIn).approve(address(swapRouterV3), amountIn);
@@ -343,22 +357,15 @@ contract IndexToken is
 
 
     function issuanceIndexTokens(address tokenIn, uint amountIn) public {
+        
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
         uint firstPortfolioValue = getPortfolioBalance();
         uint wethAmount = _swapSingle(tokenIn, WETH9, amountIn);
         //swap
-        _swapSingle(WETH9, SHIB, wethAmount/10);
-        _swapSingle(WETH9, PEPE, wethAmount/10);
-        _swapSingle(WETH9, MEME, wethAmount/10);
-        _swapSingle(WETH9, BONE, wethAmount/10);
-        _swapSingle(WETH9, HarryPotterObamaSonic10Inu, wethAmount/10);
-        _swapSingle(WETH9, ELON, wethAmount/10);
-        _swapSingle(WETH9, WSM, wethAmount/10);
-
-        _swapSingle(WETH9, LEASH, wethAmount/10);
-        _swapSingle(WETH9, FLOKI, wethAmount/10);
-        _swapSingle(WETH9, BabyDoge, wethAmount/10);
-
+        for(uint i = 0; i < 10; i++) {
+        _swapSingle(WETH9, assetList[i], wethAmount/10);
+        }
+       //mint index tokens
        uint amountToMint;
        if(totalSupply() > 0){
         amountToMint = (totalSupply()*wethAmount)/firstPortfolioValue;
@@ -369,26 +376,41 @@ contract IndexToken is
         _mintTo(msg.sender, amountToMint);
     }
 
-    function redemption(address tokenIn, uint amountIn) public {
+    function issuanceIndexTokensWithEth() public payable {
+        weth.deposit{value: msg.value}();
         uint firstPortfolioValue = getPortfolioBalance();
-        uint burnPercent = amountIn*1e18/totalSupply();
-
-        burn(msg.sender, amountIn);
-
-        uint wethAmount = _swapSingle(tokenIn, WETH9, amountIn);
+        uint wethAmount = msg.value;
         //swap
-        _swapSingle(SHIB, WETH9, (burnPercent*IERC20(SHIB).balanceOf(this))/1e18);
-        _swapSingle(PEPE, WETH9, (burnPercent*IERC20(PEPE).balanceOf(this))/1e18);
-        _swapSingle(MEME, WETH9, (burnPercent*IERC20(MEME).balanceOf(this))/1e18);
-        _swapSingle(BONE, WETH9, (burnPercent*IERC20(BONE).balanceOf(this))/1e18);
-        _swapSingle(HarryPotterObamaSonic10Inu, WETH9, (burnPercent*IERC20(HarryPotterObamaSonic10Inu).balanceOf(this))/1e18);
-        _swapSingle(ELON, WETH9, (burnPercent*IERC20(ELON).balanceOf(this))/1e18);
-        _swapSingle(WSM, WETH9, (burnPercent*IERC20(WSM).balanceOf(this))/1e18);
+        for(uint i = 0; i < 10; i++) {
+        _swapSingle(WETH9, assetList[i], wethAmount/10);
+        // _swapSingle(WETH9, SHIB, wethAmount/10);
+        }
+       //mint index tokens
+       uint amountToMint;
+       if(totalSupply() > 0){
+        amountToMint = (totalSupply()*wethAmount)/firstPortfolioValue;
+       }else{
+        amountToMint = wethAmount;
+       }
 
-        _swapSingle(LEASH, WETH9, (burnPercent*IERC20(LEASH).balanceOf(this))/1e18);
-        _swapSingle(FLOKI, WETH9, (burnPercent*IERC20(FLOKI).balanceOf(this))/1e18);
-        _swapSingle(BabyDoge, WETH9, (burnPercent*IERC20(BabyDoge).balanceOf(this))/1e18);
+        _mintTo(msg.sender, amountToMint);
+    }
 
+
+    function redemption(address tokenIn, uint amountIn) public {
+        // uint firstPortfolioValue = getPortfolioBalance();
+        // uint burnPercent = amountIn*1e18/totalSupply();
+        uint burnPercent = 1e18;
+
+        _burnTo(msg.sender, amountIn);
+
+       
+        //swap
+        for(uint i = 0; i < 10; i++) {
+        _swapSingle(assetList[i], WETH9, (burnPercent*IERC20(assetList[i]).balanceOf(address(this)))/1e18);
+        // _swapSingle(SHIB, WETH9, (burnPercent*IERC20(assetList[i]).balanceOf(address(this)))/1e18/10);
+        }
+        
         weth.transfer(msg.sender, weth.balanceOf(address(this)));
 
     }
@@ -460,10 +482,28 @@ contract IndexToken is
     function getPortfolioBalance() public returns(uint){
         uint totalValue;
         for(uint i = 0; i < 10; i++) {
-            uint value = getAmountOut(assetList[i], WETH9, IERC20(assetList[i]).balanceOf(address(this)));
+            (uint value, DexStatus status) = getAmountOut(assetList[i], WETH9, IERC20(assetList[i]).balanceOf(address(this)));
             totalValue += value;
         }
         return totalValue;
+    }
+
+
+    function testSwapGas() public payable {
+        weth.deposit{value: msg.value}();
+        // weth.approve(, amount);
+        // for(uint i; i < 8; i++){
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+            _swapSingle(WETH9, SHIB, 1e18);
+        // }
     }
 
 
