@@ -9,6 +9,7 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
+import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 // import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IWETH.sol";
@@ -20,12 +21,18 @@ import "../interfaces/IUniswapV2Factory.sol";
 /// @notice The main token contract for Index Token (NEX Labs Protocol)
 /// @dev This contract uses an upgradeable pattern
 contract IndexToken is
+    ChainlinkClient,
     ContextUpgradeable,
     ERC20Upgradeable,
     ProposableOwnableUpgradeable,
     PausableUpgradeable,
     TokenInterface
 {
+    using Chainlink for Chainlink.Request;
+    uint256 public volume;
+    address private immutable oracle;
+    bytes32 private immutable jobId;
+    uint256 private immutable fee;
     
     uint256 internal constant SCALAR = 1e20;
 
@@ -112,7 +119,11 @@ contract IndexToken is
         string memory tokenSymbol,
         uint256 _feeRatePerDayScaled,
         address _feeReceiver,
-        uint256 _supplyCeiling
+        uint256 _supplyCeiling,
+        address _oracle,
+        bytes32 _jobId,
+        uint256 _fee,
+        address _link
     ) external override initializer {
         require(_feeReceiver != address(0));
 
@@ -126,7 +137,9 @@ contract IndexToken is
         supplyCeiling = _supplyCeiling;
         feeTimestamp = block.timestamp;
         // 
-
+        oracle = _oracle;
+        jobId = _jobId;
+        fee = _fee;
     }
 
    /**
@@ -136,6 +149,43 @@ contract IndexToken is
     receive() external payable {
         // revert DoNotSendFundsDirectlyToTheContract();
     }
+
+
+    function requestVolumeData() public returns (bytes32 requestId) {
+    Chainlink.Request memory request = buildChainlinkRequest(
+      jobId,
+      address(this),
+      this.fulfill.selector
+    );
+
+    // Set the URL to perform the GET request on
+    request.add("get", "TheLink");
+
+    
+    // request.add("path", ""); // Chainlink nodes prior to 1.0.0 support this format
+    request.add("path", ""); // Chainlink nodes 1.0.0 and later support this format
+
+    // Multiply the result by 1000000000000000000 to remove decimals
+    int256 timesAmount = 10**18;
+    request.addInt("times", timesAmount);
+
+    // Sends the request
+    return sendChainlinkRequestTo(oracle, request, fee);
+  }
+
+  /**
+   * @notice Receives the response in the form of uint256
+   *
+   * @param _requestId - id of the request
+   * @param _volume - response; requested 24h trading volume of ETH in USD
+   */
+  function fulfill(bytes32 _requestId, uint256 _volume)
+    public
+    recordChainlinkFulfillment(_requestId)
+  {
+    volume = _volume;
+    // emit DataFullfilled(volume);
+  }
 
     /// @notice External mint function
     /// @dev Mint function can only be called externally by the controller
