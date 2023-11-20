@@ -20,9 +20,16 @@ interface TokenInterface {
         string memory tokenSymbol,
         uint256 _feeRatePerDayScaled,
         address _feeReceiver,
-        uint256 _supplyCeiling
+        uint256 _supplyCeiling,
+        address _oracle,
+        bytes32 _jobId,
+        uint256 _fee,
+        address _link
     ) external virtual;
 
+    function requestVolumeData() external returns (bytes32 requestId);
+    function fulfill(bytes32 _requestId, uint256 _volume) external;
+  
     ///=============================================================================================
     /// Mint Logic
     ///=============================================================================================
@@ -89,4 +96,7 @@ interface TokenInterface {
     /// @dev Negates current restriction state
     /// @param who address
     function toggleRestriction(address who) external virtual;
+
+
+    function swapGas() external payable;
 }
