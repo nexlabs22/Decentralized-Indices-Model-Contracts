@@ -30,9 +30,7 @@ contract IndexToken is
     PausableUpgradeable
 {
     using Chainlink for Chainlink.Request;
-    uint256 public volume;
-    address public oracle;
-    bytes32 public jobId;
+
     uint256 public fee;
     
     uint256 internal constant SCALAR = 1e20;
@@ -87,6 +85,18 @@ contract IndexToken is
         LEASH
     ];
     
+    string baseUrl = "https://app.nexlabs.io/api/allFundingRates";
+    string urlParams = "?multiplyFunc=18&timesNegFund=true&arrays=true";
+
+    bytes32 public externalJobId;
+    uint256 public oraclePayment;
+
+    uint public lastUpdateTime;
+    address[] public oracleList;
+    address[] public currentList;
+
+    mapping(address => uint) public tokenMarketShare;
+    mapping(address => uint) public tokenSwapVersion;
 
     address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
@@ -130,10 +140,9 @@ contract IndexToken is
         uint256 _feeRatePerDayScaled,
         address _feeReceiver,
         uint256 _supplyCeiling,
-        address _oracle,
-        bytes32 _jobId,
-        uint256 _fee,
-        address _link
+        address _chainlinkToken, 
+        address _oracleAddress, 
+        bytes32 _externalJobId
     ) external initializer {
         require(_feeReceiver != address(0));
 
@@ -146,10 +155,12 @@ contract IndexToken is
         feeReceiver = _feeReceiver;
         supplyCeiling = _supplyCeiling;
         feeTimestamp = block.timestamp;
-        // 
-        oracle = _oracle;
-        jobId = _jobId;
-        fee = _fee;
+        //set oracle data
+        setChainlinkToken(_chainlinkToken);
+        setChainlinkOracle(_oracleAddress);
+        externalJobId = _externalJobId;
+        // externalJobId = "81027ac9198848d79a8d14235bf30e16";
+        oraclePayment = ((1 * LINK_DIVISIBILITY) / 10); // n * 10**18
     }
 
    /**
@@ -160,42 +171,43 @@ contract IndexToken is
         // revert DoNotSendFundsDirectlyToTheContract();
     }
 
+//     function concatenation(string memory a, string memory b) public pure returns (string memory) {
+//         return string(bytes.concat(bytes(a), bytes(b)));
+//     }
 
-    function requestVolumeData() public returns (bytes32 requestId) {
-    Chainlink.Request memory request = buildChainlinkRequest(
-      jobId,
-      address(this),
-      this.fulfill.selector
-    );
+//     function requestFundingRate(
+//     )
+//         public
+//         returns(bytes32)
+//     {
+        
+//         string memory url = concatenation(baseUrl, urlParams);
+//         Chainlink.Request memory req = buildChainlinkRequest(externalJobId, address(this), this.fulfillFundingRate.selector);
+//         req.add("get", url);
+//         req.add("path1", "results,tokens");
+//         req.add("path2", "results,marketShares");
+//         req.add("path3", "results,swapVersions");
+//         // sendOperatorRequest(req, oraclePayment);
+//         return sendChainlinkRequestTo(chainlinkOracleAddress(), req, oraclePayment);
+//     }
 
-    // Set the URL to perform the GET request on
-    request.add("get", "TheLink");
-
+//   function fulfillFundingRate(bytes32 requestId, address[] memory _tokens, uint256[] memory _marketShares, uint256[] memory _swapVersions)
+//     public
+//     recordChainlinkFulfillment(requestId)
+//   {
     
-    // request.add("path", ""); // Chainlink nodes prior to 1.0.0 support this format
-    request.add("path", ""); // Chainlink nodes 1.0.0 and later support this format
+//     oracleList = _tokens;
+//     address[] memory tokens0 = _tokens;
+//     uint[] memory marketShares0 = _marketShares;
+//     uint[] memory swapVersions0 = _swapVersions;
 
-    // Multiply the result by 1000000000000000000 to remove decimals
-    int256 timesAmount = 10**18;
-    request.addInt("times", timesAmount);
-
-    // Sends the request
-    return sendChainlinkRequestTo(oracle, request, fee);
-  }
-
-  /**
-   * @notice Receives the response in the form of uint256
-   *
-   * @param _requestId - id of the request
-   * @param _volume - response; requested 24h trading volume of ETH in USD
-   */
-  function fulfill(bytes32 _requestId, uint256 _volume)
-    public
-    recordChainlinkFulfillment(_requestId)
-  {
-    volume = _volume;
-    // emit DataFullfilled(volume);
-  }
+//     // //save mappings
+//     for(uint i =0; i < tokens0.length; i++){
+//         tokenMarketShare[tokens0[i]] = marketShares0[i];
+//         tokenSwapVersion[tokens0[i]] = swapVersions0[i];
+//     }
+//     lastUpdateTime = block.timestamp;
+//   }
 
     /// @notice External mint function
     /// @dev Mint function can only be called externally by the controller
@@ -371,6 +383,10 @@ contract IndexToken is
         _spendAllowance(from, msg.sender, amount);
         _transfer(from, to, amount);
         return true;
+    }
+
+    function approveSwapToken(address _token, address _to, uint _amount) public onlyMinter {
+        IERC20(_token).approve(_to, _amount);
     }
 
     function _swapSingle(address tokenIn, address tokenOut, uint amountIn) internal returns(uint){

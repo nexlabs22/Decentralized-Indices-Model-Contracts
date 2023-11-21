@@ -93,7 +93,7 @@ contract MockApiOracle is ChainlinkRequestInterface, LinkTokenReceiver {
   }
 
   
-  function fulfillOracleFundingRateRequest(bytes32 _requestId, uint256[] memory _prices, int256[] memory _fundingfractionaverages, string[] memory _names, string[] memory _contracts, address[] memory _addresses)
+  function fulfillOracleFundingRateRequest(bytes32 _requestId, address[] memory _tokens, uint256[] memory _marketCapShares, uint256[] memory _swapVersions)
     external
     isValidRequest(_requestId)
     returns (bool)
@@ -104,16 +104,16 @@ contract MockApiOracle is ChainlinkRequestInterface, LinkTokenReceiver {
     // All updates to the oracle's fulfillment should come before calling the
     // callback(addr+functionId) as it is untrusted.
     // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
-    uint[] memory price = new uint[](1);
-    price[0] = (1000e18);
-    int[] memory fundingRate = new int[](1);
-    fundingRate[0] = (2000e18);
-    string[] memory strings = new string[](1);
-    strings[0] = "Morteza";
+    address[] memory tokens = new address[](1);
+    tokens[0] = address(0);
+    uint[] memory marketCapShares = new uint[](1);
+    marketCapShares[0] = (100e18);
+    uint[] memory swapVersion = new uint[](1);
+    swapVersion[0] = (3);
     (bool success, ) = req.callbackAddr.call(
       // abi.encodeWithSelector(req.callbackFunctionId, _requestId, _data1, _data2, _data3, _data4, _data5)
       // abi.encodeWithSelector(req.callbackFunctionId, _requestId, convertUintToBytes32(price), convertIntToBytes32Array(fundingRate), convertStringToBytes32Array(strings))
-      abi.encodeWithSelector(req.callbackFunctionId, _requestId, _prices, _fundingfractionaverages, _names, _contracts, _addresses)
+      abi.encodeWithSelector(req.callbackFunctionId, _requestId, _tokens, _marketCapShares, _swapVersions)
     ); // solhint-disable-line avoid-low-level-calls
     return success;
   }

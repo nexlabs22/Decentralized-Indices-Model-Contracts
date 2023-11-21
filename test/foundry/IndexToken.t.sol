@@ -53,10 +53,9 @@ contract CounterTest is Test {
             1e18,
             feeReceiver,
             1000000e18,
+            address(link),
             address(oracle),
-            jobId,
-            1e17,
-            address(link)
+            jobId
         );
         indexToken.setMinter(minter);
     }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.7;
 
 import "forge-std/Test.sol";
 import "../../contracts/token/IndexToken.sol";
+import "../../contracts/factory/IndexFactory.sol";
 import "../../contracts/test/TestSwap.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -15,10 +16,12 @@ import "../../contracts/test/LinkToken.sol";
 
 contract CounterTest is Test {
 
+    using stdStorage for StdStorage;
 
     uint256 internal constant SCALAR = 1e20;
 
     IndexToken public indexToken;
+    IndexFactory public factory;
     TestSwap public testSwap;
 
     uint256 mainnetFork;
@@ -44,6 +47,45 @@ contract CounterTest is Test {
     address public constant ELON = 0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3;
     address public constant WSM = 0xB62E45c3Df611dcE236A6Ddc7A493d79F9DFadEf;
     address public constant LEASH = 0x27C70Cd1946795B66be9d954418546998b546634;
+
+    address[] public assetList = [
+        SHIB,
+        PEPE,
+        FLOKI,
+        MEME,
+        // BabyDoge
+        BONE
+        // HarryPotterObamaSonic10Inu,
+        // ELON,
+        // WSM,
+        // LEASH
+    ];
+
+    uint[] public tokenShares = [
+        10e18,
+        10e18,
+        10e18,
+        10e18,
+        10e18
+        // 10e18,
+        // 10e18,
+        // 10e18,
+        // 10e18,
+        // 10e18
+    ];
+
+    uint[] public swapVersions = [
+        3,
+        3,
+        2,
+        3,
+        // 2
+        3
+        // 3,
+        // 2,
+        // 3,
+        // 2
+    ];
 
     ISwapRouter public constant swapRouter =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
@@ -74,7 +116,7 @@ contract CounterTest is Test {
         mainnetFork = vm.createFork(MAINNET_RPC_URL);
         vm.selectFork(mainnetFork);
 
-        LinkToken link = new LinkToken();
+        link = new LinkToken();
         oracle = new MockApiOracle(address(link));
 
         indexToken = new IndexToken();
@@ -84,12 +126,21 @@ contract CounterTest is Test {
             1e18,
             feeReceiver,
             1000000e18,
+            address(link),
             address(oracle),
-            jobId,
-            1e17,
-            address(link)
+            jobId
         );
-        indexToken.setMinter(minter);
+
+        factory = new IndexFactory();
+        factory.initialize(
+            payable(address(indexToken)),
+            address(0),
+            address(link),
+            address(oracle),
+            jobId
+        );
+
+        indexToken.setMinter(address(factory));
 
         // swap = new Swap();
         dai = ERC20(DAI);
@@ -109,7 +160,7 @@ contract CounterTest is Test {
         assertEq(indexToken.feeReceiver(), feeReceiver);
         assertEq(indexToken.methodology(), "");
         assertEq(indexToken.supplyCeiling(), 1000000e18);
-        assertEq(indexToken.minter(), minter);
+        assertEq(indexToken.minter(), address(factory));
     }
 
     enum DexStatus {
@@ -117,16 +168,104 @@ contract CounterTest is Test {
         UNISWAP_V3
     }
 
+    function updateOracleList() public {
+        // console.log(link.balanceOf(address(this)));
+        // console.log(link.balanceOf(address(this)));
+        // link.transfer(address(factory), 1e18);
+        link.transfer(address(factory), 1e17);
+        bytes32 requestId = factory.requestFundingRate();
+        oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
+    }
+    function testOracleList() public {
+        updateOracleList();
+        // token list
+        assertEq(factory.oracleList(0), assetList[0]);
+        assertEq(factory.oracleList(1), assetList[1]);
+        assertEq(factory.oracleList(2), assetList[2]);
+        assertEq(factory.oracleList(3), assetList[3]);
+        assertEq(factory.oracleList(4), assetList[4]);
+        // assertEq(factory.oracleList(5), assetList[5]);
+        // assertEq(factory.oracleList(6), assetList[6]);
+        // assertEq(factory.oracleList(7), assetList[7]);
+        // assertEq(factory.oracleList(8), assetList[8]);
+        // assertEq(factory.oracleList(9), assetList[9]);
+        // token shares
+        assertEq(factory.tokenMarketShare(assetList[0]), tokenShares[0]);
+        assertEq(factory.tokenMarketShare(assetList[1]), tokenShares[1]);
+        assertEq(factory.tokenMarketShare(assetList[2]), tokenShares[2]);
+        assertEq(factory.tokenMarketShare(assetList[3]), tokenShares[3]);
+        assertEq(factory.tokenMarketShare(assetList[4]), tokenShares[4]);
+        // assertEq(factory.tokenMarketShare(assetList[5]), tokenShares[5]);
+        // assertEq(factory.tokenMarketShare(assetList[6]), tokenShares[6]);
+        // assertEq(factory.tokenMarketShare(assetList[7]), tokenShares[7]);
+        // assertEq(factory.tokenMarketShare(assetList[8]), tokenShares[8]);
+        // assertEq(factory.tokenMarketShare(assetList[9]), tokenShares[9]);
+        // token shares
+        assertEq(factory.tokenSwapVersion(assetList[0]), swapVersions[0]);
+        assertEq(factory.tokenSwapVersion(assetList[1]), swapVersions[1]);
+        assertEq(factory.tokenSwapVersion(assetList[2]), swapVersions[2]);
+        assertEq(factory.tokenSwapVersion(assetList[3]), swapVersions[3]);
+        assertEq(factory.tokenSwapVersion(assetList[4]), swapVersions[4]);
+        // assertEq(factory.tokenSwapVersion(assetList[5]), swapVersions[5]);
+        // assertEq(factory.tokenSwapVersion(assetList[6]), swapVersions[6]);
+        // assertEq(factory.tokenSwapVersion(assetList[7]), swapVersions[7]);
+        // assertEq(factory.tokenSwapVersion(assetList[8]), swapVersions[8]);
+        // assertEq(factory.tokenSwapVersion(assetList[9]), swapVersions[9]);
+    }
+
+    
     function testMintWithSwap() public {
         uint startAmount = 1e14;
         vm.selectFork(mainnetFork);
-
-        console.log("shib", IERC20(SHIB).balanceOf(address(indexToken)));
-        console.log("expect", indexToken.estimateAmountOut(WETH9, SHIB, 10e18, 1));
-        indexToken.swapGas{value: 10e18}();
-        console.log("shib", IERC20(SHIB).balanceOf(address(indexToken)));
-        indexToken.swapGas1{value: 10e18}();
-        console.log("shib", IERC20(SHIB).balanceOf(address(indexToken)));
+        updateOracleList();
+        // stdstore.target(address(factory)).sig(factory.oracleList.selector).with_key(assetList);
+        // stdstore
+        //     .target(address(SHIB))
+        //     .sig("balanceOf(address)")
+        //     .with_key(address(factory))
+        //     // .depth(1)
+        //     .checked_write(100e18);
+        // stdstore
+        //     .target(address(PEPE))
+        //     .sig("balanceOf(address)")
+        //     .with_key(address(factory))
+        //     // .depth(1)
+        //     .checked_write(100e18);
+        // stdstore
+        //     .target(address(FLOKI))
+        //     .sig("balanceOf(address)")
+        //     .with_key(address(factory))
+        //     // .depth(1)
+        //     .checked_write(100e18);
+        // stdstore
+        //     .target(address(MEME))
+        //     .sig("balanceOf(address)")
+        //     .with_key(address(factory))
+        //     // .depth(1)
+        //     .checked_write(100e18);
+        // stdstore
+        //     .target(address(BONE))
+        //     .sig("balanceOf(address)")
+        //     .with_key(address(factory))
+        //     // .depth(1)
+        //     .checked_write(100e18);
+        // stdstore
+        //     .target(address(factory))
+        //     .sig("oracleList(uint256)")
+        //     .with_key(0)
+        //     .depth(0)
+        //     .checked_write(WETH9);
+        // console.log("fee", factory.fee());
+        console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
+        // console.log("expect", indexToken.estimateAmountOut(WETH9, SHIB, 10e18, 1));
+        // indexToken.swapGas{value: 10e18}();
+        // factory.swapGas{value: 10e18}();
+        factory.issuanceIndexTokensWithEth{value: 10e18}();
+        console.log("index token balance", indexToken.balanceOf(address(this)));
+        // console.log("portfolio value", factory.getPortfolioBalance());
+        // console.log("shib", IERC20(SHIB).balanceOf(address(factory)));
+        // indexToken.swapGas1{value: 10e18}();
+        // console.log("shib", IERC20(SHIB).balanceOf(address(indexToken)));
         // weth.deposit{value: startAmount}();
         // assertEq(weth.balanceOf(address(this)), startAmount);
         // weth.approve(address(swapRouter), startAmount);
@@ -173,7 +312,7 @@ contract CounterTest is Test {
         // console.log(weth.balanceOf(address(testSwap)));
 
     }
-
+    
 
     function testTSwap() public {
         // testSwap.deposit{value: 1e16}();
