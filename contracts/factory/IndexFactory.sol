@@ -268,7 +268,7 @@ contract IndexFactory is
         uint wethAmount = _swapSingle(tokenIn, WETH9, amountIn, address(this), tokenSwapVersion[tokenIn]);
         //swap
         for(uint i = 0; i < currentList.length; i++) {
-        _swapSingle(WETH9, currentList[i], wethAmount/10, address(this), tokenSwapVersion[currentList[i]]);
+        _swapSingle(WETH9, currentList[i], wethAmount*tokenMarketShare[currentList[i]]/100e18, address(this), tokenSwapVersion[currentList[i]]);
         }
        //mint index tokens
        uint amountToMint;
@@ -303,9 +303,9 @@ contract IndexFactory is
     }
 
 
-    function redemption(address tokenIn, uint amountIn) public {
+    function redemption(uint amountIn) public {
         uint firstPortfolioValue = getPortfolioBalance();
-        uint burnPercent = amountIn*1e18/totalSupply();
+        uint burnPercent = amountIn*1e18/indexToken.totalSupply();
         // uint burnPercent = 1e18;
 
         indexToken.burn(msg.sender, amountIn);
@@ -313,7 +313,10 @@ contract IndexFactory is
        
         //swap
         for(uint i = 0; i < currentList.length; i++) {
-        _swapSingle(currentList[i], WETH9, (burnPercent*IERC20(currentList[i]).balanceOf(address(this)))/1e18, address(this), tokenSwapVersion[currentList[i]]);
+        uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(this)))/1e18;
+        // indexToken.approveSwapToken(currentList[i], address(this), swapAmount);
+        // indexToken.transferFrom(address(indexToken), address(this), swapAmount);
+        _swapSingle(currentList[i], WETH9, swapAmount, address(this), tokenSwapVersion[currentList[i]]);
         // _swapSingle(SHIB, WETH9, (burnPercent*IERC20(assetList[i]).balanceOf(address(this)))/1e18/10);
         }
         

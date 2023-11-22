@@ -48,25 +48,37 @@ contract CounterTest is Test {
     address public constant WSM = 0xB62E45c3Df611dcE236A6Ddc7A493d79F9DFadEf;
     address public constant LEASH = 0x27C70Cd1946795B66be9d954418546998b546634;
 
+    address public constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address public constant BNB = 0x418D75f65a02b3D53B2418FB8E1fe493759c7605;
+    address public constant WXRP = 0x1E02E2eD139F5Baf6bfaD04c0E61EBb0110dA653;
+    address public constant CURVE = 0xD533a949740bb3306d119CC777fa900bA034cd52;
+    address public constant LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
+    address public constant UNI = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984;
+
     address[] public assetList = [
-        SHIB,
-        PEPE,
-        FLOKI,
-        MEME,
+        WBTC,
+        BNB,
+        CURVE,
+        LINK,
+        UNI
+        // SHIB,
+        // PEPE,
+        // FLOKI
+        // MEME,
         // BabyDoge
-        BONE
+        // BONE
         // HarryPotterObamaSonic10Inu,
-        // ELON,
+        // ELON
         // WSM,
         // LEASH
     ];
 
     uint[] public tokenShares = [
-        10e18,
-        10e18,
-        10e18,
-        10e18,
-        10e18
+        20e18,
+        20e18,
+        20e18,
+        20e18,
+        20e18
         // 10e18,
         // 10e18,
         // 10e18,
@@ -77,10 +89,15 @@ contract CounterTest is Test {
     uint[] public swapVersions = [
         3,
         3,
-        2,
         3,
-        // 2
+        3,
         3
+        // 3,
+        // 3,
+        // 2,
+        // 3,
+        // 2
+        // 3
         // 3,
         // 2,
         // 3,
@@ -262,7 +279,9 @@ contract CounterTest is Test {
         // factory.swapGas{value: 10e18}();
         factory.issuanceIndexTokensWithEth{value: 10e18}();
         console.log("index token balance", indexToken.balanceOf(address(this)));
-        // console.log("portfolio value", factory.getPortfolioBalance());
+        console.log("portfolio value", factory.getPortfolioBalance());
+        factory.redemption(indexToken.balanceOf(address(this)));
+        console.log("weth after redemption", weth.balanceOf(address(this)));
         // console.log("shib", IERC20(SHIB).balanceOf(address(factory)));
         // indexToken.swapGas1{value: 10e18}();
         // console.log("shib", IERC20(SHIB).balanceOf(address(indexToken)));
