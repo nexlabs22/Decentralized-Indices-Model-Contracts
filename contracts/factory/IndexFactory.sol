@@ -94,8 +94,17 @@ contract IndexFactory is
     uint256 public oraclePayment;
 
     uint public lastUpdateTime;
-    address[] public oracleList;
-    address[] public currentList;
+    // address[] public oracleList;
+    // address[] public currentList;
+
+    uint public totalOracleList;
+    uint public totalCurrentList;
+
+    mapping(uint => address) public oracleList;
+    mapping(uint => address) public currentList;
+
+    mapping(address => uint) public tokenOracleListIndex;
+    mapping(address => uint) public tokenCurrentListIndex;
 
     mapping(address => uint) public tokenMarketShare;
     mapping(address => uint) public tokenSwapVersion;
@@ -188,18 +197,28 @@ contract IndexFactory is
     recordChainlinkFulfillment(requestId)
   {
     
-    oracleList = _tokens;
-    if(currentList.length == 0){
-        currentList = _tokens;
-    }
+    // oracleList = _tokens;
+    // if(currentList.length == 0){
+    //     currentList = _tokens;
+    // }
     address[] memory tokens0 = _tokens;
     uint[] memory marketShares0 = _marketShares;
     uint[] memory swapVersions0 = _swapVersions;
 
     // //save mappings
     for(uint i =0; i < tokens0.length; i++){
+        oracleList[i] = tokens0[i];
+        tokenOracleListIndex[tokens0[i]] = i;
         tokenMarketShare[tokens0[i]] = marketShares0[i];
         tokenSwapVersion[tokens0[i]] = swapVersions0[i];
+        if(totalCurrentList == 0){
+            currentList[i] = tokens0[i];
+            tokenCurrentListIndex[tokens0[i]] = i;
+        }
+    }
+    totalOracleList = tokens0.length;
+    if(totalCurrentList == 0){
+        totalCurrentList  = tokens0.length;
     }
     lastUpdateTime = block.timestamp;
     }
@@ -267,7 +286,7 @@ contract IndexFactory is
         uint firstPortfolioValue = getPortfolioBalance();
         uint wethAmount = _swapSingle(tokenIn, WETH9, amountIn, address(this), tokenSwapVersion[tokenIn]);
         //swap
-        for(uint i = 0; i < currentList.length; i++) {
+        for(uint i = 0; i < totalCurrentList; i++) {
         _swapSingle(WETH9, currentList[i], wethAmount*tokenMarketShare[currentList[i]]/100e18, address(this), tokenSwapVersion[currentList[i]]);
         }
        //mint index tokens
@@ -286,7 +305,7 @@ contract IndexFactory is
         uint firstPortfolioValue = getPortfolioBalance();
         uint wethAmount = msg.value;
         //swap
-        for(uint i = 0; i < currentList.length; i++) {
+        for(uint i = 0; i < totalCurrentList; i++) {
         // _swapSingle(WETH9, currentList[i], wethAmount*tokenMarketShare[currentList[i]]/100e18, address(this), tokenSwapVersion[currentList[i]]);
         _swapSingle(WETH9, currentList[i], wethAmount*tokenMarketShare[currentList[i]]/100e18, address(this), tokenSwapVersion[currentList[i]]);
         // _swapSingle(WETH9, SHIB, wethAmount/10);
@@ -312,7 +331,7 @@ contract IndexFactory is
 
        
         //swap
-        for(uint i = 0; i < currentList.length; i++) {
+        for(uint i = 0; i < totalCurrentList; i++) {
         uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(this)))/1e18;
         // indexToken.approveSwapToken(currentList[i], address(this), swapAmount);
         // indexToken.transferFrom(address(indexToken), address(this), swapAmount);
@@ -382,7 +401,7 @@ contract IndexFactory is
 
     function getPortfolioBalance() public returns(uint){
         uint totalValue;
-        for(uint i = 0; i < currentList.length; i++) {
+        for(uint i = 0; i < totalCurrentList; i++) {
             uint value = getAmountOut(currentList[i], WETH9, IERC20(currentList[i]).balanceOf(address(this)), tokenSwapVersion[currentList[i]]);
             totalValue += value;
         }
@@ -485,5 +504,29 @@ contract IndexFactory is
             tokenOut
         );
     }
+
+    function getNewTokens() public returns (address[] memory){
+        address[] memory newTokens;
+        for(uint i; i < totalOracleList; i++) {
+        tokenOracleListIndex[tokens0[i]] = i;
+            if(tokenCurrentListIndex[oracleList[i]] > totalCurrentList ||(tokenCurrentListIndex[oracleList[i]] == 0 && tokenCurrentListIndex[oracleList[i]] != currentList[0])){
+                newTokens.push(tokens0[i]);
+            }
+        }
+        return newTokens;
+    }
+
+
+    function getOldTokens() public returns (address[] memory){
+        address[] memory oldTokens;
+        for(uint i; i < totalCurrentList; i++) {
+        tokenCurrentListIndex[tokens0[i]] = i;
+            if(tokenOracleListIndex[oracleList[i]] > totalOracleList ||(tokenOracleListIndex[oracleList[i]] == 0 && tokenOracleListIndex[oracleList[i]] != oracleList[0])){
+                newTokens.push(tokens0[i]);
+            }
+        }
+        return oldTokens;
+    }
+
     
 }

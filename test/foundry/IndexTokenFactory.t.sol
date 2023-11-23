@@ -13,6 +13,7 @@ import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 import "../../contracts/test/MockV3Aggregator.sol";
 import "../../contracts/test/MockApiOracle.sol";
 import "../../contracts/test/LinkToken.sol";
+import "../../contracts/interfaces/IUniswapV3Pool.sol";
 
 contract CounterTest is Test {
 
@@ -37,6 +38,9 @@ contract CounterTest is Test {
     address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
 
+    IUniswapV3Factory public constant factoryV3 =
+        IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
+    
     address public SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE;
     address public constant PEPE = 0x6982508145454Ce325dDbE47a25d4ec3d2311933;
     address public constant FLOKI = 0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E;
@@ -131,8 +135,10 @@ contract CounterTest is Test {
 
     function setUp() public {
         mainnetFork = vm.createFork(MAINNET_RPC_URL);
-        vm.selectFork(mainnetFork);
 
+        vm.selectFork(mainnetFork);
+        // vm.rollFork(18635000);
+        // vm.rollFork(block.number - 1000);
         link = new LinkToken();
         oracle = new MockApiOracle(address(link));
 
@@ -233,7 +239,10 @@ contract CounterTest is Test {
     
     function testMintWithSwap() public {
         uint startAmount = 1e14;
-        vm.selectFork(mainnetFork);
+        //start fork
+        // vm.selectFork(mainnetFork);
+        // vm.rollFork(block.number - 1000);
+
         updateOracleList();
         // stdstore.target(address(factory)).sig(factory.oracleList.selector).with_key(assetList);
         // stdstore
@@ -333,8 +342,119 @@ contract CounterTest is Test {
     }
     
 
-    function testTSwap() public {
-        // testSwap.deposit{value: 1e16}();
+    function testBlock() public {
+        // updateOracleList();
+        initializeAssetList();
+        //user has 10 index tokens
+        stdstore
+            .target(address(indexToken))
+            .sig("balanceOf(address)")
+            .with_key(address(this))
+            .checked_write(10e18);
+        stdstore
+            .target(address(indexToken))
+            .sig("totalSupply()")
+            // .with_key(address(this))
+            .checked_write(10e18);
+        // console.log("balanceOf user index token", indexToken.balanceOf(address(this)));
+        // console.log("total supply index token", indexToken.totalSupply());
+        // return;
+        for(uint i; i < assetList.length; i++){
+        stdstore
+            .target(address(assetList[i]))
+            .sig("balanceOf(address)")
+            .with_key(address(factory))
+            .checked_write(200e18);
+        }
+        for(uint i; i < assetList.length; i++){
+        // console.log(IERC20(assetList[i]).balanceOf(address(factory)));
+        }
+        console.log(factory.getPortfolioBalance());
+        console.log("redemption happening...");
+        factory.redemption(indexToken.balanceOf(address(this)));
+    }
+
+    function testGetPrice() public {
+        address pool = factoryV3.getPool(
+            WETH9,
+            WBTC,
+            3000
+        );
+       (
+            uint160 sqrtPriceX96,
+            int24 tick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            uint16 observationCardinalityNext,
+            uint8 feeProtocol,
+            bool unlocked
+        ) = IUniswapV3Pool(pool).slot0();
+        console.log(sqrtPriceX96);
+        console.log(factory.getAmountOut(WETH9, WBTC, 1e18, 3));
+
+        //swap
+        weth.deposit{value:1e18}();
+        IERC20(WETH9).approve(address(swapRouter), 1e18);
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+        .ExactInputSingleParams({
+            tokenIn: WETH9,
+            tokenOut: WBTC,
+            // pool fee 0.3%
+            fee: 3000,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: 1e18,
+            amountOutMinimum: 0,
+            // NOTE: In production, this value can be used to set the limit
+            // for the price the swap will push the pool to,
+            // which can help protect against price impact
+            sqrtPriceLimitX96: 0
+        });
+        uint finalAmountOut = swapRouter.exactInputSingle(params);
+        console.log(finalAmountOut);
+
+    }
+
+
+    function initializeAssetList() public {
+        for(uint i = 0; i < assetList.length; i++) {
+        stdstore
+            .target(address(factory))
+            .sig("oracleList(uint256)")
+            .with_key(i)
+            .checked_write(assetList[i]);
+        stdstore
+            .target(address(factory))
+            .sig("currentList(uint256)")
+            .with_key(i)
+            .checked_write(assetList[i]);
+        stdstore
+            .target(address(factory))
+            .sig("tokenMarketShare(address)")
+            .with_key(assetList[i])
+            .checked_write(tokenShares[i]);
+        stdstore
+            .target(address(factory))
+            .sig("tokenSwapVersion(address)")
+            .with_key(assetList[i])
+            .checked_write(swapVersions[i]);
+        
+        }
+        stdstore
+            .target(address(factory))
+            .sig("totalOracleList()")
+            // .with_key(i)
+            .checked_write(assetList.length);
+        stdstore
+            .target(address(factory))
+            .sig("totalCurrentList()")
+            // .with_key(i)
+            .checked_write(assetList.length);
+        
+        // console.log(factory.oracleList(4));   
+        // console.log(factory.currentList(4));   
+        // console.log(factory.tokenMarketShare(factory.oracleList(4)));   
+        // console.log(factory.tokenSwapVersion(factory.oracleList(4)));   
     }
 
     
