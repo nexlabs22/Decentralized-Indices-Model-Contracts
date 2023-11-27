@@ -25,8 +25,9 @@ import {
     abi as NFTDESCRIPTOR_ABI,
     bytecode as NFTDESCRIPTOR_BYTECODE,
   } from '@uniswap/v3-periphery/artifacts/contracts/libraries/NFTDescriptor.sol/NFTDescriptor.json'
-import { INonfungiblePositionManager, ISwapRouter, IUniswapV3Factory, WETH9 } from "../typechain-types";
-import WETH9Obj from '../artifacts/contracts/WETH9.sol/WETH9.json'
+import { INonfungiblePositionManager, ISwapRouter, IUniswapV3Factory, WETH9 } from "../../typechain-types";
+// import WETH9Obj from '../../artifacts/contracts/WETH9.sol/WETH9.json'
+import WETH9Obj from '../../artifacts/contracts/uniswap/WETH9.sol/WETH9.json'
 import { encodePriceSqrt } from './utils/encodePriceSqrt';
 import { encodePath } from "./utils/path";
 import { getMaxTick, getMinTick } from "./utils/ticks";

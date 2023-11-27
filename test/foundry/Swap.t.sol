@@ -36,6 +36,13 @@ contract CounterTest is Test {
     event MintFeeToReceiver(address feeReceiver, uint256 timestamp, uint256 totalSupply, uint256 amount);
     event ToggledRestricted(address indexed account, bool isRestricted);
 
+    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
+    address public constant SwapRouterV3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address public constant FactoryV3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    address public constant SwapRouterV2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
+
 
     function setUp() public {
         indexToken = new IndexToken();
@@ -45,9 +52,13 @@ contract CounterTest is Test {
             1e18,
             feeReceiver,
             1000000e18,
-            address(link),
-            address(oracle),
-            jobId
+            //swap addresses
+            WETH9,
+            QUOTER,
+            SwapRouterV3,
+            FactoryV3,
+            SwapRouterV2,
+            FactoryV2
         );
         indexToken.setMinter(minter);
 

@@ -32,11 +32,12 @@ contract CounterTest is Test {
     address minter = vm.addr(3);
     address newMinter = vm.addr(4);
     address methodologist = vm.addr(5);
-    address add1 = vm.addr(6);
+    address owner = vm.addr(6);
+    address add1 = vm.addr(7);
 
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
+    // address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    // address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
 
     IUniswapV3Factory public constant factoryV3 =
         IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
@@ -110,6 +111,15 @@ contract CounterTest is Test {
 
     ISwapRouter public constant swapRouter =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    
+    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
+    address public constant SwapRouterV3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address public constant FactoryV3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    address public constant SwapRouterV2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
+    
+    
 
     ERC20 public dai;
     IWETH public weth;
@@ -149,9 +159,13 @@ contract CounterTest is Test {
             1e18,
             feeReceiver,
             1000000e18,
-            address(link),
-            address(oracle),
-            jobId
+            //swap addresses
+            WETH9,
+            QUOTER,
+            SwapRouterV3,
+            FactoryV3,
+            SwapRouterV2,
+            FactoryV2
         );
 
         factory = new IndexFactory();
@@ -160,7 +174,14 @@ contract CounterTest is Test {
             address(0),
             address(link),
             address(oracle),
-            jobId
+            jobId,
+            //swap addresses
+            WETH9,
+            QUOTER,
+            SwapRouterV3,
+            FactoryV3,
+            SwapRouterV2,
+            FactoryV2
         );
 
         indexToken.setMinter(address(factory));
@@ -196,7 +217,7 @@ contract CounterTest is Test {
         // console.log(link.balanceOf(address(this)));
         // link.transfer(address(factory), 1e18);
         link.transfer(address(factory), 1e17);
-        bytes32 requestId = factory.requestFundingRate();
+        bytes32 requestId = factory.requestAssetsData();
         oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
     }
     function testOracleList() public {
@@ -237,108 +258,67 @@ contract CounterTest is Test {
     }
 
     
-    function testMintWithSwap() public {
+    function testIssuanceWithEth() public {
         uint startAmount = 1e14;
-        //start fork
-        // vm.selectFork(mainnetFork);
-        // vm.rollFork(block.number - 1000);
+        
 
         updateOracleList();
-        // stdstore.target(address(factory)).sig(factory.oracleList.selector).with_key(assetList);
-        // stdstore
-        //     .target(address(SHIB))
-        //     .sig("balanceOf(address)")
-        //     .with_key(address(factory))
-        //     // .depth(1)
-        //     .checked_write(100e18);
-        // stdstore
-        //     .target(address(PEPE))
-        //     .sig("balanceOf(address)")
-        //     .with_key(address(factory))
-        //     // .depth(1)
-        //     .checked_write(100e18);
-        // stdstore
-        //     .target(address(FLOKI))
-        //     .sig("balanceOf(address)")
-        //     .with_key(address(factory))
-        //     // .depth(1)
-        //     .checked_write(100e18);
-        // stdstore
-        //     .target(address(MEME))
-        //     .sig("balanceOf(address)")
-        //     .with_key(address(factory))
-        //     // .depth(1)
-        //     .checked_write(100e18);
-        // stdstore
-        //     .target(address(BONE))
-        //     .sig("balanceOf(address)")
-        //     .with_key(address(factory))
-        //     // .depth(1)
-        //     .checked_write(100e18);
-        // stdstore
-        //     .target(address(factory))
-        //     .sig("oracleList(uint256)")
-        //     .with_key(0)
-        //     .depth(0)
-        //     .checked_write(WETH9);
-        // console.log("fee", factory.fee());
+        
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+        payable(add1).transfer(11e18);
+        vm.startPrank(add1);
         console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
-        // console.log("expect", indexToken.estimateAmountOut(WETH9, SHIB, 10e18, 1));
-        // indexToken.swapGas{value: 10e18}();
-        // factory.swapGas{value: 10e18}();
-        factory.issuanceIndexTokensWithEth{value: 10e18}();
-        console.log("index token balance", indexToken.balanceOf(address(this)));
+        
+        factory.issuanceIndexTokensWithEth{value: (10e18*1001)/1000}(10e18);
+        console.log("index token balance", indexToken.balanceOf(address(add1)));
         console.log("portfolio value", factory.getPortfolioBalance());
-        factory.redemption(indexToken.balanceOf(address(this)));
-        console.log("weth after redemption", weth.balanceOf(address(this)));
-        // console.log("shib", IERC20(SHIB).balanceOf(address(factory)));
-        // indexToken.swapGas1{value: 10e18}();
-        // console.log("shib", IERC20(SHIB).balanceOf(address(indexToken)));
-        // weth.deposit{value: startAmount}();
-        // assertEq(weth.balanceOf(address(this)), startAmount);
-        // weth.approve(address(swapRouter), startAmount);
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+        console.log("weth after redemption", add1.balance);
+    }
+
+
+    function testIssuanceWithTokens() public {
+        uint startAmount = 1e14;
         
-        // ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-        // .ExactInputSingleParams({
-        //     tokenIn: WETH9,
-        //     tokenOut: DAI,
-        //     // pool fee 0.3%
-        //     fee: 3000,
-        //     recipient: address(this),
-        //     deadline: block.timestamp,
-        //     amountIn: startAmount,
-        //     amountOutMinimum: 0,
-        //     // NOTE: In production, this value can be used to set the limit
-        //     // for the price the swap will push the pool to,
-        //     // which can help protect against price impact
-        //     sqrtPriceLimitX96: 0
-        // });
-
-        // uint daiAmount = swapRouter.exactInputSingle(params);
-        // console.log(daiAmount);
-        // console.log(dai.balanceOf(address(this)));
-        // console.log(weth.balanceOf(address(testSwap)));
-
-
-        // dai.approve(address(indexToken), dai.balanceOf(address(this)));
-        // indexToken.issuanceIndexTokens(DAI, dai.balanceOf(address(this)));
-        ////
-        // indexToken.issuanceIndexTokensWithEth{value: 1e18}();
+        weth.deposit{value:10e18}();
+        IERC20(WETH9).approve(address(swapRouter), 10e18);
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+        .ExactInputSingleParams({
+            tokenIn: WETH9,
+            tokenOut: DAI,
+            // pool fee 0.3%
+            fee: 3000,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: 10e18,
+            amountOutMinimum: 0,
+            // NOTE: In production, this value can be used to set the limit
+            // for the price the swap will push the pool to,
+            // which can help protect against price impact
+            sqrtPriceLimitX96: 0
+        });
+        uint finalAmountOut = swapRouter.exactInputSingle(params);
+        console.log("dai balalnce", IERC20(DAI).balanceOf(address(this)));
+        updateOracleList();
         
-        // console.log(weth.balanceOf(address(this)));
-        // console.log(indexToken.balanceOf(address(this)));
-        // console.log(indexToken.getPortfolioBalance());
-        // indexToken.redemption(WETH9, indexToken.balanceOf(address(this)));
-        // console.log(weth.balanceOf(address(this)));
-        // console.log(indexToken.balanceOf(address(this)));
-        // console.log(indexToken.getPortfolioBalance());
-
-        // dai.approve(address(testSwap), dai.balanceOf(address(this)));
-        // testSwap.deposit(dai.balanceOf(address(this)));
-
-        // console.log(dai.balanceOf(address(this)));
-        // console.log(weth.balanceOf(address(testSwap)));
-
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+        // payable(add1).transfer(11e18);
+        IERC20(DAI).transfer(add1, 1001e18);
+        vm.startPrank(add1);
+        console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
+        
+        IERC20(DAI).approve(address(factory), 1001e18);
+        factory.issuanceIndexTokens(address(DAI), 1000e18, 3);
+        console.log("index token balance", indexToken.balanceOf(address(add1)));
+        console.log("portfolio value", factory.getPortfolioBalance());
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+        console.log("weth after redemption", add1.balance);
     }
     
 
@@ -371,7 +351,7 @@ contract CounterTest is Test {
         }
         console.log(factory.getPortfolioBalance());
         console.log("redemption happening...");
-        factory.redemption(indexToken.balanceOf(address(this)));
+        factory.redemption(indexToken.balanceOf(address(this)), address(weth), 3);
     }
 
     function testGetPrice() public {
@@ -451,10 +431,6 @@ contract CounterTest is Test {
             // .with_key(i)
             .checked_write(assetList.length);
         
-        // console.log(factory.oracleList(4));   
-        // console.log(factory.currentList(4));   
-        // console.log(factory.tokenMarketShare(factory.oracleList(4)));   
-        // console.log(factory.tokenSwapVersion(factory.oracleList(4)));   
     }
 
     
