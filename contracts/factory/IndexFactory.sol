@@ -10,13 +10,12 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "../libraries/OracleLibrary.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
-import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
-// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import "../chainlink/ChainlinkClient.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IWETH.sol";
 import "../interfaces/IUniswapV2Router02.sol";
 import "../interfaces/IUniswapV2Factory.sol";
-import "../token/RequestNFT.sol";
 
 /// @title Index Token
 /// @author NEX Labs Protocol
@@ -31,7 +30,6 @@ contract IndexFactory is
     using Chainlink for Chainlink.Request;
 
     IndexToken public indexToken;
-    RequestNFT public nft;
 
     uint256 public fee;
     uint8 public feeRate; // 10/10000 = 0.1%
@@ -65,32 +63,10 @@ contract IndexFactory is
         UNISWAP_V3
     }
 
-    address public SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE;
-    address public constant PEPE = 0x6982508145454Ce325dDbE47a25d4ec3d2311933;
-    address public constant FLOKI = 0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E;
-    address public constant MEME = 0xb131f4A55907B10d1F0A50d8ab8FA09EC342cd74;
-    address public constant BabyDoge = 0xAC57De9C1A09FeC648E93EB98875B212DB0d460B;
-    address public constant BONE = 0x9813037ee2218799597d83D4a5B6F3b6778218d9;
-    address public constant HarryPotterObamaSonic10Inu = 0x72e4f9F808C49A2a61dE9C5896298920Dc4EEEa9;
-    address public constant ELON = 0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3;
-    address public constant WSM = 0xB62E45c3Df611dcE236A6Ddc7A493d79F9DFadEf;
-    address public constant LEASH = 0x27C70Cd1946795B66be9d954418546998b546634;
-
-    address[] public assetList = [
-        SHIB,
-        PEPE,
-        FLOKI,
-        MEME,
-        BabyDoge,
-        BONE,
-        HarryPotterObamaSonic10Inu,
-        ELON,
-        WSM,
-        LEASH
-    ];
     
-    string baseUrl = "https://app.nexlabs.io/api/allFundingRates";
-    string urlParams = "?multiplyFunc=18&timesNegFund=true&arrays=true";
+    
+    string baseUrl;
+    string urlParams;
 
     bytes32 public externalJobId;
     uint256 public oraclePayment;
@@ -111,26 +87,12 @@ contract IndexFactory is
     mapping(address => uint) public tokenMarketShare;
     mapping(address => uint) public tokenSwapVersion;
 
-    // address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    // address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-
-    // ISwapRouter public constant swapRouterV3 =
-    //     ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
-    ISwapRouter public swapRouterV3;
-    // IUniswapV3Factory public constant factoryV3 =
-    //     IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
-    IUniswapV3Factory public factoryV3;
     
-    // IUniswapV2Router02 public constant swapRouterV2 =
-    //     IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+    ISwapRouter public swapRouterV3;
+    IUniswapV3Factory public factoryV3;
     IUniswapV2Router02 public swapRouterV2;
-    // IUniswapV2Factory public constant factoryV2 =
-    //     IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
     IUniswapV2Factory public factoryV2;
-
-    // IWETH public weth = IWETH(WETH9);
     IWETH public weth;
-    // IQuoter public quoter = IQuoter(QUOTER);
     IQuoter public quoter;
 
     event FeeReceiverSet(address indexed feeReceiver);
@@ -158,7 +120,6 @@ contract IndexFactory is
     
     function initialize(
         address payable _token,
-        address _nft,
         address _chainlinkToken, 
         address _oracleAddress, 
         bytes32 _externalJobId,
@@ -190,6 +151,10 @@ contract IndexFactory is
 
         feeRate = 10;
         latestFeeUpdate = block.timestamp;
+
+        baseUrl = "https://app.nexlabs.io/api/allFundingRates";
+        urlParams = "?multiplyFunc=18&timesNegFund=true&arrays=true";
+        // s_requestCount = 1;
     }
 
 
@@ -213,6 +178,11 @@ contract IndexFactory is
     function concatenation(string memory a, string memory b) public pure returns (string memory) {
         return string(bytes.concat(bytes(a), bytes(b)));
     }
+
+    function setUrl(string memory _beforeAddress, string memory _afterAddress) public onlyOwner{
+    baseUrl = _beforeAddress;
+    urlParams = _afterAddress;
+    }
     
     function requestAssetsData(
     )
@@ -235,10 +205,6 @@ contract IndexFactory is
     recordChainlinkFulfillment(requestId)
   {
     
-    // oracleList = _tokens;
-    // if(currentList.length == 0){
-    //     currentList = _tokens;
-    // }
     address[] memory tokens0 = _tokens;
     uint[] memory marketShares0 = _marketShares;
     uint[] memory swapVersions0 = _swapVersions;
@@ -447,49 +413,12 @@ contract IndexFactory is
 
     }
 
-    function getPool() public returns(address, address) {
-        // return factoryV3.getPool(address(weth), SHIB, 3000);
-        address v3pool = factoryV3.getPool(address(weth), SHIB, 3000);
-       
-        address v2pool = factoryV2.getPair(address(weth), SHIB);
-        
-        return (v3pool, v2pool);
-    }
-
-    function getAmounts() public returns(uint, uint) {
-        // return factoryV3.getPool(address(weth), SHIB, 3000);
-        
-        // uint v3AmountOut = quoter.quoteExactInputSingle(address(weth), SHIB, 3000, 1e18, 0);
-        uint v3AmountOut;
-
-        try quoter.quoteExactInputSingle(address(weth), LEASH, 3000, 1e18, 0) returns (uint _amount){
-            v3AmountOut = _amount;
-        } catch {
-            v3AmountOut = 0;
-        }
-        // uint v3AmountOut = 0;
-
-        address[] memory path = new address[](2);
-        path[0] = address(weth);
-        path[1] = LEASH;
-        
-        
-        uint v2amountOut;
-        try swapRouterV2.getAmountsOut(1e18, path) returns (uint[] memory _amounts){
-            v2amountOut = _amounts[1];
-        } catch {
-            v2amountOut = 0;
-        }
-        return (v3AmountOut, v2amountOut);
-
-    }
-
+    
 
     function getAmountOut(address tokenIn, address tokenOut, uint amountIn, uint _swapVersion) public view returns(uint finalAmountOut) {
         uint finalAmountOut;
         if(amountIn > 0){
         if(_swapVersion == 3){
-        //    finalAmountOut = quoter.quoteExactInputSingle(tokenIn, tokenOut, 3000, amountIn, 0);
            finalAmountOut = estimateAmountOut(tokenIn, tokenOut, uint128(amountIn), 1);
         }else {
             address[] memory path = new address[](2);
@@ -521,9 +450,7 @@ contract IndexFactory is
         uint128 amountIn,
         uint32 secondsAgo
     ) public view returns (uint amountOut) {
-        // require(tokenIn == token0 || tokenIn == token1, "invalid token");
-
-        // address tokenOut = tokenIn == token0 ? token1 : token0;
+        
         address _pool = factoryV3.getPool(
             tokenIn,
             tokenOut,

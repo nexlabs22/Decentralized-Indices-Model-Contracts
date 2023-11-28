@@ -171,7 +171,7 @@ contract CounterTest is Test {
         factory = new IndexFactory();
         factory.initialize(
             payable(address(indexToken)),
-            address(0),
+            // address(0),
             address(link),
             address(oracle),
             jobId,

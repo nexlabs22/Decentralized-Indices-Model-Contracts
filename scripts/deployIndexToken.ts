@@ -1,4 +1,5 @@
 import { ethers, upgrades } from "hardhat";
+import { goerliFactoryV2Address, goerliFactoryV3Address, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress } from "../contractAddresses";
 // const { ethers, upgrades, network, hre } = require('hardhat');
 
 async function deployIndexToken() {
@@ -9,11 +10,17 @@ async function deployIndexToken() {
   console.log('Deploying IndexToken...');
 
   const indexToken = await upgrades.deployProxy(IndexToken, [
-      "CRYPTO5 Index token",
-      "CR5",
+      "Anti Inflation Index token",
+      "ANFI",
       '1000000000000000000', // 1e18
       deployer.address,
-      '1000000000000000000000000' // 1000000e18
+      '1000000000000000000000000', // 1000000e18
+      goerliWethAddress,
+      goerliQouterAddress,
+      goerliRouterV3Address,
+      goerliFactoryV3Address,
+      goerliRouterV2Address,
+      goerliFactoryV2Address
   ], { initializer: 'initialize' });
 
   await indexToken.waitForDeployment()

@@ -98,9 +98,60 @@
         }
       }
     },
+    "contracts/chainlink/ChainlinkClient.sol": {
+      "lastModificationDate": 1701180177273,
+      "contentHash": "d01d29508c2e10394a7a46650c85b2d4",
+      "sourceName": "contracts/chainlink/ChainlinkClient.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "node_modules/@chainlink\\contracts/src/v0.8/Chainlink.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/ChainlinkRequestInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/ENSInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/LinkTokenInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/OperatorInterface.sol",
+        "node_modules/@chainlink/contracts/src/v0.8/interfaces/OracleInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/PointerInterface.sol",
+        "node_modules/@chainlink/contracts/src/v0.8/vendor/BufferChainlink.sol",
+        "node_modules/@chainlink/contracts/src/v0.8/vendor/CBORChainlink.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/vendor/ENSResolver.sol"
+      ],
+      "versionRequirement": "^0.8.0",
+      "artifacts": {
+        "ChainlinkClient": {
+          "0.8.17+commit.8df45f5f.Windows.msvc": "ChainlinkClient.sol\\ChainlinkClient.0.8.17.json"
+        }
+      }
+    },
     "contracts/factory/IndexFactory.sol": {
-      "lastModificationDate": 1701121753332,
-      "contentHash": "97dfb4878c9ff290147a2725ae8ef7b2",
+      "lastModificationDate": 1701180209355,
+      "contentHash": "1862ebbb5b8dda089ca96a7f15919452",
       "sourceName": "contracts/factory/IndexFactory.sol",
       "solcConfig": {
         "settings": {
@@ -131,6 +182,7 @@
         }
       },
       "imports": [
+        "contracts\\chainlink\\ChainlinkClient.sol",
         "contracts\\interfaces\\IUniswapV2Factory.sol",
         "contracts\\interfaces\\IUniswapV2Router01.sol",
         "contracts\\interfaces\\IUniswapV2Router02.sol",
@@ -148,36 +200,18 @@
         "contracts\\libraries\\TickMath.sol",
         "contracts\\proposable\\ProposableOwnableUpgradeable.sol",
         "contracts\\token\\IndexToken.sol",
-        "contracts\\token\\RequestNFT.sol",
         "contracts\\token\\TokenInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/Chainlink.sol",
-        "node_modules/@chainlink\\contracts/src/v0.8/ChainlinkClient.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/Chainlink.sol",
         "node_modules/@chainlink\\contracts/src/v0.8/interfaces/ChainlinkRequestInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/ENSInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/ENSInterface.sol",
         "node_modules/@chainlink\\contracts/src/v0.8/interfaces/LinkTokenInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/OperatorInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/OperatorInterface.sol",
         "node_modules/@chainlink/contracts/src/v0.8/interfaces/OracleInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/PointerInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/PointerInterface.sol",
         "node_modules/@chainlink/contracts/src/v0.8/vendor/BufferChainlink.sol",
         "node_modules/@chainlink/contracts/src/v0.8/vendor/CBORChainlink.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/vendor/ENSResolver.sol",
-        "node_modules/@openzeppelin\\contracts/access/Ownable.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC4906.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC721.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/vendor/ENSResolver.sol",
         "node_modules/@openzeppelin\\contracts/token/ERC20/IERC20.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
-        "node_modules/@openzeppelin\\contracts/token/ERC721/extensions/ERC721URIStorage.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
-        "node_modules/@openzeppelin/contracts/utils/Address.sol",
-        "node_modules/@openzeppelin/contracts/utils/Context.sol",
-        "node_modules/@openzeppelin/contracts/utils/Strings.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol",
         "node_modules/@openzeppelin\\contracts-upgradeable/access/OwnableUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
         "node_modules/@openzeppelin\\contracts-upgradeable/security/PausableUpgradeable.sol",
@@ -186,13 +220,11 @@
         "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
-        "node_modules/@thirdweb-dev\\contracts/eip/interface/IERC721Supply.sol",
         "node_modules/@uniswap\\v3-core/contracts/interfaces/IUniswapV3Factory.sol",
         "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
         "node_modules/@uniswap\\v3-periphery/contracts/interfaces/IQuoter.sol",
         "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
-        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol",
-        "node_modules/base64-sol\\base64.sol"
+        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol"
       ],
       "versionRequirement": "=0.8.7",
       "artifacts": {
@@ -1270,7 +1302,7 @@
       }
     },
     "contracts/token/IndexToken.sol": {
-      "lastModificationDate": 1701110374031,
+      "lastModificationDate": 1701157402018,
       "contentHash": "2423f968434b15a4ce4eb92bec31c322",
       "sourceName": "contracts/token/IndexToken.sol",
       "solcConfig": {
@@ -2503,58 +2535,7 @@
       "versionRequirement": "^0.8.0",
       "artifacts": {
         "Chainlink": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "Chainlink.sol\\Chainlink.json"
-        }
-      }
-    },
-    "node_modules/@chainlink/contracts/src/v0.8/ChainlinkClient.sol": {
-      "lastModificationDate": 1700501208261,
-      "contentHash": "6af479cbde42f1a7225c9cebc6e32239",
-      "sourceName": "node_modules/@chainlink/contracts/src/v0.8/ChainlinkClient.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "node_modules/@chainlink/contracts/src/v0.8/Chainlink.sol",
-        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/ChainlinkRequestInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/ENSInterface.sol",
-        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/LinkTokenInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/OperatorInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/OracleInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/PointerInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/vendor/BufferChainlink.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/vendor/CBORChainlink.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/vendor/ENSResolver.sol"
-      ],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "ChainlinkClient": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "ChainlinkClient.sol\\ChainlinkClient.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "Chainlink.sol\\Chainlink.0.8.17.json"
         }
       }
     },
@@ -2757,7 +2738,7 @@
       "versionRequirement": "^0.8.0",
       "artifacts": {
         "ENSInterface": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "ENSInterface.sol\\ENSInterface.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "ENSInterface.sol\\ENSInterface.0.8.17.json"
         }
       }
     },
@@ -2840,7 +2821,7 @@
       "versionRequirement": "^0.8.0",
       "artifacts": {
         "OperatorInterface": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "OperatorInterface.sol\\OperatorInterface.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "OperatorInterface.sol\\OperatorInterface.0.8.17.json"
         }
       }
     },
@@ -2880,7 +2861,7 @@
       "versionRequirement": "^0.8.0",
       "artifacts": {
         "OracleInterface": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "OracleInterface.sol\\OracleInterface.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "OracleInterface.sol\\OracleInterface.0.8.17.json"
         }
       }
     },
@@ -2920,7 +2901,7 @@
       "versionRequirement": "^0.8.0",
       "artifacts": {
         "PointerInterface": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "PointerInterface.sol\\PointerInterface.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "PointerInterface.sol\\PointerInterface.0.8.17.json"
         }
       }
     },
@@ -3004,7 +2985,7 @@
       "versionRequirement": "^0.8.0",
       "artifacts": {
         "BufferChainlink": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "BufferChainlink.sol\\BufferChainlink.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "BufferChainlink.sol\\BufferChainlink.0.8.17.json"
         }
       }
     },
@@ -3046,7 +3027,7 @@
       "versionRequirement": ">=0.4.19",
       "artifacts": {
         "CBORChainlink": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "CBORChainlink.sol\\CBORChainlink.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "CBORChainlink.sol\\CBORChainlink.0.8.17.json"
         }
       }
     },
@@ -3086,7 +3067,7 @@
       "versionRequirement": "^0.8.0",
       "artifacts": {
         "ENSResolver": {
-          "0.8.7+commit.e28d00a7.Windows.msvc": "ENSResolver.sol\\ENSResolver.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "ENSResolver.sol\\ENSResolver.0.8.17.json"
         }
       }
     },
@@ -4704,8 +4685,8 @@
       }
     },
     "test/foundry/IndexTokenFactory.t.sol": {
-      "lastModificationDate": 1701121667671,
-      "contentHash": "3ef733b8c42e04bb43dda0747b62cdd8",
+      "lastModificationDate": 1701180237851,
+      "contentHash": "fefaa189d612fc316825c36e59872b8a",
       "sourceName": "test/foundry/IndexTokenFactory.t.sol",
       "solcConfig": {
         "settings": {
@@ -4736,6 +4717,7 @@
         }
       },
       "imports": [
+        "contracts\\chainlink\\ChainlinkClient.sol",
         "contracts\\factory\\IndexFactory.sol",
         "contracts\\interfaces\\IUniswapV2Factory.sol",
         "contracts\\interfaces\\IUniswapV2Router01.sol",
@@ -4760,7 +4742,6 @@
         "contracts\\test\\libs\\LinkTokenReceiver.sol",
         "contracts\\test\\libs\\SafeMathChainlink.sol",
         "contracts\\token\\IndexToken.sol",
-        "contracts\\token\\RequestNFT.sol",
         "contracts\\token\\TokenInterface.sol",
         "lib/forge-std/lib/ds-test/src\\test.sol",
         "lib/forge-std/src/Base.sol",
@@ -4780,40 +4761,24 @@
         "lib/forge-std/src/console2.sol",
         "lib/forge-std/src/interfaces/IMulticall3.sol",
         "lib/forge-std/src/safeconsole.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/Chainlink.sol",
-        "node_modules/@chainlink\\contracts/src/v0.8/ChainlinkClient.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/Chainlink.sol",
         "node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorInterface.sol",
         "node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol",
         "node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol",
         "node_modules/@chainlink\\contracts/src/v0.8/interfaces/ChainlinkRequestInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/ENSInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/ENSInterface.sol",
         "node_modules/@chainlink\\contracts/src/v0.8/interfaces/LinkTokenInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/OperatorInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/OperatorInterface.sol",
         "node_modules/@chainlink/contracts/src/v0.8/interfaces/OracleInterface.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/interfaces/PointerInterface.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/PointerInterface.sol",
         "node_modules/@chainlink\\contracts/src/v0.8/tests/MockV3Aggregator.sol",
         "node_modules/@chainlink/contracts/src/v0.8/vendor/BufferChainlink.sol",
         "node_modules/@chainlink/contracts/src/v0.8/vendor/CBORChainlink.sol",
-        "node_modules/@chainlink/contracts/src/v0.8/vendor/ENSResolver.sol",
-        "node_modules/@openzeppelin\\contracts/access/Ownable.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC4906.sol",
-        "node_modules/@openzeppelin/contracts/interfaces/IERC721.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/vendor/ENSResolver.sol",
         "node_modules/@openzeppelin\\contracts/token/ERC20/ERC20.sol",
         "node_modules/@openzeppelin\\contracts/token/ERC20/IERC20.sol",
         "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
-        "node_modules/@openzeppelin\\contracts/token/ERC721/extensions/ERC721URIStorage.sol",
-        "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
-        "node_modules/@openzeppelin/contracts/utils/Address.sol",
         "node_modules/@openzeppelin/contracts/utils/Context.sol",
-        "node_modules/@openzeppelin/contracts/utils/Strings.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
-        "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol",
         "node_modules/@openzeppelin\\contracts-upgradeable/access/OwnableUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
         "node_modules/@openzeppelin\\contracts-upgradeable/security/PausableUpgradeable.sol",
@@ -4822,13 +4787,11 @@
         "node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
         "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
-        "node_modules/@thirdweb-dev\\contracts/eip/interface/IERC721Supply.sol",
         "node_modules/@uniswap\\v3-core/contracts/interfaces/IUniswapV3Factory.sol",
         "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
         "node_modules/@uniswap\\v3-periphery/contracts/interfaces/IQuoter.sol",
         "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
-        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol",
-        "node_modules/base64-sol\\base64.sol"
+        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol"
       ],
       "versionRequirement": "^0.8.7",
       "artifacts": {
