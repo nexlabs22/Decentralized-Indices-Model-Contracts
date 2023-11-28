@@ -84,7 +84,8 @@ contract IndexFactory is
     mapping(address => uint) public tokenOracleListIndex;
     mapping(address => uint) public tokenCurrentListIndex;
 
-    mapping(address => uint) public tokenMarketShare;
+    mapping(address => uint) public tokenCurrentMarketShare;
+    mapping(address => uint) public tokenOracleMarketShare;
     mapping(address => uint) public tokenSwapVersion;
 
     
@@ -213,10 +214,11 @@ contract IndexFactory is
     for(uint i =0; i < tokens0.length; i++){
         oracleList[i] = tokens0[i];
         tokenOracleListIndex[tokens0[i]] = i;
-        tokenMarketShare[tokens0[i]] = marketShares0[i];
+        tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
         tokenSwapVersion[tokens0[i]] = swapVersions0[i];
         if(totalCurrentList == 0){
             currentList[i] = tokens0[i];
+            tokenCurrentMarketShare[tokens0[i]] = marketShares0[i];
             tokenCurrentListIndex[tokens0[i]] = i;
         }
     }
@@ -241,10 +243,11 @@ contract IndexFactory is
     for(uint i =0; i < tokens0.length; i++){
         oracleList[i] = tokens0[i];
         tokenOracleListIndex[tokens0[i]] = i;
-        tokenMarketShare[tokens0[i]] = marketShares0[i];
+        tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
         tokenSwapVersion[tokens0[i]] = swapVersions0[i];
         if(totalCurrentList == 0){
             currentList[i] = tokens0[i];
+            tokenCurrentMarketShare[tokens0[i]] = marketShares0[i];
             tokenCurrentListIndex[tokens0[i]] = i;
         }
     }
@@ -336,7 +339,7 @@ contract IndexFactory is
 
         //swap
         for(uint i = 0; i < totalCurrentList; i++) {
-        _swapSingle(address(weth), currentList[i], wethAmount*tokenMarketShare[currentList[i]]/100e18, address(indexToken), tokenSwapVersion[currentList[i]]);
+        _swapSingle(address(weth), currentList[i], wethAmount*tokenCurrentMarketShare[currentList[i]]/100e18, address(indexToken), tokenSwapVersion[currentList[i]]);
         }
        //mint index tokens
        uint amountToMint;
@@ -364,7 +367,7 @@ contract IndexFactory is
         uint wethAmount = _inputAmount;
         //swap
         for(uint i = 0; i < totalCurrentList; i++) {
-        _swapSingle(address(weth), currentList[i], wethAmount*tokenMarketShare[currentList[i]]/100e18, address(indexToken), tokenSwapVersion[currentList[i]]);
+        _swapSingle(address(weth), currentList[i], wethAmount*tokenCurrentMarketShare[currentList[i]]/100e18, address(indexToken), tokenSwapVersion[currentList[i]]);
         }
        //mint index tokens
        uint amountToMint;
@@ -507,12 +510,17 @@ contract IndexFactory is
 
     function reIndexAndReweight() public onlyOwner {
         for(uint i; i < totalCurrentList; i++) {
-            _swapSingle(currentList[i], address(weth), IERC20(currentList[i]).balanceOf(address(this)), address(indexToken), tokenSwapVersion[currentList[i]]);
+            _swapSingle(currentList[i], address(weth), IERC20(currentList[i]).balanceOf(address(indexToken)), address(indexToken), tokenSwapVersion[currentList[i]]);
         }
-        uint wethBalance = weth.balanceOf(address(this));
+        uint wethBalance = weth.balanceOf(address(indexToken));
         for(uint i; i < totalOracleList; i++) {
-            _swapSingle(address(weth), oracleList[i], wethBalance*tokenMarketShare[oracleList[i]]/100e18, address(indexToken), tokenSwapVersion[oracleList[i]]);
+            _swapSingle(address(weth), oracleList[i], wethBalance*tokenOracleMarketShare[oracleList[i]]/100e18, address(indexToken), tokenSwapVersion[oracleList[i]]);
+            //update current list
+            currentList[i] = oracleList[i];
+            tokenCurrentMarketShare[oracleList[i]] = tokenOracleMarketShare[oracleList[i]];
+            tokenCurrentListIndex[oracleList[i]] = tokenOracleListIndex[oracleList[i]];
         }
+        totalCurrentList = totalOracleList;
     }
 
     

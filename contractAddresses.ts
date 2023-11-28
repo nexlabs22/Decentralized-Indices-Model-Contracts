@@ -12,8 +12,12 @@ export const goerliLinkAddress = '0x326C977E6efc84E512bB9C30f76E30c160eD06FB'
 export const goerliOracleAdress = '0x58c31F5CDe37608DCb4d60322B6933b4376A622b'
 export const goerliExternalJobId = "98aaf34077ec4d0fa4b2d3c5dabf5e65"
 export const goerliExternalJobIdBytes32 = "0x3938616166333430373765633464306661346232643363356461626635653635"
+//tokens
+export const goerliXautTokenAddress = "0x99AB2160dDAe7003b46e09118aC5C379A4823E98";
+export const goerliWBTCTokenAddress = "0xfeC3D2CEA6f85Cdf236c7205Fb8EdD4eBF29789D";
+export const goerliUsdtTokenAddress = "0x636b346942ee09Ee6383C22290e89742b55797c5";
 //protocol contract addresses
 export const goerliAnfiIndexTokenAddress = "0x4302f80718F76d4c2b1274c356f8d1fC2c543edf";
-export const goerliAnfiFactoryAddress = "0xA05E4f3eC344eF0E0e8B70dBb30670FD8086E309";
+export const goerliAnfiFactoryAddress = "0x98C6E4a07aD42acC3Fb92F34FB3Bac23E296Ccc2";
 
 
