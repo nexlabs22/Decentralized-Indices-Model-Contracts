@@ -382,21 +382,22 @@ contract IndexFactory is
     }
 
 
-    function redemption(uint amountIn, address _tokenOut, uint _tokenOutSwapVersion) public {
-        uint firstPortfolioValue = getPortfolioBalance();
+    function redemption(uint amountIn, address _tokenOut, uint _tokenOutSwapVersion) public returns(uint) {
+        // uint firstPortfolioValue = getPortfolioBalance();
         uint burnPercent = amountIn*1e18/indexToken.totalSupply();
         // uint burnPercent = 1e18;
 
         indexToken.burn(msg.sender, amountIn);
 
-       
+        uint outputAmount;
         //swap
         for(uint i = 0; i < totalCurrentList; i++) {
         uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(indexToken)))/1e18;
-        _swapSingle(currentList[i], address(weth), swapAmount, address(this), tokenSwapVersion[currentList[i]]);
+        uint swapAmountOut = _swapSingle(currentList[i], address(weth), swapAmount, address(this), tokenSwapVersion[currentList[i]]);
+        outputAmount += swapAmountOut;
         }
         
-        uint outputAmount = weth.balanceOf(address(this));
+        // uint outputAmount = weth.balanceOf(address(this));
         uint fee = outputAmount*feeRate/10000;
         if(_tokenOut == address(weth)){
             // weth.transfer(msg.sender, outputAmount - fee);
@@ -405,15 +406,71 @@ contract IndexFactory is
             require(_ownerSuccess, "transfer eth fee to the owner failed");
             (bool _userSuccess,) = payable(msg.sender).call{value: outputAmount - fee}("");
             require(_userSuccess, "transfer eth fee to the user failed");
+            emit Redemption(msg.sender, _tokenOut, amountIn, outputAmount - fee, block.timestamp);
+            return outputAmount - fee;
         }else{
             weth.withdraw(fee);
             (bool _success,) = owner().call{value: fee}("");
             require(_success, "transfer eth fee to the owner failed");
-            swap(address(weth), _tokenOut, outputAmount - fee, msg.sender, _tokenOutSwapVersion);
+            uint reallOut = swap(address(weth), _tokenOut, outputAmount - fee, msg.sender, _tokenOutSwapVersion);
+            emit Redemption(msg.sender, _tokenOut, amountIn, outputAmount - fee, block.timestamp);
+            return reallOut;
         }
 
-        emit Redemption(msg.sender, _tokenOut, amountIn, outputAmount - fee, block.timestamp);
 
+    }
+
+
+    function getExactAmountOut(address tokenIn, address tokenOut, uint amountIn, uint _swapVersion) public returns(uint finalAmountOut) {
+        if(_swapVersion == 3){
+        uint v3AmountOut;
+        try quoter.quoteExactInputSingle(tokenIn, tokenOut, 3000, amountIn, 0) returns (uint _amount){
+            v3AmountOut = _amount;
+        } catch {
+            v3AmountOut = 0;
+        }
+        return v3AmountOut;
+        }else{
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+        
+        
+        uint v2amountOut;
+        try swapRouterV2.getAmountsOut(amountIn, path) returns (uint[] memory _amounts){
+            v2amountOut = _amounts[1];
+        } catch {
+            v2amountOut = 0;
+        }
+        return v2amountOut;
+        }
+    }
+
+
+    function getExactAmountOut2(address tokenIn, address tokenOut, uint amountIn) public returns(uint finalAmountOut) {
+        uint v3AmountOut;
+        try quoter.quoteExactInputSingle(tokenIn, tokenOut, 3000, amountIn, 0) returns (uint _amount){
+            v3AmountOut = _amount;
+        } catch {
+            v3AmountOut = 0;
+        }
+
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+        
+        
+        uint v2amountOut;
+        try swapRouterV2.getAmountsOut(amountIn, path) returns (uint[] memory _amounts){
+            v2amountOut = _amounts[1];
+        } catch {
+            v2amountOut = 0;
+        }
+        
+        // finalAmountOut = v3AmountOut > v2amountOut ? v3AmountOut : v2amountOut;
+        finalAmountOut = v3AmountOut;
+        // dexStatus = v3AmountOut > v2amountOut ? DexStatus.UNISWAP_V3 : DexStatus.UNISWAP_V2;
+        
     }
 
     
@@ -494,6 +551,33 @@ contract IndexFactory is
         }
     }
 
+
+    function getIssuanceAmountOut2(uint _amountIn, address _tokenIn, uint _swapVersion) public returns(uint){
+        if(_tokenIn == address(weth)){
+            uint portfolioValue = getPortfolioBalance();
+            uint totalSupply = indexToken.totalSupply();
+            uint amountOut;
+            if(totalSupply > 0){
+                amountOut = (totalSupply*_amountIn)/portfolioValue;
+            }else{
+                amountOut = _amountIn;
+            }
+            return amountOut;
+        }else{
+            // uint wethAmount = getAmountOut(_tokenIn, address(weth), _amountIn, _swapVersion);
+            uint wethAmount = getExactAmountOut(_tokenIn, address(weth), _amountIn, _swapVersion);
+            uint portfolioValue = getPortfolioBalance();
+            uint totalSupply = indexToken.totalSupply();
+            uint amountOut;
+            if(totalSupply > 0){
+                amountOut = (totalSupply*wethAmount)/portfolioValue;
+            }else{
+                amountOut = wethAmount;
+            }
+            return amountOut;
+        }
+    }
+
     function getRedemptionAmountOut(uint _amountIn, address _tokenOut, uint _swapVersion) public view returns(uint){
         uint firstPortfolioValue = getPortfolioBalance();
         uint burnPercent = _amountIn*1e18/indexToken.totalSupply();
@@ -502,6 +586,26 @@ contract IndexFactory is
             return outputWethAmount;
         }else{
         uint outputTokenAmount = getAmountOut(address(weth), _tokenOut, outputWethAmount, _swapVersion);   
+        return outputTokenAmount;
+        }
+    }
+
+    function getRedemptionAmountOut2(uint _amountIn, address _tokenOut, uint _swapVersion) public returns(uint){
+        uint burnPercent = _amountIn*1e18/indexToken.totalSupply();
+        uint outputAmount;
+        //swap
+        for(uint i = 0; i < totalCurrentList; i++) {
+        uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(indexToken)))/1e18;
+        uint swapAmountOut = getExactAmountOut(currentList[i], address(weth), swapAmount, tokenSwapVersion[currentList[i]]);
+        outputAmount += swapAmountOut;
+        }
+        uint fee = outputAmount*feeRate/10000;
+        outputAmount -= fee;
+        if(_tokenOut == address(weth)){
+            return outputAmount;
+        }else{
+        // uint outputTokenAmount = getAmountOut(address(weth), _tokenOut, outputWethAmount, _swapVersion);   
+        uint outputTokenAmount = getExactAmountOut(address(weth), _tokenOut, outputAmount, _swapVersion);   
         return outputTokenAmount;
         }
     }

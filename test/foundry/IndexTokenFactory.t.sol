@@ -234,11 +234,11 @@ contract CounterTest is Test {
         // assertEq(factory.oracleList(8), assetList[8]);
         // assertEq(factory.oracleList(9), assetList[9]);
         // token shares
-        assertEq(factory.tokenMarketShare(assetList[0]), tokenShares[0]);
-        assertEq(factory.tokenMarketShare(assetList[1]), tokenShares[1]);
-        assertEq(factory.tokenMarketShare(assetList[2]), tokenShares[2]);
-        assertEq(factory.tokenMarketShare(assetList[3]), tokenShares[3]);
-        assertEq(factory.tokenMarketShare(assetList[4]), tokenShares[4]);
+        assertEq(factory.tokenOracleMarketShare(assetList[0]), tokenShares[0]);
+        assertEq(factory.tokenOracleMarketShare(assetList[1]), tokenShares[1]);
+        assertEq(factory.tokenOracleMarketShare(assetList[2]), tokenShares[2]);
+        assertEq(factory.tokenOracleMarketShare(assetList[3]), tokenShares[3]);
+        assertEq(factory.tokenOracleMarketShare(assetList[4]), tokenShares[4]);
         // assertEq(factory.tokenMarketShare(assetList[5]), tokenShares[5]);
         // assertEq(factory.tokenMarketShare(assetList[6]), tokenShares[6]);
         // assertEq(factory.tokenMarketShare(assetList[7]), tokenShares[7]);
@@ -319,6 +319,53 @@ contract CounterTest is Test {
         console.log("portfolio value", factory.getPortfolioBalance());
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
         console.log("weth after redemption", add1.balance);
+    }
+
+
+    function testIssuanceWithTokensOutput() public {
+        uint startAmount = 1e14;
+        
+        weth.deposit{value:10e18}();
+        IERC20(WETH9).approve(address(swapRouter), 10e18);
+        console.log(factory.getExactAmountOut(WETH9, DAI, 10e18, 3));
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+        .ExactInputSingleParams({
+            tokenIn: WETH9,
+            tokenOut: DAI,
+            // pool fee 0.3%
+            fee: 3000,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: 10e18,
+            amountOutMinimum: 0,
+            // NOTE: In production, this value can be used to set the limit
+            // for the price the swap will push the pool to,
+            // which can help protect against price impact
+            sqrtPriceLimitX96: 0
+        });
+        uint finalAmountOut = swapRouter.exactInputSingle(params);
+        console.log("dai balalnce", IERC20(DAI).balanceOf(address(this)));
+        updateOracleList();
+        
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+        // payable(add1).transfer(11e18);
+        IERC20(DAI).transfer(add1, 1001e18);
+        vm.startPrank(add1);
+        console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
+        
+        IERC20(DAI).approve(address(factory), 1001e18);
+        console.log("issuance output amount", factory.getIssuanceAmountOut2(1000e18, DAI, 3));
+        factory.issuanceIndexTokens(address(DAI), 1000e18, 3);
+        console.log("index token balance", indexToken.balanceOf(address(add1)));
+        console.log("portfolio value", factory.getPortfolioBalance());
+        console.log("redemption output amount", factory.getRedemptionAmountOut2(indexToken.balanceOf(address(add1)), DAI, 3));
+        console.log("weth after redemption", IERC20(DAI).balanceOf(add1));
+        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(DAI), 3);
+        console.log("real out", reallOut);
+        console.log("weth after redemption", IERC20(DAI).balanceOf(add1));
     }
     
 
