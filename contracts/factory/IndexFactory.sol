@@ -16,6 +16,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IWETH.sol";
 import "../interfaces/IUniswapV2Router02.sol";
 import "../interfaces/IUniswapV2Factory.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /// @title Index Token
 /// @author NEX Labs Protocol
@@ -70,7 +71,7 @@ contract IndexFactory is
 
     bytes32 public externalJobId;
     uint256 public oraclePayment;
-
+    AggregatorV3Interface public toUsdPriceFeed;
     uint public lastUpdateTime;
     // address[] public oracleList;
     // address[] public currentList;
@@ -124,6 +125,7 @@ contract IndexFactory is
         address _chainlinkToken, 
         address _oracleAddress, 
         bytes32 _externalJobId,
+        address _toUsdPriceFeed,
         //addresses
         address _weth,
         address _quoter,
@@ -142,6 +144,7 @@ contract IndexFactory is
         externalJobId = _externalJobId;
         // externalJobId = "81027ac9198848d79a8d14235bf30e16";
         oraclePayment = ((1 * LINK_DIVISIBILITY) / 10); // n * 10**18
+        toUsdPriceFeed = AggregatorV3Interface(_toUsdPriceFeed);
         //set addresses
         weth = IWETH(_weth);
         quoter = IQuoter(_quoter);
@@ -157,6 +160,31 @@ contract IndexFactory is
         urlParams = "?multiplyFunc=18&timesNegFund=true&arrays=true";
         // s_requestCount = 1;
     }
+
+  /**
+    * @dev Sets the price feed address of the native coin to USD from the Chainlink oracle.
+    * @param _toUsdPricefeed The address of native coin to USD price feed.
+    */    
+    function setPriceFeed(address _toUsdPricefeed) external onlyOwner {
+        require(_toUsdPricefeed != address(0), "ICO: Price feed address cannot be zero address");
+        toUsdPriceFeed = AggregatorV3Interface(_toUsdPricefeed);        
+    }
+
+    
+    function _toWei(int256 _amount, uint8 _amountDecimals, uint8 _chainDecimals) private pure returns (int256) {        
+        if (_chainDecimals > _amountDecimals)
+            return _amount * int256(10 **(_chainDecimals - _amountDecimals));
+        else
+            return _amount * int256(10 **(_amountDecimals - _chainDecimals));
+    }
+
+    function priceInWei() public view returns (uint256) {
+        (,int price,,,) = toUsdPriceFeed.latestRoundData();
+        uint8 priceFeedDecimals = toUsdPriceFeed.decimals();
+        price = _toWei(price, priceFeedDecimals, 18);
+        return uint256(price);
+    }
+    
 
 
     //Notice: newFee should be between 1 to 100 (0.01% - 1%)
@@ -346,7 +374,8 @@ contract IndexFactory is
        if(indexToken.totalSupply() > 0){
         amountToMint = (indexToken.totalSupply()*wethAmount)/firstPortfolioValue;
        }else{
-        amountToMint = wethAmount;
+        uint price = priceInWei();
+        amountToMint = (wethAmount*price)/1e16;
        }
         indexToken.mint(msg.sender, amountToMint);
 
@@ -374,7 +403,8 @@ contract IndexFactory is
        if(indexToken.totalSupply() > 0){
         amountToMint = (indexToken.totalSupply()*wethAmount)/firstPortfolioValue;
        }else{
-        amountToMint = wethAmount;
+        uint price = priceInWei();
+        amountToMint = (wethAmount*price)/1e16;
        }
         indexToken.mint(msg.sender, amountToMint);
         emit Issuanced(msg.sender, address(weth), _inputAmount, amountToMint, block.timestamp);
@@ -545,7 +575,8 @@ contract IndexFactory is
             if(totalSupply > 0){
                 amountOut = (totalSupply*wethAmount)/portfolioValue;
             }else{
-                amountOut = wethAmount;
+                uint price = priceInWei();
+                amountOut = (wethAmount*price)/1e16;
             }
             return amountOut;
         }
@@ -560,7 +591,8 @@ contract IndexFactory is
             if(totalSupply > 0){
                 amountOut = (totalSupply*_amountIn)/portfolioValue;
             }else{
-                amountOut = _amountIn;
+                uint price = priceInWei();
+                amountOut = (_amountIn*price)/1e16;
             }
             return amountOut;
         }else{
@@ -572,7 +604,8 @@ contract IndexFactory is
             if(totalSupply > 0){
                 amountOut = (totalSupply*wethAmount)/portfolioValue;
             }else{
-                amountOut = wethAmount;
+                uint price = priceInWei();
+                amountOut = (wethAmount*price)/1e16;
             }
             return amountOut;
         }

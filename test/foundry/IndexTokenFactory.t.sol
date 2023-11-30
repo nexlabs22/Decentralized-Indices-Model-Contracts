@@ -14,6 +14,7 @@ import "../../contracts/test/MockV3Aggregator.sol";
 import "../../contracts/test/MockApiOracle.sol";
 import "../../contracts/test/LinkToken.sol";
 import "../../contracts/interfaces/IUniswapV3Pool.sol";
+import "../../contracts/test/MockV3Aggregator.sol";
 
 contract CounterTest is Test {
 
@@ -24,6 +25,7 @@ contract CounterTest is Test {
     IndexToken public indexToken;
     IndexFactory public factory;
     TestSwap public testSwap;
+    MockV3Aggregator public ethPriceOracle;
 
     uint256 mainnetFork;
 
@@ -152,6 +154,12 @@ contract CounterTest is Test {
         link = new LinkToken();
         oracle = new MockApiOracle(address(link));
 
+        ethPriceOracle = new MockV3Aggregator(
+            18, //decimals
+            2000e18   //initial data
+        );
+
+
         indexToken = new IndexToken();
         indexToken.initialize(
             "Anti Inflation",
@@ -175,6 +183,7 @@ contract CounterTest is Test {
             address(link),
             address(oracle),
             jobId,
+            address(ethPriceOracle),
             //swap addresses
             WETH9,
             QUOTER,

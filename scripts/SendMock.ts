@@ -4,6 +4,7 @@ import {
     bytecode as Factory_BYTECODE,
   } from '../artifacts/contracts/factory/IndexFactory.sol/IndexFactory.json'
 import { IndexFactory } from "../typechain-types";
+import { goerliAnfiFactoryAddress } from "../contractAddresses";
 require("dotenv").config()
 
 async function main() {
@@ -12,7 +13,7 @@ async function main() {
     // const signer = await ethers.getSigner(wallet)
     const provider = new ethers.JsonRpcProvider(process.env.GOERLI_RPC_URL)
     const cotract:any = new ethers.Contract(
-        "0x98C6E4a07aD42acC3Fb92F34FB3Bac23E296Ccc2", //factory goerli
+        goerliAnfiFactoryAddress, //factory goerli
         Factory_ABI,
         provider
     )

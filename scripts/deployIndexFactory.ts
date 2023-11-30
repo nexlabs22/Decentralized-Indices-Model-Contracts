@@ -1,5 +1,5 @@
 import { ethers, upgrades } from "hardhat";
-import { goerliAnfiIndexTokenAddress, goerliExternalJobIdBytes32, goerliFactoryV2Address, goerliFactoryV3Address, goerliLinkAddress, goerliOracleAdress, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress } from "../contractAddresses";
+import { goerliAnfiIndexTokenAddress, goerliEthUsdPriceFeed, goerliExternalJobIdBytes32, goerliFactoryV2Address, goerliFactoryV3Address, goerliLinkAddress, goerliOracleAdress, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress } from "../contractAddresses";
 // const { ethers, upgrades, network, hre } = require('hardhat');
 
 async function deployIndexToken() {
@@ -14,6 +14,7 @@ async function deployIndexToken() {
       goerliLinkAddress, //link token address
       goerliOracleAdress, //oracle address
       goerliExternalJobIdBytes32, // jobId
+      goerliEthUsdPriceFeed, // price feed
       goerliWethAddress, //weth address
       goerliQouterAddress, // qoute
       goerliRouterV3Address, // routerv3
