@@ -4,7 +4,7 @@ import {
   } from "@nomicfoundation/hardhat-toolbox/network-helpers";
   import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
   import { expect } from "chai";
-  import { ethers } from "hardhat";
+//   import { ethers } from "hardhat";
   import {
     abi as FACTORY_ABI,
     bytecode as FACTORY_BYTECODE,
@@ -18,6 +18,10 @@ import {
     bytecode as PMANAGER_BYTECODE,
   } from '@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json'
   import {
+    abi as QOUTER_ABI,
+    bytecode as QOUTER_BYTECODE,
+  } from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
+  import {
     abi as PDESCRIPTOR_ABI,
     bytecode as PDESCRIPTOR_BYTECODE,
   } from '@uniswap/v3-periphery/artifacts/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json'
@@ -25,7 +29,7 @@ import {
     abi as NFTDESCRIPTOR_ABI,
     bytecode as NFTDESCRIPTOR_BYTECODE,
   } from '@uniswap/v3-periphery/artifacts/contracts/libraries/NFTDescriptor.sol/NFTDescriptor.json'
-import { INonfungiblePositionManager, ISwapRouter, IUniswapV3Factory, WETH9 } from "../../typechain-types";
+import { INonfungiblePositionManager, IQuoter, ISwapRouter, IUniswapV3Factory, WETH9 } from "../../typechain-types";
 // import WETH9Obj from '../../artifacts/contracts/WETH9.sol/WETH9.json'
 import WETH9Obj from '../../artifacts/contracts/uniswap/WETH9.sol/WETH9.json'
 import { encodePriceSqrt } from './utils/encodePriceSqrt';
@@ -33,6 +37,7 @@ import { encodePath } from "./utils/path";
 import { getMaxTick, getMinTick } from "./utils/ticks";
 import { FeeAmount, TICK_SPACINGS } from "./utils/constants";
 import { Block, formatEther, parseEther } from "ethers";
+import { ethers, upgrades } from "hardhat";
 
   describe("Lock", function () {
     // We define a fixture to reuse the same setup in every test.
@@ -60,25 +65,28 @@ import { Block, formatEther, parseEther } from "ethers";
         wethAddress
       ) as ISwapRouter;
       const routerAddress = await router.getAddress();
+      
       //token
       const Token = await ethers.getContractFactory("Token");
       const token0 = await Token.deploy(ethers.parseEther("100000"));
       const token0Address = await token0.getAddress()
       const token1 = await Token.deploy(ethers.parseEther("100000"));
       const token1Address = await token1.getAddress()
+      const btcToken = await Token.deploy(ethers.parseEther("100000"));
+      const btcTokenAddress = await btcToken.getAddress()
       //nft descriptor
       const nftDescriptorLibraryFactory = new ethers.ContractFactory(NFTDESCRIPTOR_ABI, NFTDESCRIPTOR_BYTECODE, owner)
       const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
       const nftDescriptorLibraryAddress = await nftDescriptorLibrary.getAddress()
       
-      //position descriptor
-    //   const positionDescriptorFactory = new ethers.ContractFactory(PDESCRIPTOR_ABI, PDESCRIPTOR_BYTECODE, owner)
-    //   const nftDescriptor = await positionDescriptorFactory.deploy(
-    //     token0Address,
-    //     // 'ETH' as a bytes32 string
-    //     '0x4554480000000000000000000000000000000000000000000000000000000000'
-    //   )
-    //   const nftDescriptorAddress = await nftDescriptor.getAddress()
+      //qouter contract
+      const contractQouter = new ethers.ContractFactory(QOUTER_ABI, QOUTER_BYTECODE, owner);
+      const qouter = await contractQouter.deploy(
+        factoryAddress,
+        wethAddress
+      ) as IQuoter;
+      const qouterAddress = await qouter.getAddress();
+
       
       //position manager
       //nft descriptor
@@ -90,7 +98,56 @@ import { Block, formatEther, parseEther } from "ethers";
       ) as INonfungiblePositionManager
 
       const nftAddress = await nft.getAddress()
-        
+      
+
+      //deploy index token
+      const IndexToken = await ethers.getContractFactory("IndexToken");
+      const indexToken = await await upgrades.deployProxy(IndexToken, [
+        "Anti Inflation Index token",
+        "ANFI",
+        '1000000000000000000', // 1e18
+        owner.address,
+        '1000000000000000000000000', // 1000000e18
+        wethAddress,
+        qouterAddress,
+        routerAddress,
+        factoryAddress,
+        routerAddress, //should be v2
+        factoryAddress //should be v2
+    ], { initializer: 'initialize' });
+    const indexTokenAddress = await indexToken.getAddress();
+
+    //deploy link token
+    const LinkToken = await ethers.getContractFactory("LinkToken");
+    const linkToken = await LinkToken.deploy();
+    const linkTokenAddress = await linkToken.getAddress()
+    //deploy oracle
+    const Oracle = await ethers.getContractFactory("MockApiOracle");
+    const oracle = await Oracle.deploy(linkTokenAddress);
+    const oracleAddress = await oracle.getAddress()
+    //deploy eth price oracle
+    const EthPriceOracle = await ethers.getContractFactory("MockV3Aggregator");
+    const ethPriceOracle = await EthPriceOracle.deploy("18", ethers.parseEther("2000"));
+    const ethPriceOracleAddress = await ethPriceOracle.getAddress()
+    //deploy index factory
+    const IndexFactory = await ethers.getContractFactory("IndexFactory");
+    const indexFactory = await await upgrades.deployProxy(IndexFactory, [
+        indexTokenAddress,
+        // address(0),
+        linkTokenAddress,
+        oracleAddress,
+        "0x3938616166333430373765633464306661346232643363356461626635653635", //jobId
+        ethPriceOracleAddress,
+        //swap addresses
+        wethAddress,
+        qouterAddress,
+        routerAddress,
+        factoryAddress,
+        routerAddress, //should be v2
+        factoryAddress //should be v2
+  ], { initializer: 'initialize' });
+
+      const indexFactoryAddress = await indexFactory.getAddress()
       return { 
         factory, 
         factoryAddress, 
@@ -108,7 +165,89 @@ import { Block, formatEther, parseEther } from "ethers";
         nftAddress
         };
     }
-  
+    async function addLiquidity(
+        token0Address: string,
+        token1Address: string,
+        token0Amount: number,
+        token1Amount:number,
+    ) {
+        const fixtureObject = await loadFixture(deployOneYearLockFixture);
+        const token0Contract = await ethers.getContractAt("Token", token0Address);
+        const token1Contract = await ethers.getContractAt("Token", token1Address);
+        await token0Contract.approve(fixtureObject.nftAddress, parseEther(token0Amount.toString()))
+        await token1Contract.approve(fixtureObject.nftAddress, parseEther(token1Amount.toString()))
+        console.log("Allowance0", ethers.formatEther(await token0Contract.allowance(fixtureObject.owner.address, fixtureObject.nftAddress)));
+        console.log("Allowance1", ethers.formatEther(await token1Contract.allowance(fixtureObject.owner.address, fixtureObject.nftAddress)));
+        const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
+        const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+        await fixtureObject.nft.createAndInitializePoolIfNecessary(
+            token0Address,
+            token1Address,
+            "3000",
+            encodePriceSqrt(1, 1)
+          )
+        const liquidityParams = {
+            token0: token0Address,
+            token1: token1Address,
+            fee: "3000",
+            tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+            tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+            recipient: await fixtureObject.owner.getAddress(),
+            amount0Desired: parseEther(token0Amount.toString()),
+            amount1Desired: parseEther(token1Amount.toString()),
+            amount0Min: 0,
+            amount1Min: 0,
+            deadline: unlockTime,
+            }
+            
+            await fixtureObject.nft.mint(liquidityParams)
+        // cosnt token1Contract = new ethers.Contract(token0Address, )
+    }
+
+    async function addLiquidityETH(
+        token0Address: string,
+        token1Address: string,
+        token0Amount: number,
+        token1Amount:number,
+    ) {
+        const fixtureObject = await loadFixture(deployOneYearLockFixture);
+        // const token0Contract = await ethers.getContractAt("WET", token0Address);
+        const token1Contract = await ethers.getContractAt("Token", token1Address);
+        await fixtureObject.weth.deposit({value:ethers.parseEther(token0Amount.toString())});
+        await fixtureObject.weth.approve(fixtureObject.nftAddress, parseEther(token0Amount.toString()))
+        await token1Contract.approve(fixtureObject.nftAddress, parseEther(token1Amount.toString()))
+        console.log("Allowance0", ethers.formatEther(await fixtureObject.weth.allowance(fixtureObject.owner.address, fixtureObject.nftAddress)));
+        console.log("Allowance1", ethers.formatEther(await token1Contract.allowance(fixtureObject.owner.address, fixtureObject.nftAddress)));
+        const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
+        const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+        console.log("weth address", await fixtureObject.weth.getAddress())
+        console.log("token0Add", token0Address.toLocaleLowerCase())
+        console.log("token1Add", token1Address)
+        // return;
+        await fixtureObject.nft.createAndInitializePoolIfNecessary(
+            token1Address,
+            token0Address,
+            FeeAmount.MEDIUM,
+            encodePriceSqrt(1, 1)
+          )
+        // return;
+        const liquidityParams = {
+            token0: token1Address,
+            token1: token0Address,
+            fee: "3000",
+            tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+            tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+            recipient: await fixtureObject.owner.getAddress(),
+            amount0Desired: parseEther(token1Amount.toString()),
+            amount1Desired: parseEther(token0Amount.toString()),
+            amount0Min: 0,
+            amount1Min: 0,
+            deadline: unlockTime,
+            }
+            
+            await fixtureObject.nft.mint(liquidityParams)
+        // cosnt token1Contract = new ethers.Contract(token0Address, )
+    }
     describe("Deployment", function () {
       it("Should set the right unlockTime", async function () {
         const { 
@@ -194,6 +333,8 @@ import { Block, formatEther, parseEther } from "ethers";
         console.log("token0 after swap:", ethers.formatEther(await token0.balanceOf(ownerAddress)))
         console.log("token1 after swap:", ethers.formatEther(await token1.balanceOf(ownerAddress)))
         
+        // await addLiquidity(token0Address, token1Address, 1000, 1000)
+        await addLiquidityETH(wethAddress, token1Address, 1, 1000)
       });
   
      

@@ -497,9 +497,7 @@ contract IndexFactory is
             v2amountOut = 0;
         }
         
-        // finalAmountOut = v3AmountOut > v2amountOut ? v3AmountOut : v2amountOut;
         finalAmountOut = v3AmountOut;
-        // dexStatus = v3AmountOut > v2amountOut ? DexStatus.UNISWAP_V3 : DexStatus.UNISWAP_V2;
         
     }
 

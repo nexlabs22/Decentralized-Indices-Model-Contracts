@@ -281,7 +281,7 @@ contract CounterTest is Test {
         vm.startPrank(add1);
         console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
         
-        factory.issuanceIndexTokensWithEth{value: (10e18*1001)/1000}(10e18);
+        factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
         console.log("index token balance", indexToken.balanceOf(address(add1)));
         console.log("portfolio value", factory.getPortfolioBalance());
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
