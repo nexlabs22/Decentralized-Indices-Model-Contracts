@@ -35,7 +35,7 @@ import WETH9Obj from '../../artifacts/contracts/uniswap/WETH9.sol/WETH9.json'
 import { encodePriceSqrt } from './utils/encodePriceSqrt';
 import { encodePath } from "./utils/path";
 import { getMaxTick, getMinTick } from "./utils/ticks";
-import { FeeAmount, TICK_SPACINGS } from "./utils/constants";
+import { FeeAmount, TICK_SPACINGS } from './utils/constants';
 import { Block, formatEther, parseEther } from "ethers";
 import { ethers, upgrades } from "hardhat";
 
@@ -74,6 +74,8 @@ import { ethers, upgrades } from "hardhat";
       const token1Address = await token1.getAddress()
       const btcToken = await Token.deploy(ethers.parseEther("100000"));
       const btcTokenAddress = await btcToken.getAddress()
+      const xautToken = await Token.deploy(ethers.parseEther("100000"));
+      const xautTokenAddress = await xautToken.getAddress()
       //nft descriptor
       const nftDescriptorLibraryFactory = new ethers.ContractFactory(NFTDESCRIPTOR_ABI, NFTDESCRIPTOR_BYTECODE, owner)
       const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
@@ -161,8 +163,22 @@ import { ethers, upgrades } from "hardhat";
         token0Address, 
         token1,
         token1Address,
+        btcToken,
+        btcTokenAddress,
+        xautToken,
+        xautTokenAddress,
         nft,
-        nftAddress
+        nftAddress,
+        linkToken,
+        linkTokenAddress,
+        oracle,
+        oracleAddress,
+        ethPriceOracle,
+        ethPriceOracleAddress,
+        indexToken,
+        indexTokenAddress,
+        indexFactory,
+        indexFactoryAddress
         };
     }
     async function addLiquidity(
@@ -216,13 +232,13 @@ import { ethers, upgrades } from "hardhat";
         await fixtureObject.weth.deposit({value:ethers.parseEther(token0Amount.toString())});
         await fixtureObject.weth.approve(fixtureObject.nftAddress, parseEther(token0Amount.toString()))
         await token1Contract.approve(fixtureObject.nftAddress, parseEther(token1Amount.toString()))
-        console.log("Allowance0", ethers.formatEther(await fixtureObject.weth.allowance(fixtureObject.owner.address, fixtureObject.nftAddress)));
-        console.log("Allowance1", ethers.formatEther(await token1Contract.allowance(fixtureObject.owner.address, fixtureObject.nftAddress)));
+        // console.log("Allowance0", ethers.formatEther(await fixtureObject.weth.allowance(fixtureObject.owner.address, fixtureObject.nftAddress)));
+        // console.log("Allowance1", ethers.formatEther(await token1Contract.allowance(fixtureObject.owner.address, fixtureObject.nftAddress)));
         const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
         const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
-        console.log("weth address", await fixtureObject.weth.getAddress())
-        console.log("token0Add", token0Address.toLocaleLowerCase())
-        console.log("token1Add", token1Address)
+        // console.log("weth address", await fixtureObject.weth.getAddress())
+        // console.log("token0Add", token0Address.toLocaleLowerCase())
+        // console.log("token1Add", token1Address)
         // return;
         await fixtureObject.nft.createAndInitializePoolIfNecessary(
             token1Address,
@@ -248,6 +264,34 @@ import { ethers, upgrades } from "hardhat";
             await fixtureObject.nft.mint(liquidityParams)
         // cosnt token1Contract = new ethers.Contract(token0Address, )
     }
+
+    async function updateOracleList() {
+      const fixtureObject = await loadFixture(deployOneYearLockFixture);
+      const assetList = [
+        fixtureObject.btcTokenAddress,
+        fixtureObject.xautTokenAddress
+      ]
+      const tokenShares = [
+        "30000000000000000000",
+        "70000000000000000000"
+      ]
+      const swapVersions = [
+        "3",
+        "3"
+      ]
+      // console.log(link.balanceOf(address(this)));
+      // console.log(link.balanceOf(address(this)));
+      // link.transfer(address(factory), 1e18);
+      await fixtureObject.linkToken.transfer(fixtureObject.indexFactoryAddress, parseEther("1"));
+      const transaction = await fixtureObject.indexFactory.requestAssetsData();
+      // console.log("transaction:", transaction)
+      const transactionReceipt = await transaction.wait()
+      // console.log("receipt:", transactionReceipt.logs[0].topics[1])
+      // return;
+      const requestId: string = transactionReceipt.logs[0].topics[1]
+      await fixtureObject.oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
+  }
+
     describe("Deployment", function () {
       it("Should set the right unlockTime", async function () {
         const { 
@@ -266,8 +310,8 @@ import { ethers, upgrades } from "hardhat";
             nft,
             nftAddress
          } = await loadFixture(deployOneYearLockFixture);
-        console.log("owner: ", await factory.owner());
-        console.log("owner: ", await router.getAddress());
+        // console.log("owner: ", await factory.owner());
+        // console.log("owner: ", await router.getAddress());
         
         const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
         const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
@@ -326,15 +370,37 @@ import { ethers, upgrades } from "hardhat";
             sqrtPriceLimitX96: 0
         }
         const ownerAddress = owner.getAddress()
-        console.log("token0 before swap:", ethers.formatEther(await token0.balanceOf(ownerAddress)))
-        console.log("token1 before swap:", ethers.formatEther(await token1.balanceOf(ownerAddress)))
+        // console.log("token0 before swap:", ethers.formatEther(await token0.balanceOf(ownerAddress)))
+        // console.log("token1 before swap:", ethers.formatEther(await token1.balanceOf(ownerAddress)))
         await token0.approve(routerAddress, parseEther("10"));
         await router.exactInputSingle(params1);
-        console.log("token0 after swap:", ethers.formatEther(await token0.balanceOf(ownerAddress)))
-        console.log("token1 after swap:", ethers.formatEther(await token1.balanceOf(ownerAddress)))
+        // console.log("token0 after swap:", ethers.formatEther(await token0.balanceOf(ownerAddress)))
+        // console.log("token1 after swap:", ethers.formatEther(await token1.balanceOf(ownerAddress)))
         
         // await addLiquidity(token0Address, token1Address, 1000, 1000)
         await addLiquidityETH(wethAddress, token1Address, 1, 1000)
+      });
+  
+     
+    });
+
+
+
+    describe("FactoryTest", function () {
+      it("Should set the right unlockTime", async function () {
+        const FixtureObject = await loadFixture(deployOneYearLockFixture);
+        await addLiquidityETH(FixtureObject.wethAddress, FixtureObject.btcTokenAddress, 1, 1000)
+        await addLiquidityETH(FixtureObject.wethAddress, FixtureObject.xautTokenAddress, 1, 1000)
+        await updateOracleList()
+        const inputAmount = 0.001
+        const finalInputAmount = 0.001*10/10000
+        console.log(Number(inputAmount.toString()))
+        console.log(Number(finalInputAmount.toString()))
+        console.log(Number(await FixtureObject.indexFactory.feeRate()))
+        await FixtureObject.indexFactory.issuanceIndexTokensWithEth("10000000000000000", {vaule: ("20100000000000000")})
+
+        
+        
       });
   
      
