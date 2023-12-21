@@ -443,7 +443,7 @@ contract IndexFactory is
             (bool _success,) = owner().call{value: fee}("");
             require(_success, "transfer eth fee to the owner failed");
             uint reallOut = swap(address(weth), _tokenOut, outputAmount - fee, msg.sender, _tokenOutSwapVersion);
-            emit Redemption(msg.sender, _tokenOut, amountIn, outputAmount - fee, block.timestamp);
+            emit Redemption(msg.sender, _tokenOut, amountIn, reallOut, block.timestamp);
             return reallOut;
         }
 
