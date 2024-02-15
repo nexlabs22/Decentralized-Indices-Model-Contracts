@@ -41,6 +41,11 @@ const config: HardhatUserConfig = {
       url: process.env.GOERLI_RPC_URL,
       accounts: [process.env.PRIVATE_KEY as string],
     },
+    ethereumSepolia: {
+      url: process.env.ETHEREUM_SEPOLIA_RPC_URL !== undefined ? process.env.ETHEREUM_SEPOLIA_RPC_URL : '',
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      chainId: 11155111
+    },
   },
   
   etherscan: {

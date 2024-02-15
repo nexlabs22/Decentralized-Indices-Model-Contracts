@@ -1,5 +1,5 @@
 import { ethers, upgrades } from "hardhat";
-import { goerliFactoryV2Address, goerliFactoryV3Address, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress } from "../contractAddresses";
+import { goerliFactoryV2Address, goerliFactoryV3Address, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress, seploliaWethAddress, sepoliaFactoryV3Address, sepoliaRouterV3Address } from "../contractAddresses";
 // const { ethers, upgrades, network, hre } = require('hardhat');
 
 async function deployIndexToken() {
@@ -15,10 +15,10 @@ async function deployIndexToken() {
       '1000000000000000000', // 1e18
       deployer.address,
       '1000000000000000000000000', // 1000000e18
-      goerliWethAddress,
+      seploliaWethAddress,
       goerliQouterAddress,
-      goerliRouterV3Address,
-      goerliFactoryV3Address,
+      sepoliaRouterV3Address,
+      sepoliaFactoryV3Address,
       goerliRouterV2Address,
       goerliFactoryV2Address
   ], { initializer: 'initialize' });

@@ -545,7 +545,8 @@ contract IndexFactory is
             3000
         );
 
-        (int24 tick, ) = OracleLibrary.consult(_pool, secondsAgo);
+        // (int24 tick, ) = OracleLibrary.consult(_pool, secondsAgo);
+        (int24 tick ) = OracleLibrary.getLatestTick(_pool);
         amountOut = OracleLibrary.getQuoteAtTick(
             tick,
             amountIn,
