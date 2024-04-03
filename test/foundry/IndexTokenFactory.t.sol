@@ -16,7 +16,9 @@ import "../../contracts/test/LinkToken.sol";
 import "../../contracts/interfaces/IUniswapV3Pool.sol";
 import "../../contracts/test/MockV3Aggregator.sol";
 
-contract CounterTest is Test {
+import "./ContractDeployer.sol";
+
+contract CounterTest is Test, ContractDeployer {
 
     using stdStorage for StdStorage;
 
@@ -29,38 +31,35 @@ contract CounterTest is Test {
 
     uint256 mainnetFork;
 
-    address feeReceiver = vm.addr(1);
-    address newFeeReceiver = vm.addr(2);
-    address minter = vm.addr(3);
-    address newMinter = vm.addr(4);
-    address methodologist = vm.addr(5);
-    address owner = vm.addr(6);
-    address add1 = vm.addr(7);
+    // address feeReceiver = vm.addr(1);
+    // address newFeeReceiver = vm.addr(2);
+    // address minter = vm.addr(3);
+    // address newMinter = vm.addr(4);
+    // address methodologist = vm.addr(5);
+    // address owner = vm.addr(6);
+    // address add1 = vm.addr(7);
 
-    address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    // address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    // address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-
-    IUniswapV3Factory public constant factoryV3 =
-        IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
+    // address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    // IUniswapV3Factory public constant factoryV3 =
+    //     IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
     
-    address public SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE;
-    address public constant PEPE = 0x6982508145454Ce325dDbE47a25d4ec3d2311933;
-    address public constant FLOKI = 0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E;
-    address public constant MEME = 0xb131f4A55907B10d1F0A50d8ab8FA09EC342cd74;
-    address public constant BabyDoge = 0xAC57De9C1A09FeC648E93EB98875B212DB0d460B;
-    address public constant BONE = 0x9813037ee2218799597d83D4a5B6F3b6778218d9;
-    address public constant HarryPotterObamaSonic10Inu = 0x72e4f9F808C49A2a61dE9C5896298920Dc4EEEa9;
-    address public constant ELON = 0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3;
-    address public constant WSM = 0xB62E45c3Df611dcE236A6Ddc7A493d79F9DFadEf;
-    address public constant LEASH = 0x27C70Cd1946795B66be9d954418546998b546634;
+    // address public SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE;
+    // address public constant PEPE = 0x6982508145454Ce325dDbE47a25d4ec3d2311933;
+    // address public constant FLOKI = 0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E;
+    // address public constant MEME = 0xb131f4A55907B10d1F0A50d8ab8FA09EC342cd74;
+    // address public constant BabyDoge = 0xAC57De9C1A09FeC648E93EB98875B212DB0d460B;
+    // address public constant BONE = 0x9813037ee2218799597d83D4a5B6F3b6778218d9;
+    // address public constant HarryPotterObamaSonic10Inu = 0x72e4f9F808C49A2a61dE9C5896298920Dc4EEEa9;
+    // address public constant ELON = 0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3;
+    // address public constant WSM = 0xB62E45c3Df611dcE236A6Ddc7A493d79F9DFadEf;
+    // address public constant LEASH = 0x27C70Cd1946795B66be9d954418546998b546634;
 
-    address public constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-    address public constant BNB = 0x418D75f65a02b3D53B2418FB8E1fe493759c7605;
-    address public constant WXRP = 0x1E02E2eD139F5Baf6bfaD04c0E61EBb0110dA653;
-    address public constant CURVE = 0xD533a949740bb3306d119CC777fa900bA034cd52;
-    address public constant LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
-    address public constant UNI = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984;
+    // address public constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    // address public constant BNB = 0x418D75f65a02b3D53B2418FB8E1fe493759c7605;
+    // address public constant WXRP = 0x1E02E2eD139F5Baf6bfaD04c0E61EBb0110dA653;
+    // address public constant CURVE = 0xD533a949740bb3306d119CC777fa900bA034cd52;
+    // address public constant LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
+    // address public constant UNI = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984;
 
     address[] public assetList = [
         WBTC,
@@ -68,16 +67,6 @@ contract CounterTest is Test {
         CURVE,
         LINK,
         UNI
-        // SHIB,
-        // PEPE,
-        // FLOKI
-        // MEME,
-        // BabyDoge
-        // BONE
-        // HarryPotterObamaSonic10Inu,
-        // ELON
-        // WSM,
-        // LEASH
     ];
 
     uint[] public tokenShares = [
@@ -86,11 +75,6 @@ contract CounterTest is Test {
         20e18,
         20e18,
         20e18
-        // 10e18,
-        // 10e18,
-        // 10e18,
-        // 10e18,
-        // 10e18
     ];
 
     uint[] public swapVersions = [
@@ -99,27 +83,17 @@ contract CounterTest is Test {
         3,
         3,
         3
-        // 3,
-        // 3,
-        // 2,
-        // 3,
-        // 2
-        // 3
-        // 3,
-        // 2,
-        // 3,
-        // 2
     ];
 
-    ISwapRouter public constant swapRouter =
-        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    // ISwapRouter public constant swapRouter =
+    //     ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     
-    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-    address public constant SwapRouterV3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
-    address public constant FactoryV3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-    address public constant SwapRouterV2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
+    // address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    // address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
+    // address public constant SwapRouterV3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    // address public constant FactoryV3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    // address public constant SwapRouterV2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    // address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     
     
 
@@ -130,7 +104,7 @@ contract CounterTest is Test {
     IQuoter public quoter;
 
     string MAINNET_RPC_URL = vm.envString("MAINNET_RPC_URL");
-    bytes32 jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
+    // bytes32 jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
 
     MockApiOracle public oracle;
     LinkToken link;
@@ -147,10 +121,12 @@ contract CounterTest is Test {
 
     function setUp() public {
         mainnetFork = vm.createFork(MAINNET_RPC_URL);
-
         vm.selectFork(mainnetFork);
-        // vm.rollFork(18635000);
-        // vm.rollFork(block.number - 1000);
+        (link, oracle, indexToken, ethPriceOracle, factory, testSwap) = deployContracts();
+        dai = ERC20(DAI);
+        weth = IWETH(WETH9);
+        quoter = IQuoter(QUOTER);
+        /**
         link = new LinkToken();
         oracle = new MockApiOracle(address(link));
 
@@ -202,7 +178,7 @@ contract CounterTest is Test {
 
         testSwap = new TestSwap();
 
-        
+        */
     }
 
     function testInitialized() public {
@@ -378,37 +354,37 @@ contract CounterTest is Test {
     }
     
 
-    function testBlock() public {
-        // updateOracleList();
-        initializeAssetList();
-        //user has 10 index tokens
-        stdstore
-            .target(address(indexToken))
-            .sig("balanceOf(address)")
-            .with_key(address(this))
-            .checked_write(10e18);
-        stdstore
-            .target(address(indexToken))
-            .sig("totalSupply()")
-            // .with_key(address(this))
-            .checked_write(10e18);
-        // console.log("balanceOf user index token", indexToken.balanceOf(address(this)));
-        // console.log("total supply index token", indexToken.totalSupply());
-        // return;
-        for(uint i; i < assetList.length; i++){
-        stdstore
-            .target(address(assetList[i]))
-            .sig("balanceOf(address)")
-            .with_key(address(factory))
-            .checked_write(200e18);
-        }
-        for(uint i; i < assetList.length; i++){
-        // console.log(IERC20(assetList[i]).balanceOf(address(factory)));
-        }
-        console.log(factory.getPortfolioBalance());
-        console.log("redemption happening...");
-        factory.redemption(indexToken.balanceOf(address(this)), address(weth), 3);
-    }
+    // function testBlock() public {
+    //     // updateOracleList();
+    //     initializeAssetList();
+    //     //user has 10 index tokens
+    //     stdstore
+    //         .target(address(indexToken))
+    //         .sig("balanceOf(address)")
+    //         .with_key(address(this))
+    //         .checked_write(10e18);
+    //     stdstore
+    //         .target(address(indexToken))
+    //         .sig("totalSupply()")
+    //         // .with_key(address(this))
+    //         .checked_write(10e18);
+    //     // console.log("balanceOf user index token", indexToken.balanceOf(address(this)));
+    //     // console.log("total supply index token", indexToken.totalSupply());
+    //     // return;
+    //     for(uint i; i < assetList.length; i++){
+    //     stdstore
+    //         .target(address(assetList[i]))
+    //         .sig("balanceOf(address)")
+    //         .with_key(address(factory))
+    //         .checked_write(200e18);
+    //     }
+    //     for(uint i; i < assetList.length; i++){
+    //     // console.log(IERC20(assetList[i]).balanceOf(address(factory)));
+    //     }
+    //     console.log(factory.getPortfolioBalance());
+    //     console.log("redemption happening...");
+    //     factory.redemption(indexToken.balanceOf(address(this)), address(weth), 3);
+    // }
 
     function testGetPrice() public {
         address pool = factoryV3.getPool(

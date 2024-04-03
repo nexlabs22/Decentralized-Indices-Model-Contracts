@@ -6,30 +6,32 @@ import "../../contracts/token/IndexToken.sol";
 import "../../contracts/test/MockV3Aggregator.sol";
 import "../../contracts/test/MockApiOracle.sol";
 import "../../contracts/test/LinkToken.sol";
+import "./ContractDeployer.sol";
 
-contract CounterTest is Test {
+
+contract CounterTest is Test, ContractDeployer {
 
 
     uint256 internal constant SCALAR = 1e20;
-    bytes32 jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
+    // bytes32 jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
 
     IndexToken public indexToken;
     // MockV3Aggregator public oracle;
     MockApiOracle public oracle;
     LinkToken link;
 
-    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-    address public constant SwapRouterV3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
-    address public constant FactoryV3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-    address public constant SwapRouterV2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
+    // address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    // address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
+    // address public constant SwapRouterV3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    // address public constant FactoryV3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    // address public constant SwapRouterV2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    // address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     
-    address feeReceiver = vm.addr(1);
-    address newFeeReceiver = vm.addr(2);
-    address minter = vm.addr(3);
-    address newMinter = vm.addr(4);
-    address methodologist = vm.addr(5);
+    // address feeReceiver = vm.addr(1);
+    // address newFeeReceiver = vm.addr(2);
+    // address minter = vm.addr(3);
+    // address newMinter = vm.addr(4);
+    // address methodologist = vm.addr(5);
 
 
     event FeeReceiverSet(address indexed feeReceiver);
@@ -45,11 +47,11 @@ contract CounterTest is Test {
     
 
     function setUp() public {
-        // Create a new oracle
-        // oracle = new MockV3Aggregator(
-        //     18, //decimals
-        //     1   //initial data
-        // );
+        // ContractDeployer deployer = new ContractDeployer();
+        // (link, oracle, indexToken) = deployer.deployContracts();
+        (link, oracle, indexToken,,,) = deployContracts();
+        indexToken.setMinter(minter);
+        /**
         LinkToken link = new LinkToken();
         oracle = new MockApiOracle(address(link));
 
@@ -69,6 +71,7 @@ contract CounterTest is Test {
             FactoryV2
         );
         indexToken.setMinter(minter);
+        */
     }
 
     function testInitialized() public {
