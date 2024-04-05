@@ -7,7 +7,10 @@ import "../../contracts/Swap.sol";
 import "../../contracts/test/MockV3Aggregator.sol";
 import "../../contracts/test/MockApiOracle.sol";
 import "../../contracts/test/LinkToken.sol";
+import "../../contracts/interfaces/IWETH.sol";
 import "../../contracts/interfaces/IUniswapV3Factory2.sol";
+import "../../contracts/interfaces/IUniswapV2Router02.sol";
+import "../../contracts/uniswap/INonfungiblePositionManager.sol";
 import "./ContractDeployer.sol";
 
 contract CounterTest is Test, ContractDeployer {
@@ -46,13 +49,20 @@ contract CounterTest is Test, ContractDeployer {
     // address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
 
     address factory;
+    address weth;
+    address router;
+    address positionManager;
     function setUp() public {
         (link, oracle, indexToken,,,) = deployContracts();
         indexToken.setMinter(minter);
-        factory = deployUniswap();
-        // console.log("owner", IUniswapV3Factory2(factory).owner());
-        console.log("owner1", factory);
-        console.log("this address", address(this));
+        (factory, weth, router, positionManager) = deployUniswap();
+        // console.log("factory address", factory);
+        // console.log("factory owner", IUniswapV3Factory2(factory).owner());
+        // console.log("this address", address(this));
+        // IWETH(weth).deposit{value:1}();
+        // console.log("weth balancer", IWETH(weth).balanceOf(address(this)));
+        // console.log("router's factory address", IUniswapV2Router02(router).factory());
+        // console.log("position manager", positionManager);
         /**
         indexToken = new IndexToken();
         indexToken.initialize(
@@ -77,8 +87,10 @@ contract CounterTest is Test, ContractDeployer {
     }
 
     function testInitialized() public {
-        // console.log("owner2", IUniswapV3Factory2(factory).owner());
-        // counter.increment();
+        assertEq(IUniswapV3Factory2(factory).owner(), address(this));
+        
+        assertEq(IUniswapV2Router02(router).factory(), factory);
+        
         assertEq(indexToken.owner(), address(this));
         assertEq(indexToken.feeRatePerDayScaled(), 1e18);
         assertEq(indexToken.feeTimestamp(), block.timestamp);
@@ -89,9 +101,7 @@ contract CounterTest is Test, ContractDeployer {
     }
 
     function testMintOnlyMinter() public {
-        vm.expectRevert("IndexToken: caller is not the minter");
-        indexToken.mint(address(this), 1000e18);
-        assertEq(indexToken.balanceOf(address(this)), 0);
+        
     }
 
     

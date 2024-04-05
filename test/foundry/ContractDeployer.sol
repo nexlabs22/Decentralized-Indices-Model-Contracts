@@ -15,6 +15,9 @@ import "../../contracts/test/MockV3Aggregator.sol";
 import "../../contracts/test/MockApiOracle.sol";
 import "../../contracts/test/LinkToken.sol";
 import "../../contracts/test/UniswapFactoryByteCode.sol";
+import "../../contracts/test/UniswapWETHByteCode.sol";
+import "../../contracts/test/UniswapRouterByteCode.sol";
+import "../../contracts/test/UniswapPositionManagerByteCode.sol";
 import "../../contracts/factory/IndexFactory.sol";
 import "../../contracts/test/TestSwap.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -24,7 +27,7 @@ import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 import "../../contracts/interfaces/IUniswapV3Pool.sol";
 
 
-contract ContractDeployer is Test, UniswapFactoryByteCode {
+contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, UniswapRouterByteCode, UniswapPositionManagerByteCode {
 
     bytes32 jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
     
@@ -144,17 +147,36 @@ contract ContractDeployer is Test, UniswapFactoryByteCode {
 
     }
 
-    function deployUniswap() public returns(address){
-        bytes memory bytecode = factoryByteCode;
-        address factoryAddress = deployByteCode(bytecode);
+    function deployUniswap() public returns(address, address, address, address){
+        // bytes memory bytecode = factoryByteCode;
+        address factoryAddress = deployByteCode(factoryByteCode);
+        address wethAddress = deployByteCode(WETHByteCode);
+        address routerAddress = deployByteCodeWithInputs(routerByteCode, abi.encode(factoryAddress, wethAddress));
+        address positionManagerAddress = deployByteCodeWithInputs(positionManagerByteCode, abi.encode(factoryAddress, wethAddress, 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707));
         // bytes memory bytecodeWithArgs = abi.encodePacked(bytecode, abi.encode(_initData));
-        return factoryAddress;
+        return (factoryAddress, wethAddress, routerAddress, positionManagerAddress);
     }
 
     function deployByteCode(bytes memory bytecode) public returns(address){
         // bytes memory bytecode = hex"608060405234801561001057600080fd5b5060405161022338038061022383398181016040528101906100329190610054565b806000819055505061009e565b60008151905061004e81610087565b92915050565b60006020828403121561006657600080fd5b60006100748482850161003f565b91505092915050565b6000819050919050565b6100908161007d565b811461009b57600080fd5b50565b610176806100ad6000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c80633bc5de30146100465780635b4b73a91461006457806373d4a13a14610080575b600080fd5b61004e61009e565b60405161005b9190610104565b60405180910390f35b61007e600480360381019061007991906100cc565b6100a7565b005b6100886100b1565b6040516100959190610104565b60405180910390f35b60008054905090565b8060008190555050565b60005481565b6000813590506100c681610129565b92915050565b6000602082840312156100de57600080fd5b60006100ec848285016100b7565b91505092915050565b6100fe8161011f565b82525050565b600060208201905061011960008301846100f5565b92915050565b6000819050919050565b6101328161011f565b811461013d57600080fd5b5056fea26469706673582212201b45f6ebd798180c4fea0a5c71d62272dc330a7727f9546c8b21961ea72bde4f64736f6c63430008010033";
         // bytes memory bytecodeWithArgs = abi.encodePacked(bytecode, abi.encode(_initData));
         bytes memory bytecodeWithArgs = bytecode;
+        address deployedContract;
+        assembly {
+            deployedContract := create(0, add(bytecodeWithArgs, 0x20), mload(bytecodeWithArgs))
+        }
+        // assembly{
+        //     mstore(0x0, bytecode)
+        //     deployedContract := create(0,0xa0, 32)
+        // }
+        return deployedContract;
+    }
+
+    function deployByteCodeWithInputs(bytes memory bytecode, bytes memory _initData) public returns(address){
+        // bytes memory bytecode = hex"608060405234801561001057600080fd5b5060405161022338038061022383398181016040528101906100329190610054565b806000819055505061009e565b60008151905061004e81610087565b92915050565b60006020828403121561006657600080fd5b60006100748482850161003f565b91505092915050565b6000819050919050565b6100908161007d565b811461009b57600080fd5b50565b610176806100ad6000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c80633bc5de30146100465780635b4b73a91461006457806373d4a13a14610080575b600080fd5b61004e61009e565b60405161005b9190610104565b60405180910390f35b61007e600480360381019061007991906100cc565b6100a7565b005b6100886100b1565b6040516100959190610104565b60405180910390f35b60008054905090565b8060008190555050565b60005481565b6000813590506100c681610129565b92915050565b6000602082840312156100de57600080fd5b60006100ec848285016100b7565b91505092915050565b6100fe8161011f565b82525050565b600060208201905061011960008301846100f5565b92915050565b6000819050919050565b6101328161011f565b811461013d57600080fd5b5056fea26469706673582212201b45f6ebd798180c4fea0a5c71d62272dc330a7727f9546c8b21961ea72bde4f64736f6c63430008010033";
+        // bytes memory bytecodeWithArgs = abi.encodePacked(bytecode, abi.encode(_initData));
+        bytes memory bytecodeWithArgs = abi.encodePacked(bytecode, _initData);
+        // bytes memory bytecodeWithArgs = bytecode;
         address deployedContract;
         assembly {
             deployedContract := create(0, add(bytecodeWithArgs, 0x20), mload(bytecodeWithArgs))
