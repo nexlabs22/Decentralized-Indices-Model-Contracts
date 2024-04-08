@@ -10,7 +10,9 @@ import "../../contracts/test/LinkToken.sol";
 import "../../contracts/interfaces/IWETH.sol";
 import "../../contracts/interfaces/IUniswapV3Factory2.sol";
 import "../../contracts/interfaces/IUniswapV2Router02.sol";
+import "../../contracts/uniswap/ISwapRouter.sol";
 import "../../contracts/uniswap/INonfungiblePositionManager.sol";
+import "../../contracts/uniswap/Token.sol";
 import "./ContractDeployer.sol";
 
 contract CounterTest is Test, ContractDeployer {
@@ -47,13 +49,15 @@ contract CounterTest is Test, ContractDeployer {
     // address public constant FactoryV3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     // address public constant SwapRouterV2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     // address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
-
+    Token token0;
+    Token token1;
     address factory;
     address weth;
     address router;
     address positionManager;
     function setUp() public {
         (link, oracle, indexToken,,,) = deployContracts();
+        (token0, token1) = deployTokens();
         indexToken.setMinter(minter);
         (factory, weth, router, positionManager) = deployUniswap();
         // console.log("factory address", factory);
@@ -100,8 +104,54 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(indexToken.minter(), minter);
     }
 
-    function testMintOnlyMinter() public {
+    
+
+    function testAddLiquidity() public {
         
+        addLiquidity(positionManager, factory, token0, token1, 1000e18, 1000e18);
+        address poolAddress = IUniswapV3Factory2(factory).getPool(address(token0), address(token1), 3000);
+        console.log("token0 balance:", token0.balanceOf(poolAddress));
+        console.log("token1 balance:", token1.balanceOf(poolAddress));
+        token0.approve(router, 100e18);
+        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams(
+            address(token0),
+            address(token1),
+            3000,
+            address(this),
+            block.timestamp,
+            100e18,
+            0,
+            0
+        );
+        ISwapRouter(router).exactInputSingle(swapParams);
+
+        console.log("token0 balance:", token0.balanceOf(poolAddress));
+        console.log("token1 balance:", token1.balanceOf(poolAddress));
+
+    }
+
+    function testAddLiquidityETH() public {
+        
+        addLiquidityETH(positionManager, factory, token0, weth, 1000e18, 1e18);
+        address poolAddress = IUniswapV3Factory2(factory).getPool(address(token0), address(weth), 3000);
+        console.log("token0 balance:", token0.balanceOf(poolAddress));
+        console.log("token1 balance:", Token(weth).balanceOf(poolAddress));
+        token0.approve(router, 100e18);
+        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams(
+            address(token0),
+            address(weth),
+            3000,
+            address(this),
+            block.timestamp,
+            100e18,
+            0,
+            0
+        );
+        ISwapRouter(router).exactInputSingle(swapParams);
+
+        console.log("token0 balance:", token0.balanceOf(poolAddress));
+        console.log("token1 balance:", Token(weth).balanceOf(poolAddress));
+
     }
 
     

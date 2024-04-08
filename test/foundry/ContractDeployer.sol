@@ -20,11 +20,16 @@ import "../../contracts/test/UniswapRouterByteCode.sol";
 import "../../contracts/test/UniswapPositionManagerByteCode.sol";
 import "../../contracts/factory/IndexFactory.sol";
 import "../../contracts/test/TestSwap.sol";
+import "../../contracts/uniswap/Token.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 import "../../contracts/interfaces/IUniswapV3Pool.sol";
+
+import "../../contracts/uniswap/INonfungiblePositionManager.sol";
+import "../../contracts/interfaces/IUniswapV3Factory2.sol";
+import "../../contracts/interfaces/IWETH.sol";
 
 
 contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, UniswapRouterByteCode, UniswapPositionManagerByteCode {
@@ -73,6 +78,32 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     address owner = vm.addr(6);
     address add1 = vm.addr(7);
 
+    function getMinTick(int24 tickSpacing) public pure returns (int24) {
+        return int24((int256(-887272) / int256(tickSpacing) + 1) * int256(tickSpacing));
+    }
+
+    function getMaxTick(int24 tickSpacing) public pure returns (int24) {
+        return int24((int256(887272) / int256(tickSpacing)) * int256(tickSpacing));
+    }
+
+
+    function encodePriceSqrt(uint256 reserve1, uint256 reserve0) public pure returns (uint160) {
+        uint256 sqrtPriceX96 = sqrt((reserve1 * 2**192) / reserve0);
+        return uint160(sqrtPriceX96);
+    }
+
+    function sqrt(uint256 y) public pure returns (uint256 z) {
+        if (y > 3) {
+            z = y;
+            uint256 x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
 
     function deployContracts() public returns(
         LinkToken,
@@ -132,7 +163,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         // quoter = IQuoter(QUOTER);
 
         TestSwap testSwap = new TestSwap();
-
+        
         // indexToken.transferOwnership(msg.sender);
         // link.transfer(msg.sender, link.balanceOf(address(this)););
         
@@ -145,6 +176,17 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             testSwap
         );
 
+    }
+
+    function deployTokens() public returns(Token, Token) {
+        Token token0 = new Token(
+            1000000e18
+        );
+        Token token1 = new Token(
+            1000000e18
+        );
+
+        return (token0, token1);
     }
 
     function deployUniswap() public returns(address, address, address, address){
@@ -186,5 +228,85 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         //     deployedContract := create(0,0xa0, 32)
         // }
         return deployedContract;
+    }
+
+    function addLiquidity(
+        address positionManager,
+        address factory,
+        Token token0,
+        Token token1,
+        uint amount0,
+        uint amount1
+    ) public {
+       Token[] memory tokens = new Token[](2);
+       tokens[0] = address(token0) < address(token1) ? token0: token1;
+       tokens[1] = address(token0) > address(token1) ? token0: token1;
+       uint[] memory amounts = new uint[](2);
+       amounts[0] = address(tokens[0]) == address(token0) ? amount0 : amount1;
+       amounts[1] = address(tokens[1]) == address(token1) ? amount1 : amount0;
+       INonfungiblePositionManager(positionManager).createAndInitializePoolIfNecessary(
+          address(tokens[0]),
+          address(tokens[1]),
+          3000,
+          encodePriceSqrt(1, 1)
+        );
+        address poolAddress = IUniswapV3Factory2(factory).getPool(address(tokens[0]), address(tokens[1]), 3000);
+        tokens[0].approve(positionManager, amounts[0]);
+        tokens[1].approve(positionManager, amounts[1]);
+        INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams(
+            address(tokens[0]),
+            address(tokens[1]),
+            3000,
+            getMinTick(3000),
+            getMaxTick(3000),
+            amounts[0],
+            amounts[1],
+            0,
+            0,
+            address(this),
+            block.timestamp
+        );
+        INonfungiblePositionManager(positionManager).mint(params); 
+    }
+
+
+    function addLiquidityETH(
+        address positionManager,
+        address factory,
+        Token token0,
+        address weth,
+        uint amount0,
+        uint amount1
+    ) public {
+       Token[] memory tokens = new Token[](2);
+       tokens[0] = address(token0) < address(weth) ? token0: Token(weth);
+       tokens[1] = address(token0) > address(weth) ? token0: Token(weth);
+       uint[] memory amounts = new uint[](2);
+       amounts[0] = address(token0) < address(weth) ? amount0 : amount1;
+       amounts[1] = address(token0) > address(weth) ? amount0 : amount1;
+       INonfungiblePositionManager(positionManager).createAndInitializePoolIfNecessary(
+          address(tokens[0]),
+          address(tokens[1]),
+          3000,
+          encodePriceSqrt(amount0, amount1)
+        );
+        address poolAddress = IUniswapV3Factory2(factory).getPool(address(tokens[0]), address(tokens[1]), 3000);
+        IWETH(weth).deposit{value: amount1}();
+        tokens[0].approve(positionManager, amounts[0]);
+        tokens[1].approve(positionManager, amounts[1]);
+        INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams(
+            address(tokens[0]),
+            address(tokens[1]),
+            3000,
+            getMinTick(3000),
+            getMaxTick(3000),
+            amounts[0],
+            amounts[1],
+            0,
+            0,
+            address(this),
+            block.timestamp
+        );
+        INonfungiblePositionManager(positionManager).mint(params); 
     }
 }
