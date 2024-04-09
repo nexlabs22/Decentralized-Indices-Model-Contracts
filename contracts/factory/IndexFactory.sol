@@ -631,15 +631,15 @@ contract IndexFactory is
         uint swapAmountOut = getExactAmountOut(currentList[i], address(weth), swapAmount, tokenSwapVersion[currentList[i]]);
         outputAmount += swapAmountOut;
         }
-        uint fee = outputAmount*feeRate/10000;
-        outputAmount -= fee;
-        if(_tokenOut == address(weth)){
-            return outputAmount;
-        }else{
-        // uint outputTokenAmount = getAmountOut(address(weth), _tokenOut, outputWethAmount, _swapVersion);   
-        uint outputTokenAmount = getExactAmountOut(address(weth), _tokenOut, outputAmount, _swapVersion);   
-        return outputTokenAmount;
-        }
+        // uint fee = outputAmount*feeRate/10000;
+        // outputAmount -= fee;
+        // if(_tokenOut == address(weth)){
+        //     return outputAmount;
+        // }else{
+        // // uint outputTokenAmount = getAmountOut(address(weth), _tokenOut, outputWethAmount, _swapVersion);   
+        // uint outputTokenAmount = getExactAmountOut(address(weth), _tokenOut, outputAmount, _swapVersion);   
+        // return outputTokenAmount;
+        // }
     }
 
 

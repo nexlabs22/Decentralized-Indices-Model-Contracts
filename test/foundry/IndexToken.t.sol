@@ -15,10 +15,9 @@ contract CounterTest is Test, ContractDeployer {
     uint256 internal constant SCALAR = 1e20;
     // bytes32 jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
 
-    IndexToken public indexToken;
-    // MockV3Aggregator public oracle;
-    MockApiOracle public oracle;
-    LinkToken link;
+    // IndexToken public indexToken;
+    // MockApiOracle public oracle;
+    // LinkToken link;
 
     // address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     // address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
@@ -49,7 +48,8 @@ contract CounterTest is Test, ContractDeployer {
     function setUp() public {
         // ContractDeployer deployer = new ContractDeployer();
         // (link, oracle, indexToken) = deployer.deployContracts();
-        (link, oracle, indexToken,,,) = deployContracts();
+        deployAllContracts();
+        // (link, oracle, indexToken,,,) = deployContracts();
         indexToken.setMinter(minter);
         /**
         LinkToken link = new LinkToken();
