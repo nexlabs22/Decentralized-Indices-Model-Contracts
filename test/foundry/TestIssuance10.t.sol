@@ -15,6 +15,7 @@ import "../../contracts/test/MockApiOracle.sol";
 import "../../contracts/test/LinkToken.sol";
 import "../../contracts/interfaces/IUniswapV3Pool.sol";
 import "../../contracts/test/MockV3Aggregator.sol";
+
 import "./ContractDeployer.sol";
 
 contract CounterTest is Test, ContractDeployer {
@@ -50,6 +51,11 @@ contract CounterTest is Test, ContractDeployer {
         addLiquidityETH(positionManager, factoryAddress, token2, wethAddress, 1000e18, 1e18);
         addLiquidityETH(positionManager, factoryAddress, token3, wethAddress, 1000e18, 1e18);
         addLiquidityETH(positionManager, factoryAddress, token4, wethAddress, 1000e18, 1e18);
+        addLiquidityETH(positionManager, factoryAddress, token5, wethAddress, 1000e18, 1e18);
+        addLiquidityETH(positionManager, factoryAddress, token6, wethAddress, 1000e18, 1e18);
+        addLiquidityETH(positionManager, factoryAddress, token7, wethAddress, 1000e18, 1e18);
+        addLiquidityETH(positionManager, factoryAddress, token8, wethAddress, 1000e18, 1e18);
+        addLiquidityETH(positionManager, factoryAddress, token9, wethAddress, 1000e18, 1e18);
         addLiquidityETH(positionManager, factoryAddress, usdt, wethAddress, 1000e18, 1e18);
         
     }
@@ -71,26 +77,41 @@ contract CounterTest is Test, ContractDeployer {
     }
 
     function updateOracleList() public {
-        address[] memory assetList = new address[](5);
+        address[] memory assetList = new address[](10);
         assetList[0] = address(token0);
         assetList[1] = address(token1);
         assetList[2] = address(token2);
         assetList[3] = address(token3);
         assetList[4] = address(token4);
+        assetList[5] = address(token5);
+        assetList[6] = address(token6);
+        assetList[7] = address(token7);
+        assetList[8] = address(token8);
+        assetList[9] = address(token9);
 
-        uint[] memory tokenShares = new uint[](5);
-        tokenShares[0] = 20e18;
-        tokenShares[1] = 20e18;
-        tokenShares[2] = 20e18;
-        tokenShares[3] = 20e18;
-        tokenShares[4] = 20e18;
+        uint[] memory tokenShares = new uint[](10);
+        tokenShares[0] = 10e18;
+        tokenShares[1] = 10e18;
+        tokenShares[2] = 10e18;
+        tokenShares[3] = 10e18;
+        tokenShares[4] = 10e18;
+        tokenShares[5] = 10e18;
+        tokenShares[6] = 10e18;
+        tokenShares[7] = 10e18;
+        tokenShares[8] = 10e18;
+        tokenShares[9] = 10e18;
 
-        uint[] memory swapVersions = new uint[](5);
+        uint[] memory swapVersions = new uint[](10);
         swapVersions[0] = 3;
         swapVersions[1] = 3;
         swapVersions[2] = 3;
         swapVersions[3] = 3;
         swapVersions[4] = 3;
+        swapVersions[5] = 3;
+        swapVersions[6] = 3;
+        swapVersions[7] = 3;
+        swapVersions[8] = 3;
+        swapVersions[9] = 3;
         
         link.transfer(address(factory), 1e17);
         bytes32 requestId = factory.requestAssetsData();
@@ -104,20 +125,21 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(factory.oracleList(2), address(token2));
         assertEq(factory.oracleList(3), address(token3));
         assertEq(factory.oracleList(4), address(token4));
+        assertEq(factory.oracleList(9), address(token9));
         // token current list
         assertEq(factory.currentList(0), address(token0));
         assertEq(factory.currentList(1), address(token1));
         assertEq(factory.currentList(2), address(token2));
         assertEq(factory.currentList(3), address(token3));
         assertEq(factory.currentList(4), address(token4));
-        console.log("H", factory.currentList(0));
-        console.log("H",address(token0));
+        assertEq(factory.currentList(9), address(token9));
         // token shares
-        assertEq(factory.tokenOracleMarketShare(address(token0)), 20e18);
-        assertEq(factory.tokenOracleMarketShare(address(token1)), 20e18);
-        assertEq(factory.tokenOracleMarketShare(address(token2)), 20e18);
-        assertEq(factory.tokenOracleMarketShare(address(token3)), 20e18);
-        assertEq(factory.tokenOracleMarketShare(address(token4)), 20e18);
+        assertEq(factory.tokenOracleMarketShare(address(token0)), 10e18);
+        assertEq(factory.tokenOracleMarketShare(address(token1)), 10e18);
+        assertEq(factory.tokenOracleMarketShare(address(token2)), 10e18);
+        assertEq(factory.tokenOracleMarketShare(address(token3)), 10e18);
+        assertEq(factory.tokenOracleMarketShare(address(token4)), 10e18);
+        assertEq(factory.tokenOracleMarketShare(address(token9)), 10e18);
         
         // token shares
         assertEq(factory.tokenSwapVersion(address(token0)), 3);
@@ -125,6 +147,7 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(factory.tokenSwapVersion(address(token2)), 3);
         assertEq(factory.tokenSwapVersion(address(token3)), 3);
         assertEq(factory.tokenSwapVersion(address(token4)), 3);
+        assertEq(factory.tokenSwapVersion(address(token9)), 3);
         
     }
 
@@ -144,10 +167,7 @@ contract CounterTest is Test, ContractDeployer {
         // console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
         
         factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
-        console.log("index token balance", indexToken.balanceOf(address(add1)));
-        console.log("portfolio value", factory.getPortfolioBalance());
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
-        console.log("weth after redemption", add1.balance);
     }
 
 
@@ -165,10 +185,7 @@ contract CounterTest is Test, ContractDeployer {
         
         usdt.approve(address(factory), 1001e18);
         factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
-        console.log("index token balance", indexToken.balanceOf(address(add1)));
-        console.log("portfolio value", factory.getPortfolioBalance());
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
-        console.log("weth after redemption", add1.balance);
     }
 
 
@@ -186,11 +203,13 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         usdt.approve(address(factory), 1001e18);
         factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
-        console.log("index token balance", indexToken.balanceOf(address(add1)));
-        console.log("portfolio value", factory.getPortfolioBalance());
+        console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
+        console.log("portfolio value after issuance", factory.getPortfolioBalance());
         uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3);
+        console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
+        console.log("portfolio value after redemption", factory.getPortfolioBalance());
         console.log("real out", reallOut);
-        console.log("weth after redemption", usdt.balanceOf(add1));
+        console.log("usdt after redemption", usdt.balanceOf(add1));
     }
     
 
@@ -213,9 +232,6 @@ contract CounterTest is Test, ContractDeployer {
             uint8 feeProtocol,
             bool unlocked
         ) = IUniswapV3Pool(pool).slot0();
-        console.log(sqrtPriceX96);
-        console.log(factory.getAmountOut(wethAddress, address(token0), 1e16, 3));
-        console.log(factory.totalCurrentList());
         //swap
         weth.deposit{value:1e16}();
         weth.approve(address(swapRouter), 1e16);
@@ -235,7 +251,6 @@ contract CounterTest is Test, ContractDeployer {
             sqrtPriceLimitX96: 0
         });
         uint finalAmountOut = swapRouter.exactInputSingle(params);
-        console.log("final amount",finalAmountOut);
 
     }
 

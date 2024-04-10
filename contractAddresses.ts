@@ -35,10 +35,29 @@ export const goerliUsdtTokenAddress = "0x636b346942ee09Ee6383C22290e89742b55797c
 export const sepoliaUsdtAddress = "0xE8888fE3Bde6f287BDd0922bEA6E0bF6e5f418e7"
 export const sepoliaXautAddress = "0x47dC19853aeF9c799F888Bd99274Aa0A5f909C11"
 export const sepoliaBitcoinAddress = "0x6Ea5aD162d5b74Bc9e4C3e4eEB18AE6861407221"
+
+export const sepoliaTestArbitrumAddress = "0x9CD4f9Bec89e00A560840174Dc8054Fb4b3e1858"
+export const sepoliaTestChainLinkAddress = "0x85b7505D8Ef94348866BA185651b88Fe2c48d9cc"
+export const sepoliaTestUniswapAddress = "0x13B9932D36a757BB810cf85cBFB046e316B118F3"
+export const sepoliaTestMakerAddress = "0x8b0101f6b079268432FBCC83dA9C241fB4C97aa2"
+export const sepoliaTestGraphAddress = "0xBDfe70185Bbb93eB9DA7e77F2C64C3386ef06A1b"
+export const sepoliaTestGnosisAddress = "0xEbd43b57efCE9d034d72D87EFc24f717E231041d"
+export const sepoliaTestLidoAddress = "0xA3A9842B0AF53cBFf96Cd12Ed0CB78640Ebd16A5"
+export const sepoliaTestWOOAddress = "0xc742bf504b25270077173a3668E0fBCA4470CC3f"
+export const sepoliaTestCurveAddress = "0x2e1EdDB0a829949a9A8f186677Cf69c321841f45"
+export const sepoliaTestCOMPAddress = "0xb59EB53399A2b462BAa31b879E6075255C0eCc2c"
+export const sepoliaTestFroxSharesAddress = "0x840fa8047E0B740C4eb57871c038820e50A389d5"
+
 //protocol contract addresses
 export const goerliAnfiIndexTokenAddress = "0xE62038e2f4A057b014a840Ea6D9F07d1f5779458";
-export const sepoliaAnfiIndexTokenAddress = "0x5Cd93F5C4ECE56b7faC31ABb3c1933f6a6FE7182";
 export const goerliAnfiFactoryAddress = "0xfb5BBb9a17eA7eFf0dA692EF60f961af49345606";
+
+export const sepoliaAnfiIndexTokenAddress = "0x5Cd93F5C4ECE56b7faC31ABb3c1933f6a6FE7182";
 export const sepoliaAnfiFactoryAddress = "0x7427E998D4db46E15f831e4Cff0393Ebb277c637";
+
+export const sepoliaSCIIndexTokenAddress = "0x82166E2Fc8a641725F2Cc9C43ED04Df664065dA9";
+export const sepoliaSCIFactoryAddress = "0xCEA2034a33704821f6BB218217A334dC3B5e15Cf";
+
+
 
 

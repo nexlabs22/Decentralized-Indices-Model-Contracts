@@ -68,7 +68,14 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     Token token2;
     Token token3;
     Token token4;
+    Token token5;
+    Token token6;
+    Token token7;
+    Token token8;
+    Token token9;
+
     Token usdt;
+
     address factoryAddress;
     address wethAddress;
     address router;
@@ -189,27 +196,14 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
 
     }
 
-    function deployTokens() public returns(Token, Token, Token, Token, Token, Token) {
-        Token token0 = new Token(
-            1000000e18
-        );
-        Token token1 = new Token(
-            1000000e18
-        );
-        Token token2 = new Token(
-            1000000e18
-        );
-        Token token3 = new Token(
-            1000000e18
-        );
-        Token token4 = new Token(
-            1000000e18
-        );
-        Token usdt = new Token(
-            1000000e18
-        );
+    function deployTokens() public returns(Token[11] memory) {
+        Token[11] memory tokens;
+        
+        for (uint256 i = 0; i < 11; i++) {
+            tokens[i] = new Token(1000000e18);
+        }
 
-        return (token0, token1, token2, token3, token4, usdt);
+        return tokens;
     }
 
     function deployUniswap() public returns(address, address, address, address){
@@ -223,13 +217,24 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     }
 
     function deployAllContracts() public {
-        (token0, token1, token2, token3, token4, usdt) = deployTokens();
+        Token[11] memory tokens = deployTokens();
+        token0 = tokens[0];
+        token1 = tokens[1];
+        token2 = tokens[2];
+        token3 = tokens[3];
+        token4 = tokens[4];
+        token5 = tokens[5];
+        token6 = tokens[6];
+        token7 = tokens[7];
+        token8 = tokens[8];
+        token9 = tokens[9];
+        usdt = tokens[10];
+        
         (factoryAddress, wethAddress, router, positionManager) = deployUniswap();
         factoryV3 = IUniswapV3Factory(factoryAddress);
         swapRouter = ISwapRouter(router);
         weth = IWETH(wethAddress);
         (link, oracle, indexToken, ethPriceOracle, factory, testSwap) = deployContracts();
-
     }
 
     function deployByteCode(bytes memory bytecode) public returns(address){

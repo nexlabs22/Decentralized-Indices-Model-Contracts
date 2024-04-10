@@ -367,7 +367,9 @@ contract IndexFactory is
 
         //swap
         for(uint i = 0; i < totalCurrentList; i++) {
+        if(currentList[i] != address(weth)){
         _swapSingle(address(weth), currentList[i], wethAmount*tokenCurrentMarketShare[currentList[i]]/100e18, address(indexToken), tokenSwapVersion[currentList[i]]);
+        }
         }
        //mint index tokens
        uint amountToMint;
@@ -396,7 +398,9 @@ contract IndexFactory is
         uint wethAmount = _inputAmount;
         //swap
         for(uint i = 0; i < totalCurrentList; i++) {
+        if(currentList[i] != address(weth)){
         _swapSingle(address(weth), currentList[i], wethAmount*tokenCurrentMarketShare[currentList[i]]/100e18, address(indexToken), tokenSwapVersion[currentList[i]]);
+        }
         }
        //mint index tokens
        uint amountToMint;
@@ -423,8 +427,13 @@ contract IndexFactory is
         //swap
         for(uint i = 0; i < totalCurrentList; i++) {
         uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(indexToken)))/1e18;
+        if(currentList[i] != address(weth)){
         uint swapAmountOut = _swapSingle(currentList[i], address(weth), swapAmount, address(this), tokenSwapVersion[currentList[i]]);
         outputAmount += swapAmountOut;
+        }else{
+        indexToken.wethTransfer(address(this), swapAmount);
+        outputAmount += swapAmount;
+        }
         }
         
         // uint outputAmount = weth.balanceOf(address(this));
@@ -523,8 +532,12 @@ contract IndexFactory is
     function getPortfolioBalance() public view returns(uint){
         uint totalValue;
         for(uint i = 0; i < totalCurrentList; i++) {
+            if(currentList[i] == address(weth)){
+            totalValue += IERC20(currentList[i]).balanceOf(address(indexToken));
+            }else{
             uint value = getAmountOut(currentList[i], address(weth), IERC20(currentList[i]).balanceOf(address(indexToken)), tokenSwapVersion[currentList[i]]);
             totalValue += value;
+            }
         }
         return totalValue;
     }
@@ -627,9 +640,14 @@ contract IndexFactory is
         uint outputAmount;
         //swap
         for(uint i = 0; i < totalCurrentList; i++) {
+        if(currentList[i] != address(weth)){
         uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(indexToken)))/1e18;
         uint swapAmountOut = getExactAmountOut(currentList[i], address(weth), swapAmount, tokenSwapVersion[currentList[i]]);
         outputAmount += swapAmountOut;
+        }else{
+        uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(indexToken)))/1e18;
+        outputAmount += swapAmount;
+        }
         }
         // uint fee = outputAmount*feeRate/10000;
         // outputAmount -= fee;
@@ -646,11 +664,15 @@ contract IndexFactory is
 
     function reIndexAndReweight() public onlyOwner {
         for(uint i; i < totalCurrentList; i++) {
+            if(currentList[i] != address(weth)){
             _swapSingle(currentList[i], address(weth), IERC20(currentList[i]).balanceOf(address(indexToken)), address(indexToken), tokenSwapVersion[currentList[i]]);
+            }
         }
         uint wethBalance = weth.balanceOf(address(indexToken));
         for(uint i; i < totalOracleList; i++) {
+            if(currentList[i] != address(weth)){
             _swapSingle(address(weth), oracleList[i], wethBalance*tokenOracleMarketShare[oracleList[i]]/100e18, address(indexToken), tokenSwapVersion[oracleList[i]]);
+            }
             //update current list
             currentList[i] = oracleList[i];
             tokenCurrentMarketShare[oracleList[i]] = tokenOracleMarketShare[oracleList[i]];

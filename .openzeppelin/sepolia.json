@@ -14,6 +14,16 @@
       "address": "0x7427E998D4db46E15f831e4Cff0393Ebb277c637",
       "txHash": "0xe1d51ab0c53688846066ebb40f20df16bf8a8ae953b142bf9bfc9f1df7e938a8",
       "kind": "transparent"
+    },
+    {
+      "address": "0x82166E2Fc8a641725F2Cc9C43ED04Df664065dA9",
+      "txHash": "0x94dbad8d71da334cccc25e6764d231c86e9878d8992153bbfbd7b2f49b59ba34",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xCEA2034a33704821f6BB218217A334dC3B5e15Cf",
+      "txHash": "0x6a8d369a4dd833c6df6e3b4f7a8a0470b32ae19f8645d48937150c1df3e09a4b",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -800,6 +810,832 @@
             "numberOfBytes": "20"
           },
           "t_contract(IndexToken)9982": {
+            "label": "contract IndexToken",
+            "numberOfBytes": "20"
+          },
+          "t_contract(LinkTokenInterface)522": {
+            "label": "contract LinkTokenInterface",
+            "numberOfBytes": "20"
+          },
+          "t_contract(OperatorInterface)602": {
+            "label": "contract OperatorInterface",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_address)": {
+            "label": "mapping(bytes32 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "23ec4d3691771fa273927561e76681a4e5c48dc6b59b7a1499ab5025d43cf624": {
+      "address": "0x42D254B744e8Ccf41E470a9E32Ea169f64693764",
+      "txHash": "0x8bab720fc2effd59c96bfabdcd1857eeb54d38f402a7de3e3a58a1534c2d2a23",
+      "layout": {
+        "solcVersion": "0.8.7",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_balances",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:40"
+          },
+          {
+            "label": "_allowances",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "ERC20Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:42"
+          },
+          {
+            "label": "_totalSupply",
+            "offset": 0,
+            "slot": "53",
+            "type": "t_uint256",
+            "contract": "ERC20Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:44"
+          },
+          {
+            "label": "_name",
+            "offset": 0,
+            "slot": "54",
+            "type": "t_string_storage",
+            "contract": "ERC20Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:46"
+          },
+          {
+            "label": "_symbol",
+            "offset": 0,
+            "slot": "55",
+            "type": "t_string_storage",
+            "contract": "ERC20Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:47"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "56",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "ERC20Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:376"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "proposedOwner",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "ProposableOwnableUpgradeable",
+            "src": "contracts\\proposable\\ProposableOwnableUpgradeable.sol:11"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ProposableOwnableUpgradeable",
+            "src": "contracts\\proposable\\ProposableOwnableUpgradeable.sol:30"
+          },
+          {
+            "label": "_paused",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_bool",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol:29"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "203",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol:116"
+          },
+          {
+            "label": "fee",
+            "offset": 0,
+            "slot": "252",
+            "type": "t_uint256",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:30"
+          },
+          {
+            "label": "feeRatePerDayScaled",
+            "offset": 0,
+            "slot": "253",
+            "type": "t_uint256",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:35"
+          },
+          {
+            "label": "feeTimestamp",
+            "offset": 0,
+            "slot": "254",
+            "type": "t_uint256",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:38"
+          },
+          {
+            "label": "feeReceiver",
+            "offset": 0,
+            "slot": "255",
+            "type": "t_address",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:41"
+          },
+          {
+            "label": "methodologist",
+            "offset": 0,
+            "slot": "256",
+            "type": "t_address",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:44"
+          },
+          {
+            "label": "minter",
+            "offset": 0,
+            "slot": "257",
+            "type": "t_address",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:47"
+          },
+          {
+            "label": "methodology",
+            "offset": 0,
+            "slot": "258",
+            "type": "t_string_storage",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:49"
+          },
+          {
+            "label": "supplyCeiling",
+            "offset": 0,
+            "slot": "259",
+            "type": "t_uint256",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:51"
+          },
+          {
+            "label": "isRestricted",
+            "offset": 0,
+            "slot": "260",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:53"
+          },
+          {
+            "label": "tokenMarketShare",
+            "offset": 0,
+            "slot": "261",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:60"
+          },
+          {
+            "label": "tokenSwapVersion",
+            "offset": 0,
+            "slot": "262",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:61"
+          },
+          {
+            "label": "swapRouterV3",
+            "offset": 0,
+            "slot": "263",
+            "type": "t_contract(ISwapRouter)3475",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:63"
+          },
+          {
+            "label": "factoryV3",
+            "offset": 0,
+            "slot": "264",
+            "type": "t_contract(IUniswapV3Factory)3304",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:64"
+          },
+          {
+            "label": "swapRouterV2",
+            "offset": 0,
+            "slot": "265",
+            "type": "t_contract(IUniswapV2Router02)7236",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:65"
+          },
+          {
+            "label": "factoryV2",
+            "offset": 0,
+            "slot": "266",
+            "type": "t_contract(IUniswapV2Factory)6840",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:66"
+          },
+          {
+            "label": "weth",
+            "offset": 0,
+            "slot": "267",
+            "type": "t_contract(IWETH)7285",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:67"
+          },
+          {
+            "label": "quoter",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_contract(IQuoter)3375",
+            "contract": "IndexToken",
+            "src": "contracts\\token\\IndexToken.sol:68"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IQuoter)3375": {
+            "label": "contract IQuoter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISwapRouter)3475": {
+            "label": "contract ISwapRouter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV2Factory)6840": {
+            "label": "contract IUniswapV2Factory",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV2Router02)7236": {
+            "label": "contract IUniswapV2Router02",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3Factory)3304": {
+            "label": "contract IUniswapV3Factory",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IWETH)7285": {
+            "label": "contract IWETH",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "c8d2ee01bf05c1f38b970d3d79ff73ea11fac0eefde96c79703b730c4be4ca4c": {
+      "address": "0xA4808e5E0F6814f9548e5DBc158667FD9dE2EBfF",
+      "txHash": "0x6b5ab5847647c54f25db2fa8a308802fb2c15b45398cba84957fedb0ec57db0a",
+      "layout": {
+        "solcVersion": "0.8.7",
+        "storage": [
+          {
+            "label": "s_ens",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(ENSInterface)427",
+            "contract": "ChainlinkClient",
+            "src": "contracts\\chainlink\\ChainlinkClient.sol:29"
+          },
+          {
+            "label": "s_ensNode",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_bytes32",
+            "contract": "ChainlinkClient",
+            "src": "contracts\\chainlink\\ChainlinkClient.sol:30"
+          },
+          {
+            "label": "s_link",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(LinkTokenInterface)522",
+            "contract": "ChainlinkClient",
+            "src": "contracts\\chainlink\\ChainlinkClient.sol:31"
+          },
+          {
+            "label": "s_oracle",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(OperatorInterface)602",
+            "contract": "ChainlinkClient",
+            "src": "contracts\\chainlink\\ChainlinkClient.sol:32"
+          },
+          {
+            "label": "s_requestCount",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "ChainlinkClient",
+            "src": "contracts\\chainlink\\ChainlinkClient.sol:33"
+          },
+          {
+            "label": "s_pendingRequests",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_bytes32,t_address)",
+            "contract": "ChainlinkClient",
+            "src": "contracts\\chainlink\\ChainlinkClient.sol:34"
+          },
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "6",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "57",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "58",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "proposedOwner",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_address",
+            "contract": "ProposableOwnableUpgradeable",
+            "src": "contracts\\proposable\\ProposableOwnableUpgradeable.sol:11"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "108",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ProposableOwnableUpgradeable",
+            "src": "contracts\\proposable\\ProposableOwnableUpgradeable.sol:30"
+          },
+          {
+            "label": "_paused",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_bool",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol:29"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol:116"
+          },
+          {
+            "label": "indexToken",
+            "offset": 0,
+            "slot": "208",
+            "type": "t_contract(IndexToken)10086",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:33"
+          },
+          {
+            "label": "fee",
+            "offset": 0,
+            "slot": "209",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:35"
+          },
+          {
+            "label": "feeRate",
+            "offset": 0,
+            "slot": "210",
+            "type": "t_uint8",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:36"
+          },
+          {
+            "label": "latestFeeUpdate",
+            "offset": 0,
+            "slot": "211",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:37"
+          },
+          {
+            "label": "feeRatePerDayScaled",
+            "offset": 0,
+            "slot": "212",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:42"
+          },
+          {
+            "label": "feeTimestamp",
+            "offset": 0,
+            "slot": "213",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:45"
+          },
+          {
+            "label": "feeReceiver",
+            "offset": 0,
+            "slot": "214",
+            "type": "t_address",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:48"
+          },
+          {
+            "label": "methodologist",
+            "offset": 0,
+            "slot": "215",
+            "type": "t_address",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:51"
+          },
+          {
+            "label": "minter",
+            "offset": 0,
+            "slot": "216",
+            "type": "t_address",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:54"
+          },
+          {
+            "label": "methodology",
+            "offset": 0,
+            "slot": "217",
+            "type": "t_string_storage",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:56"
+          },
+          {
+            "label": "supplyCeiling",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:58"
+          },
+          {
+            "label": "isRestricted",
+            "offset": 0,
+            "slot": "219",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:60"
+          },
+          {
+            "label": "baseUrl",
+            "offset": 0,
+            "slot": "220",
+            "type": "t_string_storage",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:69"
+          },
+          {
+            "label": "urlParams",
+            "offset": 0,
+            "slot": "221",
+            "type": "t_string_storage",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:70"
+          },
+          {
+            "label": "externalJobId",
+            "offset": 0,
+            "slot": "222",
+            "type": "t_bytes32",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:72"
+          },
+          {
+            "label": "oraclePayment",
+            "offset": 0,
+            "slot": "223",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:73"
+          },
+          {
+            "label": "toUsdPriceFeed",
+            "offset": 0,
+            "slot": "224",
+            "type": "t_contract(AggregatorV3Interface)314",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:74"
+          },
+          {
+            "label": "lastUpdateTime",
+            "offset": 0,
+            "slot": "225",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:75"
+          },
+          {
+            "label": "totalOracleList",
+            "offset": 0,
+            "slot": "226",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:79"
+          },
+          {
+            "label": "totalCurrentList",
+            "offset": 0,
+            "slot": "227",
+            "type": "t_uint256",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:80"
+          },
+          {
+            "label": "oracleList",
+            "offset": 0,
+            "slot": "228",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:82"
+          },
+          {
+            "label": "currentList",
+            "offset": 0,
+            "slot": "229",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:83"
+          },
+          {
+            "label": "tokenOracleListIndex",
+            "offset": 0,
+            "slot": "230",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:85"
+          },
+          {
+            "label": "tokenCurrentListIndex",
+            "offset": 0,
+            "slot": "231",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:86"
+          },
+          {
+            "label": "tokenCurrentMarketShare",
+            "offset": 0,
+            "slot": "232",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:88"
+          },
+          {
+            "label": "tokenOracleMarketShare",
+            "offset": 0,
+            "slot": "233",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:89"
+          },
+          {
+            "label": "tokenSwapVersion",
+            "offset": 0,
+            "slot": "234",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:90"
+          },
+          {
+            "label": "swapRouterV3",
+            "offset": 0,
+            "slot": "235",
+            "type": "t_contract(ISwapRouter)3475",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:93"
+          },
+          {
+            "label": "factoryV3",
+            "offset": 0,
+            "slot": "236",
+            "type": "t_contract(IUniswapV3Factory)3304",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:94"
+          },
+          {
+            "label": "swapRouterV2",
+            "offset": 0,
+            "slot": "237",
+            "type": "t_contract(IUniswapV2Router02)7236",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:95"
+          },
+          {
+            "label": "factoryV2",
+            "offset": 0,
+            "slot": "238",
+            "type": "t_contract(IUniswapV2Factory)6840",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:96"
+          },
+          {
+            "label": "weth",
+            "offset": 0,
+            "slot": "239",
+            "type": "t_contract(IWETH)7285",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:97"
+          },
+          {
+            "label": "quoter",
+            "offset": 0,
+            "slot": "240",
+            "type": "t_contract(IQuoter)3375",
+            "contract": "IndexFactory",
+            "src": "contracts\\factory\\IndexFactory.sol:98"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(AggregatorV3Interface)314": {
+            "label": "contract AggregatorV3Interface",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ENSInterface)427": {
+            "label": "contract ENSInterface",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IQuoter)3375": {
+            "label": "contract IQuoter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISwapRouter)3475": {
+            "label": "contract ISwapRouter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV2Factory)6840": {
+            "label": "contract IUniswapV2Factory",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV2Router02)7236": {
+            "label": "contract IUniswapV2Router02",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUniswapV3Factory)3304": {
+            "label": "contract IUniswapV3Factory",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IWETH)7285": {
+            "label": "contract IWETH",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IndexToken)10086": {
             "label": "contract IndexToken",
             "numberOfBytes": "20"
           },

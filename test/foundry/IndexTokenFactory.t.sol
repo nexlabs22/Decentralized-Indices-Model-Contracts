@@ -111,8 +111,6 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(factory.currentList(2), address(token2));
         assertEq(factory.currentList(3), address(token3));
         assertEq(factory.currentList(4), address(token4));
-        console.log("H", factory.currentList(0));
-        console.log("H",address(token0));
         // token shares
         assertEq(factory.tokenOracleMarketShare(address(token0)), 20e18);
         assertEq(factory.tokenOracleMarketShare(address(token1)), 20e18);
@@ -145,10 +143,7 @@ contract CounterTest is Test, ContractDeployer {
         // console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
         
         factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
-        console.log("index token balance", indexToken.balanceOf(address(add1)));
-        console.log("portfolio value", factory.getPortfolioBalance());
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
-        console.log("weth after redemption", add1.balance);
     }
 
 
@@ -166,10 +161,7 @@ contract CounterTest is Test, ContractDeployer {
         
         usdt.approve(address(factory), 1001e18);
         factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
-        console.log("index token balance", indexToken.balanceOf(address(add1)));
-        console.log("portfolio value", factory.getPortfolioBalance());
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
-        console.log("weth after redemption", add1.balance);
     }
 
 
@@ -187,11 +179,13 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         usdt.approve(address(factory), 1001e18);
         factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
-        console.log("index token balance", indexToken.balanceOf(address(add1)));
-        console.log("portfolio value", factory.getPortfolioBalance());
+        console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
+        console.log("portfolio value after issuance", factory.getPortfolioBalance());
         uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3);
+        console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
+        console.log("portfolio value after redemption", factory.getPortfolioBalance());
         console.log("real out", reallOut);
-        console.log("weth after redemption", usdt.balanceOf(add1));
+        console.log("usdt after redemption", usdt.balanceOf(add1));
     }
     
 
@@ -214,9 +208,6 @@ contract CounterTest is Test, ContractDeployer {
             uint8 feeProtocol,
             bool unlocked
         ) = IUniswapV3Pool(pool).slot0();
-        console.log(sqrtPriceX96);
-        console.log(factory.getAmountOut(wethAddress, address(token0), 1e16, 3));
-        console.log(factory.totalCurrentList());
         //swap
         weth.deposit{value:1e16}();
         weth.approve(address(swapRouter), 1e16);
@@ -236,7 +227,6 @@ contract CounterTest is Test, ContractDeployer {
             sqrtPriceLimitX96: 0
         });
         uint finalAmountOut = swapRouter.exactInputSingle(params);
-        console.log("final amount",finalAmountOut);
 
     }
 

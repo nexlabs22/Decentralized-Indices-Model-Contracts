@@ -7,7 +7,7 @@ import {
     abi as Factory_ABI,
     bytecode as Factory_BYTECODE,
   } from '../artifacts/contracts/factory/IndexFactory.sol/IndexFactory.json'
-import { sepoliaAnfiFactoryAddress } from "../contractAddresses";
+import { sepoliaAnfiFactoryAddress, sepoliaSCIFactoryAddress } from "../contractAddresses";
 // import { IndexFactory } from "../../typechain-types";
 // import { mumbaiChainSelector, mumbaiTestRippleAddress, sepoliaBitcoinAddress, sepoliaCR5IndexFactory, sepoliaCR5IndexFactoryStorage, sepoliaChainSelector, sepoliaTestBinanceAddress, sepoliaTestEthereumAddress, sepoliaTestSolanaAddress, testSepoliaCR5IndexFactory } from "../../network";
 // import { goerliAnfiFactoryAddress } from "../contractAddresses";
@@ -20,7 +20,7 @@ async function main() {
     // const provider = new ethers.JsonRpcProvider(process.env.GOERLI_RPC_URL)
     const provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_SEPOLIA_RPC_URL)
     const cotract:any = new ethers.Contract(
-        sepoliaAnfiFactoryAddress as string, //factory goerli
+        sepoliaSCIFactoryAddress as string, //factory goerli
         // testSepoliaCR5IndexFactory as string, //factory goerli
         Factory_ABI,
         provider
