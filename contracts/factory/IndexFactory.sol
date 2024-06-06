@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 import "../token/IndexToken.sol";
 import "../proposable/ProposableOwnableUpgradeable.sol";
@@ -356,8 +356,7 @@ contract IndexFactory is
 
     function issuanceIndexTokens(address _tokenIn, uint _amountIn, uint _tokenInSwapVersion) public {
         uint feeAmount = (_amountIn*feeRate)/10000;
-        uint finalAmount = _amountIn + feeAmount;
-
+        
         uint firstPortfolioValue = getPortfolioBalance();
 
         IERC20(_tokenIn).transferFrom(msg.sender, address(indexToken), _amountIn);
@@ -437,21 +436,21 @@ contract IndexFactory is
         }
         
         // uint outputAmount = weth.balanceOf(address(this));
-        uint fee = outputAmount*feeRate/10000;
+        uint ownerFee = outputAmount*feeRate/10000;
         if(_tokenOut == address(weth)){
             // weth.transfer(msg.sender, outputAmount - fee);
             weth.withdraw(outputAmount);
-            (bool _ownerSuccess,) = owner().call{value: fee}("");
+            (bool _ownerSuccess,) = owner().call{value: ownerFee}("");
             require(_ownerSuccess, "transfer eth fee to the owner failed");
-            (bool _userSuccess,) = payable(msg.sender).call{value: outputAmount - fee}("");
+            (bool _userSuccess,) = payable(msg.sender).call{value: outputAmount - ownerFee}("");
             require(_userSuccess, "transfer eth fee to the user failed");
-            emit Redemption(msg.sender, _tokenOut, amountIn, outputAmount - fee, block.timestamp);
-            return outputAmount - fee;
+            emit Redemption(msg.sender, _tokenOut, amountIn, outputAmount - ownerFee, block.timestamp);
+            return outputAmount - ownerFee;
         }else{
-            weth.withdraw(fee);
-            (bool _success,) = owner().call{value: fee}("");
+            weth.withdraw(ownerFee);
+            (bool _success,) = owner().call{value: ownerFee}("");
             require(_success, "transfer eth fee to the owner failed");
-            uint reallOut = swap(address(weth), _tokenOut, outputAmount - fee, msg.sender, _tokenOutSwapVersion);
+            uint reallOut = swap(address(weth), _tokenOut, outputAmount - ownerFee, msg.sender, _tokenOutSwapVersion);
             emit Redemption(msg.sender, _tokenOut, amountIn, reallOut, block.timestamp);
             return reallOut;
         }
@@ -513,10 +512,9 @@ contract IndexFactory is
     
 
     function getAmountOut(address tokenIn, address tokenOut, uint amountIn, uint _swapVersion) public view returns(uint finalAmountOut) {
-        uint finalAmountOut;
         if(amountIn > 0){
         if(_swapVersion == 3){
-           finalAmountOut = estimateAmountOut(tokenIn, tokenOut, uint128(amountIn), 1);
+           finalAmountOut = estimateAmountOut(tokenIn, tokenOut, uint128(amountIn));
         }else {
             address[] memory path = new address[](2);
             path[0] = tokenIn;
@@ -548,8 +546,7 @@ contract IndexFactory is
     function estimateAmountOut(
         address tokenIn,
         address tokenOut,
-        uint128 amountIn,
-        uint32 secondsAgo
+        uint128 amountIn
     ) public view returns (uint amountOut) {
         
         address _pool = factoryV3.getPool(
@@ -649,6 +646,7 @@ contract IndexFactory is
         outputAmount += swapAmount;
         }
         }
+        return outputAmount;
         // uint fee = outputAmount*feeRate/10000;
         // outputAmount -= fee;
         // if(_tokenOut == address(weth)){
