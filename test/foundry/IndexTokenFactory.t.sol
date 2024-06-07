@@ -24,7 +24,7 @@ contract CounterTest is Test, ContractDeployer {
 
     uint256 internal constant SCALAR = 1e20;
 
-
+    
     uint256 mainnetFork;
 
     
