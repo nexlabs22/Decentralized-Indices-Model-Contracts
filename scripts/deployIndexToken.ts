@@ -10,8 +10,8 @@ async function deployIndexToken() {
   console.log('Deploying IndexToken...');
 
   const indexToken = await upgrades.deployProxy(IndexToken, [
-      "Sectorial Chain Index token",
-      "SCI",
+      "Magnificent 7 Index",
+      "MAG7",
       '1000000000000000000', // 1e18
       deployer.address,
       '1000000000000000000000000', // 1000000e18

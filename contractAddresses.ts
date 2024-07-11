@@ -58,6 +58,10 @@ export const sepoliaAnfiFactoryAddress = "0x7427E998D4db46E15f831e4Cff0393Ebb277
 export const sepoliaSCIIndexTokenAddress = "0x82166E2Fc8a641725F2Cc9C43ED04Df664065dA9";
 export const sepoliaSCIFactoryAddress = "0xCEA2034a33704821f6BB218217A334dC3B5e15Cf";
 
+export const sepoliaARBIndexTokenAddress = "0x58484111fC370bdb19AeaE6336cDb745A3006b4d";
+export const sepoliaMAG7IndexTokenAddress = "0x955b3F0091414E7DBbe7bdf2c39d73695CDcDd95";
+
+
 
 
 
