@@ -1,5 +1,5 @@
 import { ethers, upgrades } from "hardhat";
-import { goerliAnfiIndexTokenAddress, goerliEthUsdPriceFeed, goerliExternalJobIdBytes32, goerliFactoryV2Address, goerliFactoryV3Address, goerliLinkAddress, goerliOracleAdress, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress, seploliaWethAddress, sepoliaAnfiIndexTokenAddress, sepoliaEthUsdPriceFeed, sepoliaFactoryV3Address, sepoliaLinkAddress, sepoliaRouterV3Address, sepoliaSCIIndexTokenAddress } from "../contractAddresses";
+import { goerliAnfiIndexTokenAddress, goerliEthUsdPriceFeed, goerliExternalJobIdBytes32, goerliFactoryV2Address, goerliFactoryV3Address, goerliLinkAddress, goerliOracleAdress, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress, seploliaWethAddress, sepoliaAnfiIndexTokenAddress, sepoliaARBEIIndexTokenAddress, sepoliaEthUsdPriceFeed, sepoliaFactoryV3Address, sepoliaLinkAddress, sepoliaRouterV3Address, sepoliaSCIIndexTokenAddress } from "../contractAddresses";
 // const { ethers, upgrades, network, hre } = require('hardhat');
 
 async function deployIndexToken() {
@@ -10,7 +10,7 @@ async function deployIndexToken() {
   console.log('Deploying IndexFactory...');
 
   const indexToken = await upgrades.deployProxy(IndexToken, [
-      sepoliaSCIIndexTokenAddress, //token
+      sepoliaARBEIIndexTokenAddress, //token
       sepoliaLinkAddress, //link token address
       goerliOracleAdress, //oracle address
       goerliExternalJobIdBytes32, // jobId
@@ -26,7 +26,7 @@ async function deployIndexToken() {
   await indexToken.waitForDeployment()
 
   console.log(
-    `IndexToken deployed: ${ await indexToken.getAddress()}`
+    `IndexFactory deployed: ${ await indexToken.getAddress()}`
   );
 }
 

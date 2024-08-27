@@ -10,8 +10,8 @@ async function deployIndexToken() {
   console.log('Deploying IndexToken...');
 
   const indexToken = await upgrades.deployProxy(IndexToken, [
-      "Magnificent 7 Index",
-      "MAG7",
+      "Arbitrum Ecosystem Index",
+      "ARBEI",
       '1000000000000000000', // 1e18
       deployer.address,
       '1000000000000000000000000', // 1000000e18
@@ -24,6 +24,8 @@ async function deployIndexToken() {
   ], { initializer: 'initialize' });
 
   await indexToken.waitForDeployment()
+
+  
 
   console.log(
     `IndexToken deployed: ${ await indexToken.getAddress()}`

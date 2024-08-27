@@ -8,7 +8,7 @@ import {
     abi as IndexToken_ABI,
     bytecode as IndexToken_BYTECODE,
   } from '../artifacts/contracts/token/IndexToken.sol/IndexToken.json'
-import { sepoliaAnfiFactoryAddress, sepoliaAnfiIndexTokenAddress, sepoliaSCIFactoryAddress, sepoliaSCIIndexTokenAddress } from "../contractAddresses";
+import { sepoliaAnfiFactoryAddress, sepoliaAnfiIndexTokenAddress, sepoliaARBEIIndexFactoryAddress, sepoliaARBEIIndexTokenAddress, sepoliaSCIFactoryAddress, sepoliaSCIIndexTokenAddress } from "../contractAddresses";
 // import { IndexFactory } from "../../typechain-types";
 // import { mumbaiCR5CrossChainFactory, mumbaiChainSelector, mumbaiTestRippleAddress, sepoliaBitcoinAddress, sepoliaCR5IndexFactory, sepoliaCR5IndexFactoryStorage, sepoliaCR5IndexToken, sepoliaChainSelector, sepoliaCrossChainTokenAddress, sepoliaTestBinanceAddress, sepoliaTestEthereumAddress, sepoliaTestSolanaAddress, testSepoliaCR5IndexFactory } from "../../network";
 // import { goerliAnfiFactoryAddress } from "../contractAddresses";
@@ -21,7 +21,7 @@ async function main() {
     // const provider = new ethers.JsonRpcProvider(process.env.GOERLI_RPC_URL)
     const provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_SEPOLIA_RPC_URL)
     const cotract:any = new ethers.Contract(
-        sepoliaSCIIndexTokenAddress as string, //factory goerli
+        sepoliaARBEIIndexTokenAddress as string, //factory goerli
         // testSepoliaCR5IndexFactory as string, //factory goerli
         IndexToken_ABI,
         provider
@@ -31,7 +31,7 @@ async function main() {
 
     console.log("setting minter...")
     const result1 = await cotract.connect(deployer).setMinter(
-        sepoliaSCIFactoryAddress
+        sepoliaARBEIIndexFactoryAddress
     )
     const receipt1 = await result1.wait();
     console.log('Ended')

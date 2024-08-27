@@ -7,7 +7,7 @@ import {
     abi as Factory_ABI,
     bytecode as Factory_BYTECODE,
   } from '../artifacts/contracts/factory/IndexFactory.sol/IndexFactory.json'
-import { sepoliaAnfiFactoryAddress, sepoliaARBEIIndexFactoryAddress, sepoliaSCIFactoryAddress } from "../contractAddresses";
+import { sepoliaAnfiFactoryAddress, sepoliaARBEIIndexFactoryAddress, sepoliaSCIFactoryAddress, sepoliaUsdtAddress } from "../contractAddresses";
 // import { IndexFactory } from "../../typechain-types";
 // import { mumbaiChainSelector, mumbaiTestRippleAddress, sepoliaBitcoinAddress, sepoliaCR5IndexFactory, sepoliaCR5IndexFactoryStorage, sepoliaChainSelector, sepoliaTestBinanceAddress, sepoliaTestEthereumAddress, sepoliaTestSolanaAddress, testSepoliaCR5IndexFactory } from "../../network";
 // import { goerliAnfiFactoryAddress } from "../contractAddresses";
@@ -27,9 +27,11 @@ async function main() {
     )
     // await wallet.connect(provider);
     console.log("sending data...")
-    const result = await cotract.connect(deployer).issuanceIndexTokensWithEth(
-        ethers.parseEther("0.001"),
-        {value: ethers.parseEther("0.0011"), gasLimit: 4000000}
+    const result = await cotract.connect(deployer).redemption(
+        ethers.parseEther("100"),
+        sepoliaUsdtAddress,
+        "3",
+        {gasLimit: 4000000}
     )
     console.log("waiting for results...")
     const receipt = await result.wait();

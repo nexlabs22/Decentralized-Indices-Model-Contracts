@@ -48,6 +48,17 @@ export const sepoliaTestCurveAddress = "0x2e1EdDB0a829949a9A8f186677Cf69c321841f
 export const sepoliaTestCOMPAddress = "0xb59EB53399A2b462BAa31b879E6075255C0eCc2c"
 export const sepoliaTestFroxSharesAddress = "0x840fa8047E0B740C4eb57871c038820e50A389d5"
 
+export const sepoliaTestAAVEAddress = "0x8B0D01137979e409Bba15098aA5665c647774003"
+export const sepoliaTestCLIPPERAddress = "0xC361Ce0885FaA9F6F5f41F2b2A08E72E465DFbc6"
+export const sepoliaTestPENDLEAddress = "0xCAC218f00e79A6923228487C52dcba71666C6b17"
+export const sepoliaTestSILOAddress = "0x861b6Db57c71F9E5B989a18d4C6f600b7b26E170"
+export const sepoliaTestCAKEAddress = "0xe4e401c5a31d43550D9218CCf412A761e5441F39"
+export const sepoliaTestDODOAddress = "0xdc29d1B632F84b64f9b2742D1CD305D11f9Db76A"
+export const sepoliaTestSALEAddress = "0x7844288a55B09Af610200C738e9714A3B55eEA34"
+export const sepoliaTestPNPAddress = "0x46F7bA9B4bfA0F7179a01Bf42143E78e65fD7904"
+export const sepoliaTestCVXAddress = "0x2A0FDA08272292883187019773F5c655cc7804FF"
+export const sepoliaTestJOEAddress = "0x6AeFff05e69Df302e4fe508778C23996A53B440f"
+
 //protocol contract addresses
 export const goerliAnfiIndexTokenAddress = "0xE62038e2f4A057b014a840Ea6D9F07d1f5779458";
 export const goerliAnfiFactoryAddress = "0xfb5BBb9a17eA7eFf0dA692EF60f961af49345606";
@@ -58,9 +69,11 @@ export const sepoliaAnfiFactoryAddress = "0x7427E998D4db46E15f831e4Cff0393Ebb277
 export const sepoliaSCIIndexTokenAddress = "0x82166E2Fc8a641725F2Cc9C43ED04Df664065dA9";
 export const sepoliaSCIFactoryAddress = "0xCEA2034a33704821f6BB218217A334dC3B5e15Cf";
 
-export const sepoliaARBIndexTokenAddress = "0x58484111fC370bdb19AeaE6336cDb745A3006b4d";
-export const sepoliaMAG7IndexTokenAddress = "0x955b3F0091414E7DBbe7bdf2c39d73695CDcDd95";
+// export const sepoliaARBIndexTokenAddress = "0x2F8B660e8E2CF66889862d4Ab1569cDe98d67748";
+// export const sepoliaMAG7IndexTokenAddress = "0x955b3F0091414E7DBbe7bdf2c39d73695CDcDd95";
 
+export const sepoliaARBEIIndexTokenAddress = "0xeCBa11929312420414b6a9a70f206f90789f3069"
+export const sepoliaARBEIIndexFactoryAddress = "0xB5f11EAd535622Fa4EA1CA665e38ab2b4B1B2F9B"
 
 
 
