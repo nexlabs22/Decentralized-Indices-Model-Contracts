@@ -178,7 +178,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         
 
         indexToken.setMinter(address(factory));
-
+        factory.setFeeReceiver(address(feeReceiver));
         
         
 

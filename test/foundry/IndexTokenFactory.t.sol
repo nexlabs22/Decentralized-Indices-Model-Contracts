@@ -42,6 +42,7 @@ contract CounterTest is Test, ContractDeployer {
     event MintFeeToReceiver(address feeReceiver, uint256 timestamp, uint256 totalSupply, uint256 amount);
     event ToggledRestricted(address indexed account, bool isRestricted);
 
+    receive() external payable {}
 
     function setUp() public {
         

@@ -9,7 +9,6 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "../libraries/OracleLibrary.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
-// import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "../chainlink/ChainlinkClient.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IWETH.sol";
@@ -34,7 +33,7 @@ contract IndexFactory is
     uint256 public fee;
     uint8 public feeRate; // 10/10000 = 0.1%
     uint256 public latestFeeUpdate;
-    
+
     uint256 internal constant SCALAR = 1e20;
 
     // Inflation rate (per day) on total supply, to be accrued to the feeReceiver.
@@ -63,8 +62,6 @@ contract IndexFactory is
         UNISWAP_V3
     }
 
-    
-    
     string baseUrl;
     string urlParams;
 
@@ -88,7 +85,6 @@ contract IndexFactory is
     mapping(address => uint) public tokenOracleMarketShare;
     mapping(address => uint) public tokenSwapVersion;
 
-    
     ISwapRouter public swapRouterV3;
     IUniswapV3Factory public factoryV3;
     IUniswapV2Router02 public swapRouterV2;
@@ -102,14 +98,34 @@ contract IndexFactory is
     event MethodologySet(string methodology);
     event MinterSet(address indexed minter);
     event SupplyCeilingSet(uint256 supplyCeiling);
-    event MintFeeToReceiver(address feeReceiver, uint256 timestamp, uint256 totalSupply, uint256 amount);
+    event MintFeeToReceiver(
+        address feeReceiver,
+        uint256 timestamp,
+        uint256 totalSupply,
+        uint256 amount
+    );
     event ToggledRestricted(address indexed account, bool isRestricted);
 
-    event Issuanced(address indexed user, address indexed inputToken, uint inputAmount, uint outputAmount, uint time);
-    event Redemption(address indexed user, address indexed outputToken, uint inputAmount, uint outputAmount, uint time);
+    event Issuanced(
+        address indexed user,
+        address indexed inputToken,
+        uint inputAmount,
+        uint outputAmount,
+        uint time
+    );
+    event Redemption(
+        address indexed user,
+        address indexed outputToken,
+        uint inputAmount,
+        uint outputAmount,
+        uint time
+    );
 
     modifier onlyMethodologist() {
-        require(msg.sender == methodologist, "IndexToken: caller is not the methodologist");
+        require(
+            msg.sender == methodologist,
+            "IndexToken: caller is not the methodologist"
+        );
         _;
     }
 
@@ -118,11 +134,24 @@ contract IndexFactory is
         _;
     }
 
-    
+    /**
+     * @dev Initializes the contract with the given parameters.
+     * @param _token The address of the IndexToken contract.
+     * @param _chainlinkToken The address of the Chainlink token.
+     * @param _oracleAddress The address of the Chainlink oracle.
+     * @param _externalJobId The external job ID for Chainlink requests.
+     * @param _toUsdPriceFeed The address of the USD price feed.
+     * @param _weth The address of the WETH token.
+     * @param _quoter The address of the Uniswap V3 quoter.
+     * @param _swapRouterV3 The address of the Uniswap V3 swap router.
+     * @param _factoryV3 The address of the Uniswap V3 factory.
+     * @param _swapRouterV2 The address of the Uniswap V2 swap router.
+     * @param _factoryV2 The address of the Uniswap V2 factory.
+     */
     function initialize(
         address payable _token,
-        address _chainlinkToken, 
-        address _oracleAddress, 
+        address _chainlinkToken,
+        address _oracleAddress,
         bytes32 _externalJobId,
         address _toUsdPriceFeed,
         //addresses
@@ -133,7 +162,6 @@ contract IndexFactory is
         address _swapRouterV2,
         address _factoryV2
     ) external initializer {
-
         __Ownable_init();
         __Pausable_init();
         indexToken = IndexToken(_token);
@@ -158,165 +186,277 @@ contract IndexFactory is
         baseUrl = "https://app.nexlabs.io/api/allFundingRates";
         urlParams = "?multiplyFunc=18&timesNegFund=true&arrays=true";
         // s_requestCount = 1;
+        feeReceiver = msg.sender;
     }
 
-  /**
-    * @dev Sets the price feed address of the native coin to USD from the Chainlink oracle.
-    * @param _toUsdPricefeed The address of native coin to USD price feed.
-    */    
+    /**
+     * @dev Sets the fee receiver address.
+     * @param _feeReceiver The address of the fee receiver.
+     */
+    function setFeeReceiver(address _feeReceiver) public onlyOwner {
+        feeReceiver = _feeReceiver;
+        emit FeeReceiverSet(_feeReceiver);
+    }
+
+    /**
+     * @dev Sets the price feed address of the native coin to USD from the Chainlink oracle.
+     * @param _toUsdPricefeed The address of native coin to USD price feed.
+     */
     function setPriceFeed(address _toUsdPricefeed) external onlyOwner {
-        require(_toUsdPricefeed != address(0), "ICO: Price feed address cannot be zero address");
-        toUsdPriceFeed = AggregatorV3Interface(_toUsdPricefeed);        
+        require(
+            _toUsdPricefeed != address(0),
+            "ICO: Price feed address cannot be zero address"
+        );
+        toUsdPriceFeed = AggregatorV3Interface(_toUsdPricefeed);
     }
 
-    
-    function _toWei(int256 _amount, uint8 _amountDecimals, uint8 _chainDecimals) private pure returns (int256) {        
+    /**
+     * @dev Converts an amount to Wei based on the given decimals.
+     * @param _amount The amount to convert.
+     * @param _amountDecimals The decimals of the amount.
+     * @param _chainDecimals The decimals of the chain.
+     * @return The amount in Wei.
+     */
+    function _toWei(
+        int256 _amount,
+        uint8 _amountDecimals,
+        uint8 _chainDecimals
+    ) private pure returns (int256) {
         if (_chainDecimals > _amountDecimals)
-            return _amount * int256(10 **(_chainDecimals - _amountDecimals));
-        else
-            return _amount * int256(10 **(_amountDecimals - _chainDecimals));
+            return _amount * int256(10 ** (_chainDecimals - _amountDecimals));
+        else return _amount * int256(10 ** (_amountDecimals - _chainDecimals));
     }
 
+    /**
+     * @dev Returns the price in Wei.
+     * @return The price in Wei.
+     */
     function priceInWei() public view returns (uint256) {
-        (,int price,,,) = toUsdPriceFeed.latestRoundData();
+        (, int price, , , ) = toUsdPriceFeed.latestRoundData();
         uint8 priceFeedDecimals = toUsdPriceFeed.decimals();
         price = _toWei(price, priceFeedDecimals, 18);
         return uint256(price);
     }
-    
 
-
+    /**
+     * @dev Sets the fee rate. The new fee should be between 1 to 100 (0.01% - 1%).
+     * @param _newFee The new fee rate.
+     */
     //Notice: newFee should be between 1 to 100 (0.01% - 1%)
-  function setFeeRate(uint8 _newFee) public onlyOwner {
-    uint256 distance = block.timestamp - latestFeeUpdate;
-    require(distance / 60 / 60 > 12, "You should wait at least 12 hours after the latest update");
-    require(_newFee <= 100 && _newFee >= 1, "The newFee should be between 1 and 100 (0.01% - 1%)");
-    feeRate = _newFee;
-    latestFeeUpdate = block.timestamp;
-  }
+    function setFeeRate(uint8 _newFee) public onlyOwner {
+        uint256 distance = block.timestamp - latestFeeUpdate;
+        require(
+            distance / 60 / 60 > 12,
+            "You should wait at least 12 hours after the latest update"
+        );
+        require(
+            _newFee <= 100 && _newFee >= 1,
+            "The newFee should be between 1 and 100 (0.01% - 1%)"
+        );
+        feeRate = _newFee;
+        latestFeeUpdate = block.timestamp;
+    }
 
-   /**
-    * @dev The contract's fallback function that does not allow direct payments to the contract.
-    * @notice Prevents users from sending ether directly to the contract by reverting the transaction.
-    */
+    /**
+     * @dev The contract's fallback function that does not allow direct payments to the contract.
+     * @notice Prevents users from sending ether directly to the contract by reverting the transaction.
+     */
     receive() external payable {
         // revert DoNotSendFundsDirectlyToTheContract();
     }
 
-    function concatenation(string memory a, string memory b) public pure returns (string memory) {
+    /**
+     * @dev Concatenates two strings.
+     * @param a The first string.
+     * @param b The second string.
+     * @return The concatenated string.
+     */
+    function concatenation(
+        string memory a,
+        string memory b
+    ) public pure returns (string memory) {
         return string(bytes.concat(bytes(a), bytes(b)));
     }
 
-    function setUrl(string memory _beforeAddress, string memory _afterAddress) public onlyOwner{
-    baseUrl = _beforeAddress;
-    urlParams = _afterAddress;
+    /**
+     * @dev Sets the base URL and URL parameters.
+     * @param _beforeAddress The base URL.
+     * @param _afterAddress The URL parameters.
+     */
+    function setUrl(
+        string memory _beforeAddress,
+        string memory _afterAddress
+    ) public onlyOwner {
+        baseUrl = _beforeAddress;
+        urlParams = _afterAddress;
     }
-    
-    function requestAssetsData(
-    )
-        public
-        returns(bytes32)
-    {
-        
+
+    /**
+     * @dev Requests asset data from the Chainlink oracle.
+     * @return The request ID.
+     */
+    function requestAssetsData() public returns (bytes32) {
         string memory url = concatenation(baseUrl, urlParams);
-        Chainlink.Request memory req = buildChainlinkRequest(externalJobId, address(this), this.fulfillAssetsData.selector);
+        Chainlink.Request memory req = buildChainlinkRequest(
+            externalJobId,
+            address(this),
+            this.fulfillAssetsData.selector
+        );
         req.add("get", url);
         req.add("path1", "results,tokens");
         req.add("path2", "results,marketShares");
         req.add("path3", "results,swapVersions");
         // sendOperatorRequest(req, oraclePayment);
-        return sendChainlinkRequestTo(chainlinkOracleAddress(), req, oraclePayment);
+        return
+            sendChainlinkRequestTo(
+                chainlinkOracleAddress(),
+                req,
+                oraclePayment
+            );
     }
 
-  function fulfillAssetsData(bytes32 requestId, address[] memory _tokens, uint256[] memory _marketShares, uint256[] memory _swapVersions)
-    public
-    recordChainlinkFulfillment(requestId)
-  {
-    
-    address[] memory tokens0 = _tokens;
-    uint[] memory marketShares0 = _marketShares;
-    uint[] memory swapVersions0 = _swapVersions;
+    /**
+     * @dev Fulfills the asset data request from the Chainlink oracle.
+     * @param requestId The request ID.
+     * @param _tokens The list of token addresses.
+     * @param _marketShares The list of market shares.
+     * @param _swapVersions The list of swap versions.
+     */
+    function fulfillAssetsData(
+        bytes32 requestId,
+        address[] memory _tokens,
+        uint256[] memory _marketShares,
+        uint256[] memory _swapVersions
+    ) public recordChainlinkFulfillment(requestId) {
+        address[] memory tokens0 = _tokens;
+        uint[] memory marketShares0 = _marketShares;
+        uint[] memory swapVersions0 = _swapVersions;
 
-    // //save mappings
-    for(uint i =0; i < tokens0.length; i++){
-        oracleList[i] = tokens0[i];
-        tokenOracleListIndex[tokens0[i]] = i;
-        tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
-        tokenSwapVersion[tokens0[i]] = swapVersions0[i];
-        if(totalCurrentList == 0){
-            currentList[i] = tokens0[i];
-            tokenCurrentMarketShare[tokens0[i]] = marketShares0[i];
-            tokenCurrentListIndex[tokens0[i]] = i;
+        // //save mappings
+        for (uint i = 0; i < tokens0.length; i++) {
+            oracleList[i] = tokens0[i];
+            tokenOracleListIndex[tokens0[i]] = i;
+            tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
+            tokenSwapVersion[tokens0[i]] = swapVersions0[i];
+            if (totalCurrentList == 0) {
+                currentList[i] = tokens0[i];
+                tokenCurrentMarketShare[tokens0[i]] = marketShares0[i];
+                tokenCurrentListIndex[tokens0[i]] = i;
+            }
         }
-    }
-    totalOracleList = tokens0.length;
-    if(totalCurrentList == 0){
-        totalCurrentList  = tokens0.length;
-    }
-    lastUpdateTime = block.timestamp;
-    }
-
-
-    function mockFillAssetsList(address[] memory _tokens, uint256[] memory _marketShares, uint256[] memory _swapVersions)
-    public
-    onlyOwner
-  {
-    
-    address[] memory tokens0 = _tokens;
-    uint[] memory marketShares0 = _marketShares;
-    uint[] memory swapVersions0 = _swapVersions;
-
-    // //save mappings
-    for(uint i =0; i < tokens0.length; i++){
-        oracleList[i] = tokens0[i];
-        tokenOracleListIndex[tokens0[i]] = i;
-        tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
-        tokenSwapVersion[tokens0[i]] = swapVersions0[i];
-        if(totalCurrentList == 0){
-            currentList[i] = tokens0[i];
-            tokenCurrentMarketShare[tokens0[i]] = marketShares0[i];
-            tokenCurrentListIndex[tokens0[i]] = i;
+        totalOracleList = tokens0.length;
+        if (totalCurrentList == 0) {
+            totalCurrentList = tokens0.length;
         }
-    }
-    totalOracleList = tokens0.length;
-    if(totalCurrentList == 0){
-        totalCurrentList  = tokens0.length;
-    }
-    lastUpdateTime = block.timestamp;
+        lastUpdateTime = block.timestamp;
     }
 
-    
+    /**
+     * @dev Mock function to fill the asset list for testing purposes.
+     * @param _tokens The list of token addresses.
+     * @param _marketShares The list of market shares.
+     * @param _swapVersions The list of swap versions.
+     */
+    function mockFillAssetsList(
+        address[] memory _tokens,
+        uint256[] memory _marketShares,
+        uint256[] memory _swapVersions
+    ) public onlyOwner {
+        address[] memory tokens0 = _tokens;
+        uint[] memory marketShares0 = _marketShares;
+        uint[] memory swapVersions0 = _swapVersions;
 
-    
+        // //save mappings
+        for (uint i = 0; i < tokens0.length; i++) {
+            oracleList[i] = tokens0[i];
+            tokenOracleListIndex[tokens0[i]] = i;
+            tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
+            tokenSwapVersion[tokens0[i]] = swapVersions0[i];
+            if (totalCurrentList == 0) {
+                currentList[i] = tokens0[i];
+                tokenCurrentMarketShare[tokens0[i]] = marketShares0[i];
+                tokenCurrentListIndex[tokens0[i]] = i;
+            }
+        }
+        totalOracleList = tokens0.length;
+        if (totalCurrentList == 0) {
+            totalCurrentList = tokens0.length;
+        }
+        lastUpdateTime = block.timestamp;
+    }
+
+    /**
+     * @dev Pauses the contract.
+     */
     function pause() external onlyOwner {
         _pause();
     }
-
+    
+    /**
+     * @dev Unpauses the contract.
+     */
     function unpause() external onlyOwner {
         _unpause();
     }
-
     
-    
-
-    function _swapSingle(address tokenIn, address tokenOut, uint amountIn, address _recipient, uint _swapVersion) internal returns(uint){
-        uint amountOut = getAmountOut(tokenIn, tokenOut, amountIn, _swapVersion);
+    /**
+     * @dev Internal function to swap a single token.
+     * @param tokenIn The address of the input token.
+     * @param tokenOut The address of the output token.
+     * @param amountIn The amount of input token.
+     * @param _recipient The address of the recipient.
+     * @param _swapVersion The swap version (2 for Uniswap V2, 3 for Uniswap V3).
+     * @return The amount of output token.
+     */
+    function _swapSingle(
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        address _recipient,
+        uint _swapVersion
+    ) internal returns (uint) {
+        uint amountOut = getAmountOut(
+            tokenIn,
+            tokenOut,
+            amountIn,
+            _swapVersion
+        );
         uint swapAmountOut;
-        if(amountOut > 0){
-           swapAmountOut = indexToken.swapSingle(tokenIn, tokenOut, amountIn, _recipient, _swapVersion);
+        if (amountOut > 0) {
+            swapAmountOut = indexToken.swapSingle(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                _recipient,
+                _swapVersion
+            );
         }
-        if(_swapVersion == 3){
+        if (_swapVersion == 3) {
             return swapAmountOut;
-        }else{
+        } else {
             return amountOut;
         }
     }
-
-    function swap(address tokenIn, address tokenOut, uint amountIn, address _recipient, uint _swapVersion) internal returns(uint){
-        
-            if(_swapVersion == 3){
-                IERC20(tokenIn).approve(address(swapRouterV3), amountIn);
-                ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+    
+    /**
+     * @dev Internal function to swap tokens.
+     * @param tokenIn The address of the input token.
+     * @param tokenOut The address of the output token.
+     * @param amountIn The amount of input token.
+     * @param _recipient The address of the recipient.
+     * @param _swapVersion The swap version (2 for Uniswap V2, 3 for Uniswap V3).
+     * @return The amount of output token.
+     */
+    function swap(
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        address _recipient,
+        uint _swapVersion
+    ) internal returns (uint) {
+        if (_swapVersion == 3) {
+            IERC20(tokenIn).approve(address(swapRouterV3), amountIn);
+            ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
                 .ExactInputSingleParams({
                     tokenIn: tokenIn,
                     tokenOut: tokenOut,
@@ -326,236 +466,371 @@ contract IndexFactory is
                     deadline: block.timestamp,
                     amountIn: amountIn,
                     amountOutMinimum: 0,
-                    // NOTE: In production, this value can be used to set the limit
-                    // for the price the swap will push the pool to,
-                    // which can help protect against price impact
                     sqrtPriceLimitX96: 0
                 });
-                uint finalAmountOut = swapRouterV3.exactInputSingle(params);
-                return finalAmountOut;
-            } else{
-                address[] memory path = new address[](2);
-                path[0] = tokenIn;
-                path[1] = tokenOut;
+            uint finalAmountOut = swapRouterV3.exactInputSingle(params);
+            return finalAmountOut;
+        } else {
+            address[] memory path = new address[](2);
+            path[0] = tokenIn;
+            path[1] = tokenOut;
 
-                IERC20(tokenIn).approve(address(swapRouterV2), amountIn);
-                swapRouterV2.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-                    amountIn, //amountIn
-                    0, //amountOutMin
-                    path, //path
-                    _recipient, //to
-                    block.timestamp //deadline
-                );
-                return 0;
-            }
+            IERC20(tokenIn).approve(address(swapRouterV2), amountIn);
+            swapRouterV2.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                amountIn, //amountIn
+                0, //amountOutMin
+                path, //path
+                _recipient, //to
+                block.timestamp //deadline
+            );
+            return 0;
+        }
     }
 
+    /**
+     * @dev Issues index tokens by swapping the input token.
+     * @param _tokenIn The address of the input token.
+     * @param _amountIn The amount of input token.
+     * @param _tokenInSwapVersion The swap version of the input token.
+     */
+    function issuanceIndexTokens(
+        address _tokenIn,
+        uint _amountIn,
+        uint _tokenInSwapVersion
+    ) public {
+        uint feeAmount = (_amountIn * feeRate) / 10000;
 
-
-
-    function issuanceIndexTokens(address _tokenIn, uint _amountIn, uint _tokenInSwapVersion) public {
-        uint feeAmount = (_amountIn*feeRate)/10000;
-        
         uint firstPortfolioValue = getPortfolioBalance();
 
-        IERC20(_tokenIn).transferFrom(msg.sender, address(indexToken), _amountIn);
-        IERC20(_tokenIn).transferFrom(msg.sender, owner(), feeAmount);
-        uint wethAmount = _swapSingle(_tokenIn, address(weth), _amountIn, address(indexToken), _tokenInSwapVersion);
-        
+        IERC20(_tokenIn).transferFrom(
+            msg.sender,
+            address(indexToken),
+            _amountIn + feeAmount
+        );
+        uint wethAmountBeforFee = _swapSingle(
+            _tokenIn,
+            address(weth),
+            _amountIn + feeAmount,
+            address(this),
+            _tokenInSwapVersion
+        );
+        uint feeWethAmount = (wethAmountBeforFee * feeRate) / 10000;
+        uint wethAmount = wethAmountBeforFee - feeWethAmount;
 
+        //transfer weth to the index token
+        weth.transfer(address(indexToken), wethAmount);
+        //giving fee to the fee receiver
+        weth.transfer(address(feeReceiver), feeWethAmount);
         //swap
-        for(uint i = 0; i < totalCurrentList; i++) {
-        if(currentList[i] != address(weth)){
-        _swapSingle(address(weth), currentList[i], wethAmount*tokenCurrentMarketShare[currentList[i]]/100e18, address(indexToken), tokenSwapVersion[currentList[i]]);
+        for (uint i = 0; i < totalCurrentList; i++) {
+            if (currentList[i] != address(weth)) {
+                _swapSingle(
+                    address(weth),
+                    currentList[i],
+                    (wethAmount * tokenCurrentMarketShare[currentList[i]]) /
+                        100e18,
+                    address(indexToken),
+                    tokenSwapVersion[currentList[i]]
+                );
+            }
         }
+        //mint index tokens
+        uint amountToMint;
+        if (indexToken.totalSupply() > 0) {
+            amountToMint =
+                (indexToken.totalSupply() * wethAmount) /
+                firstPortfolioValue;
+        } else {
+            uint price = priceInWei();
+            amountToMint = (wethAmount * price) / 1e16;
         }
-       //mint index tokens
-       uint amountToMint;
-       if(indexToken.totalSupply() > 0){
-        amountToMint = (indexToken.totalSupply()*wethAmount)/firstPortfolioValue;
-       }else{
-        uint price = priceInWei();
-        amountToMint = (wethAmount*price)/1e16;
-       }
         indexToken.mint(msg.sender, amountToMint);
 
-        emit Issuanced(msg.sender, _tokenIn, _amountIn, amountToMint, block.timestamp);
+        emit Issuanced(
+            msg.sender,
+            _tokenIn,
+            _amountIn,
+            amountToMint,
+            block.timestamp
+        );
     }
 
+    /**
+     * @dev Issues index tokens with ETH.
+     * @param _inputAmount The amount of ETH input.
+     */
     function issuanceIndexTokensWithEth(uint _inputAmount) public payable {
-        uint feeAmount = (_inputAmount*feeRate)/10000;
+        uint feeAmount = (_inputAmount * feeRate) / 10000;
         uint finalAmount = _inputAmount + feeAmount;
         require(msg.value >= finalAmount, "lower than required amount");
-        //transfer fee to the owner
-        (bool _success,) = owner().call{value: fee}("");
-        require(_success, "transfer eth fee to the owner failed");
-
-        weth.deposit{value: _inputAmount}();
+        weth.deposit{value: finalAmount}();
+        weth.transfer(address(feeReceiver), feeAmount);
         weth.transfer(address(indexToken), _inputAmount);
         uint firstPortfolioValue = getPortfolioBalance();
         uint wethAmount = _inputAmount;
         //swap
-        for(uint i = 0; i < totalCurrentList; i++) {
-        if(currentList[i] != address(weth)){
-        _swapSingle(address(weth), currentList[i], wethAmount*tokenCurrentMarketShare[currentList[i]]/100e18, address(indexToken), tokenSwapVersion[currentList[i]]);
+        for (uint i = 0; i < totalCurrentList; i++) {
+            if (currentList[i] != address(weth)) {
+                _swapSingle(
+                    address(weth),
+                    currentList[i],
+                    (wethAmount * tokenCurrentMarketShare[currentList[i]]) /
+                        100e18,
+                    address(indexToken),
+                    tokenSwapVersion[currentList[i]]
+                );
+            }
         }
+        //mint index tokens
+        uint amountToMint;
+        if (indexToken.totalSupply() > 0) {
+            amountToMint =
+                (indexToken.totalSupply() * wethAmount) /
+                firstPortfolioValue;
+        } else {
+            uint price = priceInWei();
+            amountToMint = (wethAmount * price) / 1e16;
         }
-       //mint index tokens
-       uint amountToMint;
-       if(indexToken.totalSupply() > 0){
-        amountToMint = (indexToken.totalSupply()*wethAmount)/firstPortfolioValue;
-       }else{
-        uint price = priceInWei();
-        amountToMint = (wethAmount*price)/1e16;
-       }
         indexToken.mint(msg.sender, amountToMint);
-        emit Issuanced(msg.sender, address(weth), _inputAmount, amountToMint, block.timestamp);
-
+        emit Issuanced(
+            msg.sender,
+            address(weth),
+            _inputAmount,
+            amountToMint,
+            block.timestamp
+        );
     }
 
-
-    function redemption(uint amountIn, address _tokenOut, uint _tokenOutSwapVersion) public returns(uint) {
-        // uint firstPortfolioValue = getPortfolioBalance();
-        uint burnPercent = amountIn*1e18/indexToken.totalSupply();
-        // uint burnPercent = 1e18;
-
+    /**
+     * @dev Redeems index tokens for the specified output token.
+     * @param amountIn The amount of index tokens to redeem.
+     * @param _tokenOut The address of the output token.
+     * @param _tokenOutSwapVersion The swap version of the output token.
+     * @return The amount of output token.
+     */
+    function redemption(
+        uint amountIn,
+        address _tokenOut,
+        uint _tokenOutSwapVersion
+    ) public returns (uint) {
+        uint burnPercent = (amountIn * 1e18) / indexToken.totalSupply();
+        
         indexToken.burn(msg.sender, amountIn);
 
         uint outputAmount;
         //swap
-        for(uint i = 0; i < totalCurrentList; i++) {
-        uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(indexToken)))/1e18;
-        if(currentList[i] != address(weth)){
-        uint swapAmountOut = _swapSingle(currentList[i], address(weth), swapAmount, address(this), tokenSwapVersion[currentList[i]]);
-        outputAmount += swapAmountOut;
-        }else{
-        indexToken.wethTransfer(address(this), swapAmount);
-        outputAmount += swapAmount;
+        for (uint i = 0; i < totalCurrentList; i++) {
+            uint swapAmount = (burnPercent *
+                IERC20(currentList[i]).balanceOf(address(indexToken))) / 1e18;
+            if (currentList[i] != address(weth)) {
+                uint swapAmountOut = _swapSingle(
+                    currentList[i],
+                    address(weth),
+                    swapAmount,
+                    address(this),
+                    tokenSwapVersion[currentList[i]]
+                );
+                outputAmount += swapAmountOut;
+            } else {
+                indexToken.wethTransfer(address(this), swapAmount);
+                outputAmount += swapAmount;
+            }
         }
-        }
-        
-        // uint outputAmount = weth.balanceOf(address(this));
-        uint ownerFee = outputAmount*feeRate/10000;
-        if(_tokenOut == address(weth)){
-            // weth.transfer(msg.sender, outputAmount - fee);
-            weth.withdraw(outputAmount);
-            (bool _ownerSuccess,) = owner().call{value: ownerFee}("");
-            require(_ownerSuccess, "transfer eth fee to the owner failed");
-            (bool _userSuccess,) = payable(msg.sender).call{value: outputAmount - ownerFee}("");
+        uint ownerFee = (outputAmount * feeRate) / 10000;
+        if (_tokenOut == address(weth)) {
+            weth.withdraw(outputAmount - ownerFee);
+            weth.transfer(address(feeReceiver), ownerFee);
+            (bool _userSuccess, ) = payable(msg.sender).call{
+                value: outputAmount - ownerFee
+            }("");
             require(_userSuccess, "transfer eth fee to the user failed");
-            emit Redemption(msg.sender, _tokenOut, amountIn, outputAmount - ownerFee, block.timestamp);
+            emit Redemption(
+                msg.sender,
+                _tokenOut,
+                amountIn,
+                outputAmount - ownerFee,
+                block.timestamp
+            );
             return outputAmount - ownerFee;
-        }else{
-            weth.withdraw(ownerFee);
-            (bool _success,) = owner().call{value: ownerFee}("");
-            require(_success, "transfer eth fee to the owner failed");
-            uint reallOut = swap(address(weth), _tokenOut, outputAmount - ownerFee, msg.sender, _tokenOutSwapVersion);
-            emit Redemption(msg.sender, _tokenOut, amountIn, reallOut, block.timestamp);
+        } else {
+            weth.transfer(address(feeReceiver), ownerFee);
+            uint reallOut = swap(
+                address(weth),
+                _tokenOut,
+                outputAmount - ownerFee,
+                msg.sender,
+                _tokenOutSwapVersion
+            );
+            emit Redemption(
+                msg.sender,
+                _tokenOut,
+                amountIn,
+                reallOut,
+                block.timestamp
+            );
             return reallOut;
         }
-
-
     }
 
-
-    function getExactAmountOut(address tokenIn, address tokenOut, uint amountIn, uint _swapVersion) public returns(uint finalAmountOut) {
-        if(_swapVersion == 3){
-        uint v3AmountOut;
-        try quoter.quoteExactInputSingle(tokenIn, tokenOut, 3000, amountIn, 0) returns (uint _amount){
-            v3AmountOut = _amount;
-        } catch {
-            v3AmountOut = 0;
-        }
-        return v3AmountOut;
-        }else{
-        address[] memory path = new address[](2);
-        path[0] = tokenIn;
-        path[1] = tokenOut;
-        
-        
-        uint v2amountOut;
-        try swapRouterV2.getAmountsOut(amountIn, path) returns (uint[] memory _amounts){
-            v2amountOut = _amounts[1];
-        } catch {
-            v2amountOut = 0;
-        }
-        return v2amountOut;
-        }
-    }
-
-
-    function getExactAmountOut2(address tokenIn, address tokenOut, uint amountIn) public returns(uint finalAmountOut) {
-        uint v3AmountOut;
-        try quoter.quoteExactInputSingle(tokenIn, tokenOut, 3000, amountIn, 0) returns (uint _amount){
-            v3AmountOut = _amount;
-        } catch {
-            v3AmountOut = 0;
-        }
-
-        address[] memory path = new address[](2);
-        path[0] = tokenIn;
-        path[1] = tokenOut;
-        
-        
-        uint v2amountOut;
-        try swapRouterV2.getAmountsOut(amountIn, path) returns (uint[] memory _amounts){
-            v2amountOut = _amounts[1];
-        } catch {
-            v2amountOut = 0;
-        }
-        
-        finalAmountOut = v3AmountOut;
-        
-    }
-
-    
-
-    function getAmountOut(address tokenIn, address tokenOut, uint amountIn, uint _swapVersion) public view returns(uint finalAmountOut) {
-        if(amountIn > 0){
-        if(_swapVersion == 3){
-           finalAmountOut = estimateAmountOut(tokenIn, tokenOut, uint128(amountIn));
-        }else {
+    /**
+     * @dev Gets the exact amount out for a token swap.
+     * @param tokenIn The address of the input token.
+     * @param tokenOut The address of the output token.
+     * @param amountIn The amount of input token.
+     * @param _swapVersion The swap version (2 for Uniswap V2, 3 for Uniswap V3).
+     * @return finalAmountOut The exact amount of output token.
+     */
+    function getExactAmountOut(
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint _swapVersion
+    ) public returns (uint finalAmountOut) {
+        if (_swapVersion == 3) {
+            uint v3AmountOut;
+            try
+                quoter.quoteExactInputSingle(
+                    tokenIn,
+                    tokenOut,
+                    3000,
+                    amountIn,
+                    0
+                )
+            returns (uint _amount) {
+                v3AmountOut = _amount;
+            } catch {
+                v3AmountOut = 0;
+            }
+            return v3AmountOut;
+        } else {
             address[] memory path = new address[](2);
             path[0] = tokenIn;
             path[1] = tokenOut;
-            uint[] memory v2amountOut = swapRouterV2.getAmountsOut(amountIn, path);
-            finalAmountOut = v2amountOut[1];
+
+            uint v2amountOut;
+            try swapRouterV2.getAmountsOut(amountIn, path) returns (
+                uint[] memory _amounts
+            ) {
+                v2amountOut = _amounts[1];
+            } catch {
+                v2amountOut = 0;
+            }
+            return v2amountOut;
         }
+    }
+
+    /**
+     * @dev Gets the exact amount out for a token swap (alternative method).
+     * @param tokenIn The address of the input token.
+     * @param tokenOut The address of the output token.
+     * @param amountIn The amount of input token.
+     * @return finalAmountOut The exact amount of output token.
+     */
+    function getExactAmountOut2(
+        address tokenIn,
+        address tokenOut,
+        uint amountIn
+    ) public returns (uint finalAmountOut) {
+        uint v3AmountOut;
+        try
+            quoter.quoteExactInputSingle(tokenIn, tokenOut, 3000, amountIn, 0)
+        returns (uint _amount) {
+            v3AmountOut = _amount;
+        } catch {
+            v3AmountOut = 0;
+        }
+
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+
+        uint v2amountOut;
+        try swapRouterV2.getAmountsOut(amountIn, path) returns (
+            uint[] memory _amounts
+        ) {
+            v2amountOut = _amounts[1];
+        } catch {
+            v2amountOut = 0;
+        }
+
+        finalAmountOut = v3AmountOut;
+    }
+
+    /**
+     * @dev Gets the amount out for a token swap.
+     * @param tokenIn The address of the input token.
+     * @param tokenOut The address of the output token.
+     * @param amountIn The amount of input token.
+     * @param _swapVersion The swap version (2 for Uniswap V2, 3 for Uniswap V3).
+     * @return finalAmountOut The amount of output token.
+     */
+    function getAmountOut(
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint _swapVersion
+    ) public view returns (uint finalAmountOut) {
+        if (amountIn > 0) {
+            if (_swapVersion == 3) {
+                finalAmountOut = estimateAmountOut(
+                    tokenIn,
+                    tokenOut,
+                    uint128(amountIn)
+                );
+            } else {
+                address[] memory path = new address[](2);
+                path[0] = tokenIn;
+                path[1] = tokenOut;
+                uint[] memory v2amountOut = swapRouterV2.getAmountsOut(
+                    amountIn,
+                    path
+                );
+                finalAmountOut = v2amountOut[1];
+            }
         }
         return finalAmountOut;
     }
 
-
-    function getPortfolioBalance() public view returns(uint){
+    /**
+     * @dev Gets the portfolio balance in WETH.
+     * @return The portfolio balance in WETH.
+     */
+    function getPortfolioBalance() public view returns (uint) {
         uint totalValue;
-        for(uint i = 0; i < totalCurrentList; i++) {
-            if(currentList[i] == address(weth)){
-            totalValue += IERC20(currentList[i]).balanceOf(address(indexToken));
-            }else{
-            uint value = getAmountOut(currentList[i], address(weth), IERC20(currentList[i]).balanceOf(address(indexToken)), tokenSwapVersion[currentList[i]]);
-            totalValue += value;
+        for (uint i = 0; i < totalCurrentList; i++) {
+            if (currentList[i] == address(weth)) {
+                totalValue += IERC20(currentList[i]).balanceOf(
+                    address(indexToken)
+                );
+            } else {
+                uint value = getAmountOut(
+                    currentList[i],
+                    address(weth),
+                    IERC20(currentList[i]).balanceOf(address(indexToken)),
+                    tokenSwapVersion[currentList[i]]
+                );
+                totalValue += value;
             }
         }
         return totalValue;
     }
 
-
-
-
+    /**
+     * @dev Estimates the amount out for a token swap using Uniswap V3.
+     * @param tokenIn The address of the input token.
+     * @param tokenOut The address of the output token.
+     * @param amountIn The amount of input token.
+     * @return amountOut The estimated amount of output token.
+     */
     function estimateAmountOut(
         address tokenIn,
         address tokenOut,
         uint128 amountIn
     ) public view returns (uint amountOut) {
-        
-        address _pool = factoryV3.getPool(
-            tokenIn,
-            tokenOut,
-            3000
-        );
+        address _pool = factoryV3.getPool(tokenIn, tokenOut, 3000);
 
         // (int24 tick, ) = OracleLibrary.consult(_pool, secondsAgo);
-        (int24 tick ) = OracleLibrary.getLatestTick(_pool);
+        int24 tick = OracleLibrary.getLatestTick(_pool);
         amountOut = OracleLibrary.getQuoteAtTick(
             tick,
             amountIn,
@@ -564,119 +839,192 @@ contract IndexFactory is
         );
     }
 
-    function getIssuanceAmountOut(uint _amountIn, address _tokenIn, uint _swapVersion) public view returns(uint){
-        if(_tokenIn == address(weth)){
+    /**
+     * @dev Gets the issuance amount out for a given input amount and token.
+     * @param _amountIn The amount of input token.
+     * @param _tokenIn The address of the input token.
+     * @param _swapVersion The swap version of the input token.
+     * @return The issuance amount out.
+     */
+    function getIssuanceAmountOut(
+        uint _amountIn,
+        address _tokenIn,
+        uint _swapVersion
+    ) public view returns (uint) {
+        if (_tokenIn == address(weth)) {
             uint portfolioValue = getPortfolioBalance();
             uint totalSupply = indexToken.totalSupply();
             uint amountOut;
-            if(totalSupply > 0){
-                amountOut = (totalSupply*_amountIn)/portfolioValue;
-            }else{
+            if (totalSupply > 0) {
+                amountOut = (totalSupply * _amountIn) / portfolioValue;
+            } else {
                 amountOut = _amountIn;
             }
             return amountOut;
-        }else{
-            uint wethAmount = getAmountOut(_tokenIn, address(weth), _amountIn, _swapVersion);
+        } else {
+            uint wethAmount = getAmountOut(
+                _tokenIn,
+                address(weth),
+                _amountIn,
+                _swapVersion
+            );
             uint portfolioValue = getPortfolioBalance();
             uint totalSupply = indexToken.totalSupply();
             uint amountOut;
-            if(totalSupply > 0){
-                amountOut = (totalSupply*wethAmount)/portfolioValue;
-            }else{
+            if (totalSupply > 0) {
+                amountOut = (totalSupply * wethAmount) / portfolioValue;
+            } else {
                 uint price = priceInWei();
-                amountOut = (wethAmount*price)/1e16;
+                amountOut = (wethAmount * price) / 1e16;
             }
             return amountOut;
         }
     }
 
-
-    function getIssuanceAmountOut2(uint _amountIn, address _tokenIn, uint _swapVersion) public returns(uint){
-        if(_tokenIn == address(weth)){
+    /**
+     * @dev Gets the issuance amount out for a given input amount and token (alternative method).
+     * @param _amountIn The amount of input token.
+     * @param _tokenIn The address of the input token.
+     * @param _swapVersion The swap version of the input token.
+     * @return The issuance amount out.
+     */
+    function getIssuanceAmountOut2(
+        uint _amountIn,
+        address _tokenIn,
+        uint _swapVersion
+    ) public returns (uint) {
+        if (_tokenIn == address(weth)) {
             uint portfolioValue = getPortfolioBalance();
             uint totalSupply = indexToken.totalSupply();
             uint amountOut;
-            if(totalSupply > 0){
-                amountOut = (totalSupply*_amountIn)/portfolioValue;
-            }else{
+            if (totalSupply > 0) {
+                amountOut = (totalSupply * _amountIn) / portfolioValue;
+            } else {
                 uint price = priceInWei();
-                amountOut = (_amountIn*price)/1e16;
+                amountOut = (_amountIn * price) / 1e16;
             }
             return amountOut;
-        }else{
-            // uint wethAmount = getAmountOut(_tokenIn, address(weth), _amountIn, _swapVersion);
-            uint wethAmount = getExactAmountOut(_tokenIn, address(weth), _amountIn, _swapVersion);
+        } else {
+            uint wethAmount = getExactAmountOut(
+                _tokenIn,
+                address(weth),
+                _amountIn,
+                _swapVersion
+            );
             uint portfolioValue = getPortfolioBalance();
             uint totalSupply = indexToken.totalSupply();
             uint amountOut;
-            if(totalSupply > 0){
-                amountOut = (totalSupply*wethAmount)/portfolioValue;
-            }else{
+            if (totalSupply > 0) {
+                amountOut = (totalSupply * wethAmount) / portfolioValue;
+            } else {
                 uint price = priceInWei();
-                amountOut = (wethAmount*price)/1e16;
+                amountOut = (wethAmount * price) / 1e16;
             }
             return amountOut;
         }
     }
 
-    function getRedemptionAmountOut(uint _amountIn, address _tokenOut, uint _swapVersion) public view returns(uint){
+    /**
+     * @dev Gets the redemption amount out for a given input amount and token.
+     * @param _amountIn The amount of input token.
+     * @param _tokenOut The address of the output token.
+     * @param _swapVersion The swap version of the output token.
+     * @return The redemption amount out.
+     */
+    function getRedemptionAmountOut(
+        uint _amountIn,
+        address _tokenOut,
+        uint _swapVersion
+    ) public view returns (uint) {
         uint firstPortfolioValue = getPortfolioBalance();
-        uint burnPercent = _amountIn*1e18/indexToken.totalSupply();
-        uint outputWethAmount = (burnPercent*firstPortfolioValue)/1e18;
-        if(_tokenOut == address(weth)){
+        uint burnPercent = (_amountIn * 1e18) / indexToken.totalSupply();
+        uint outputWethAmount = (burnPercent * firstPortfolioValue) / 1e18;
+        if (_tokenOut == address(weth)) {
             return outputWethAmount;
-        }else{
-        uint outputTokenAmount = getAmountOut(address(weth), _tokenOut, outputWethAmount, _swapVersion);   
-        return outputTokenAmount;
+        } else {
+            uint outputTokenAmount = getAmountOut(
+                address(weth),
+                _tokenOut,
+                outputWethAmount,
+                _swapVersion
+            );
+            return outputTokenAmount;
         }
     }
 
-    function getRedemptionAmountOut2(uint _amountIn, address _tokenOut, uint _swapVersion) public returns(uint){
-        uint burnPercent = _amountIn*1e18/indexToken.totalSupply();
+    /**
+     * @dev Gets the redemption amount out for a given input amount and token (alternative method).
+     * @param _amountIn The amount of input token.
+     * @param _tokenOut The address of the output token.
+     * @param _swapVersion The swap version of the output token.
+     * @return The redemption amount out.
+     */
+    function getRedemptionAmountOut2(
+        uint _amountIn,
+        address _tokenOut,
+        uint _swapVersion
+    ) public returns (uint) {
+        uint burnPercent = (_amountIn * 1e18) / indexToken.totalSupply();
         uint outputAmount;
         //swap
-        for(uint i = 0; i < totalCurrentList; i++) {
-        if(currentList[i] != address(weth)){
-        uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(indexToken)))/1e18;
-        uint swapAmountOut = getExactAmountOut(currentList[i], address(weth), swapAmount, tokenSwapVersion[currentList[i]]);
-        outputAmount += swapAmountOut;
-        }else{
-        uint swapAmount = (burnPercent*IERC20(currentList[i]).balanceOf(address(indexToken)))/1e18;
-        outputAmount += swapAmount;
-        }
+        for (uint i = 0; i < totalCurrentList; i++) {
+            if (currentList[i] != address(weth)) {
+                uint swapAmount = (burnPercent *
+                    IERC20(currentList[i]).balanceOf(address(indexToken))) /
+                    1e18;
+                uint swapAmountOut = getExactAmountOut(
+                    currentList[i],
+                    address(weth),
+                    swapAmount,
+                    tokenSwapVersion[currentList[i]]
+                );
+                outputAmount += swapAmountOut;
+            } else {
+                uint swapAmount = (burnPercent *
+                    IERC20(currentList[i]).balanceOf(address(indexToken))) /
+                    1e18;
+                outputAmount += swapAmount;
+            }
         }
         return outputAmount;
-        // uint fee = outputAmount*feeRate/10000;
-        // outputAmount -= fee;
-        // if(_tokenOut == address(weth)){
-        //     return outputAmount;
-        // }else{
-        // // uint outputTokenAmount = getAmountOut(address(weth), _tokenOut, outputWethAmount, _swapVersion);   
-        // uint outputTokenAmount = getExactAmountOut(address(weth), _tokenOut, outputAmount, _swapVersion);   
-        // return outputTokenAmount;
-        // }
     }
 
-
-
+    /**
+     * @dev Reindexes and reweights the portfolio.
+     */
     function reIndexAndReweight() public onlyOwner {
-        for(uint i; i < totalCurrentList; i++) {
-            if(currentList[i] != address(weth)){
-            _swapSingle(currentList[i], address(weth), IERC20(currentList[i]).balanceOf(address(indexToken)), address(indexToken), tokenSwapVersion[currentList[i]]);
+        for (uint i; i < totalCurrentList; i++) {
+            if (currentList[i] != address(weth)) {
+                _swapSingle(
+                    currentList[i],
+                    address(weth),
+                    IERC20(currentList[i]).balanceOf(address(indexToken)),
+                    address(indexToken),
+                    tokenSwapVersion[currentList[i]]
+                );
             }
         }
         uint wethBalance = weth.balanceOf(address(indexToken));
-        for(uint i; i < totalOracleList; i++) {
-            if(currentList[i] != address(weth)){
-            _swapSingle(address(weth), oracleList[i], wethBalance*tokenOracleMarketShare[oracleList[i]]/100e18, address(indexToken), tokenSwapVersion[oracleList[i]]);
+        for (uint i; i < totalOracleList; i++) {
+            if (currentList[i] != address(weth)) {
+                _swapSingle(
+                    address(weth),
+                    oracleList[i],
+                    (wethBalance * tokenOracleMarketShare[oracleList[i]]) /
+                        100e18,
+                    address(indexToken),
+                    tokenSwapVersion[oracleList[i]]
+                );
             }
             //update current list
             currentList[i] = oracleList[i];
-            tokenCurrentMarketShare[oracleList[i]] = tokenOracleMarketShare[oracleList[i]];
-            tokenCurrentListIndex[oracleList[i]] = tokenOracleListIndex[oracleList[i]];
+            tokenCurrentMarketShare[oracleList[i]] = tokenOracleMarketShare[
+                oracleList[i]
+            ];
+            tokenCurrentListIndex[oracleList[i]] = tokenOracleListIndex[
+                oracleList[i]
+            ];
         }
         totalCurrentList = totalOracleList;
     }
-
-    
 }

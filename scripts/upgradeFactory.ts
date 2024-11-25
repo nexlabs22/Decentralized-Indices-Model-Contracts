@@ -1,5 +1,5 @@
 // import { goerliAnfiIndexToken, goerliUsdtAddress, goerliAnfiFactory, goerliAnfiNFT } from "../network";
-import { goerliAnfiFactoryAddress, goerliAnfiIndexTokenAddress, goerliEthUsdPriceFeed, goerliExternalJobIdBytes32, goerliFactoryV2Address, goerliFactoryV3Address, goerliLinkAddress, goerliOracleAdress, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress } from "../contractAddresses";
+import { goerliAnfiFactoryAddress, goerliAnfiIndexTokenAddress, goerliEthUsdPriceFeed, goerliExternalJobIdBytes32, goerliFactoryV2Address, goerliFactoryV3Address, goerliLinkAddress, goerliOracleAdress, goerliQouterAddress, goerliRouterV2Address, goerliRouterV3Address, goerliWethAddress, seploliaWethAddress, sepoliaAnfiFactoryAddress, sepoliaAnfiIndexTokenAddress, sepoliaARBEIIndexFactoryAddress, sepoliaARBEIIndexTokenAddress, sepoliaEthUsdPriceFeed, sepoliaFactoryV3Address, sepoliaLinkAddress, sepoliaRouterV3Address } from "../contractAddresses";
 
 // import { ethers, upgrades } from "hardhat";
 const { ethers, upgrades, network, hre } = require('hardhat');
@@ -11,21 +11,21 @@ async function deployFactory() {
   const IndexFactory = await ethers.getContractFactory("IndexFactory");
   console.log('Deploying IndexFactory...');
   
-  const indexFactory = await upgrades.upgradeProxy(goerliAnfiFactoryAddress, IndexFactory, [
-    goerliAnfiIndexTokenAddress, //token
-    goerliLinkAddress, //link token address
+  const indexFactory = await upgrades.upgradeProxy(sepoliaARBEIIndexFactoryAddress, IndexFactory, [
+    sepoliaARBEIIndexTokenAddress, //token
+    sepoliaLinkAddress, //link token address
     goerliOracleAdress, //oracle address
     goerliExternalJobIdBytes32, // jobId
-    goerliEthUsdPriceFeed, // price feed
-    goerliWethAddress, //weth address
+    sepoliaEthUsdPriceFeed, // price feed
+    seploliaWethAddress, //weth address
     goerliQouterAddress, // qoute
-    goerliRouterV3Address, // routerv3
-    goerliFactoryV3Address, //factoryv3
+    sepoliaRouterV3Address, // routerv3
+    sepoliaFactoryV3Address, //factoryv3
     goerliRouterV2Address, //routerv2
     goerliFactoryV2Address //factoryv2
   ], { initializer: 'initialize' });
 
-  console.log('box upgraed.')
+  console.log('box upgraed.', `${ await indexFactory.getAddress()}`)
 //   await indexFactory.waitForDeployment()
 
 //   console.log(

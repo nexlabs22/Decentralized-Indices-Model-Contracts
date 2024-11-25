@@ -6,10 +6,10 @@ async function deployIndexToken() {
   
   const [deployer] = await ethers.getSigners();
 
-  const IndexToken = await ethers.getContractFactory("IndexFactory");
+  const IndexFactory = await ethers.getContractFactory("IndexFactory");
   console.log('Deploying IndexFactory...');
 
-  const indexToken = await upgrades.deployProxy(IndexToken, [
+  const indexToken = await upgrades.deployProxy(IndexFactory, [
       sepoliaARBEIIndexTokenAddress, //token
       sepoliaLinkAddress, //link token address
       goerliOracleAdress, //oracle address

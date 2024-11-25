@@ -75,6 +75,8 @@ export const sepoliaSCIFactoryAddress = "0xCEA2034a33704821f6BB218217A334dC3B5e1
 export const sepoliaARBEIIndexTokenAddress = "0xeCBa11929312420414b6a9a70f206f90789f3069"
 export const sepoliaARBEIIndexFactoryAddress = "0xB5f11EAd535622Fa4EA1CA665e38ab2b4B1B2F9B"
 
+export const sepoliaFeeManagerAddress = "0x0f2A687Af0f9b85568795299E6b1F33006f47Ee0"
+
 
 
 
