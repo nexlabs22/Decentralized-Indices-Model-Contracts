@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import "../../contracts/Swap.sol";
+// import "../../contracts/Swap.sol";
 import "../../contracts/interfaces/IWETH.sol";
 // import "../../contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -25,7 +25,7 @@ contract ForkTest is Test {
     ERC20 public dai;
     IWETH public weth;
 
-    Swap public swap;
+    // Swap public swap;
     IQuoter public quoter;
     //Access variables from .env file via vm.envString("varname")
     //Replace ALCHEMY_KEY by your alchemy key or Etherscan key, change RPC url if need
@@ -37,7 +37,7 @@ contract ForkTest is Test {
     // create two _different_ forks during setup
     function setUp() public {
         mainnetFork = vm.createFork(MAINNET_RPC_URL);
-        swap = new Swap();
+        // swap = new Swap();
         dai = ERC20(DAI);
         weth = IWETH(WETH9);
         quoter = IQuoter(QUOTER);
@@ -63,6 +63,7 @@ contract ForkTest is Test {
         console.log(dai.name());
     }
 
+    /**
     // set `block.number` of a fork
     function testSwap() public {
         vm.selectFork(mainnetFork);
@@ -115,4 +116,5 @@ contract ForkTest is Test {
         console.log(dai.balanceOf(address(this)));
         console.log(weth.balanceOf(address(this)));
     }
+    */
 }

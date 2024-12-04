@@ -13,7 +13,7 @@ import "../../contracts/test/UniswapWETHByteCode.sol";
 import "../../contracts/test/UniswapRouterByteCode.sol";
 import "../../contracts/test/UniswapPositionManagerByteCode.sol";
 import "../../contracts/factory/IndexFactory.sol";
-import "../../contracts/test/TestSwap.sol";
+// import "../../contracts/test/TestSwap.sol";
 import "../../contracts/uniswap/Token.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -25,7 +25,7 @@ import "../../contracts/uniswap/INonfungiblePositionManager.sol";
 import "../../contracts/interfaces/IUniswapV3Factory2.sol";
 import "../../contracts/interfaces/IWETH.sol";
 
-import "../../contracts/Swap.sol";
+// import "../../contracts/Swap.sol";
 
 contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, UniswapRouterByteCode, UniswapPositionManagerByteCode {
 
@@ -81,11 +81,11 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     address router;
     address positionManager;
     IndexToken public indexToken;
-    Swap public swap;
+    // Swap public swap;
     MockApiOracle public oracle;
     LinkToken link;
     IndexFactory public factory;
-    TestSwap public testSwap;
+    // TestSwap public testSwap;
     MockV3Aggregator public ethPriceOracle;
     ERC20 public dai;
     IWETH public weth;
@@ -128,8 +128,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         MockApiOracle,
         IndexToken,
         MockV3Aggregator,
-        IndexFactory,
-        TestSwap
+        IndexFactory
+        // TestSwap
     ) {
         LinkToken link = new LinkToken();
         MockApiOracle oracle = new MockApiOracle(address(link));
@@ -182,7 +182,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         
         
 
-        TestSwap testSwap = new TestSwap();
+        // TestSwap testSwap = new TestSwap();
         
         
         return (
@@ -190,8 +190,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             oracle,
             indexToken,
             ethPriceOracle,
-            factory,
-            testSwap
+            factory
+            // testSwap
         );
 
     }
@@ -234,7 +234,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         factoryV3 = IUniswapV3Factory(factoryAddress);
         swapRouter = ISwapRouter(router);
         weth = IWETH(wethAddress);
-        (link, oracle, indexToken, ethPriceOracle, factory, testSwap) = deployContracts();
+        (link, oracle, indexToken, ethPriceOracle, factory) = deployContracts();
     }
 
     function deployByteCode(bytes memory bytecode) public returns(address){

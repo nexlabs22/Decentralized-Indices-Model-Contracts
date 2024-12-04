@@ -3,7 +3,7 @@ pragma solidity ^0.8.7;
 
 import "forge-std/Test.sol";
 import "../../contracts/token/IndexToken.sol";
-import "../../contracts/Swap.sol";
+// import "../../contracts/Swap.sol";
 import "../../contracts/test/MockV3Aggregator.sol";
 import "../../contracts/test/MockApiOracle.sol";
 import "../../contracts/test/LinkToken.sol";
