@@ -104,107 +104,100 @@ contract MockApiOracle is ChainlinkRequestInterface, LinkTokenReceiver {
     // All updates to the oracle's fulfillment should come before calling the
     // callback(addr+functionId) as it is untrusted.
     // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
-    address[] memory tokens = new address[](1);
-    tokens[0] = address(0);
-    uint[] memory marketCapShares = new uint[](1);
-    marketCapShares[0] = (100e18);
-    uint[] memory swapVersion = new uint[](1);
-    swapVersion[0] = (3);
+    
     (bool success, ) = req.callbackAddr.call(
-      // abi.encodeWithSelector(req.callbackFunctionId, _requestId, _data1, _data2, _data3, _data4, _data5)
-      // abi.encodeWithSelector(req.callbackFunctionId, _requestId, convertUintToBytes32(price), convertIntToBytes32Array(fundingRate), convertStringToBytes32Array(strings))
       abi.encodeWithSelector(req.callbackFunctionId, _requestId, _tokens, _marketCapShares, _swapVersions)
     ); // solhint-disable-line avoid-low-level-calls
     return success;
   }
 
-  function uintToBytes32(uint myUint) public pure returns (bytes32 myBytes32) {
-        myBytes32 = bytes32(myUint);
-    }
-  function convertToBytes(uint256 value) public pure returns (bytes memory) {
-        bytes memory byteArray = abi.encodePacked(value);
+  // function uintToBytes32(uint myUint) public pure returns (bytes32 myBytes32) {
+  //       myBytes32 = bytes32(myUint);
+  //   }
+  // function convertToBytes(uint256 value) public pure returns (bytes memory) {
+  //       bytes memory byteArray = abi.encodePacked(value);
         
-        return byteArray;
-    }
-    function convertUintToBytes32(uint[] memory uintArray) public pure returns (bytes32[] memory) {
-        uint length = uintArray.length;
-        require(length > 0, "Array is empty");
+  //       return byteArray;
+  //   }
+  //   function convertUintToBytes32(uint[] memory uintArray) public pure returns (bytes32[] memory) {
+  //       uint length = uintArray.length;
+  //       require(length > 0, "Array is empty");
 
-        uint numChunks = (length + 31) / 32;
-        bytes32[] memory result = new bytes32[](numChunks);
+  //       uint numChunks = (length + 31) / 32;
+  //       bytes32[] memory result = new bytes32[](numChunks);
 
-        for (uint i = 0; i < numChunks; i++) {
-            uint startIndex = i * 32;
-            uint endIndex = startIndex + 32;
-            if (endIndex > length) {
-                endIndex = length;
-            }
-            uint[] memory chunk = new uint[](endIndex - startIndex);
-            for (uint j = startIndex; j < endIndex; j++) {
-                chunk[j - startIndex] = uintArray[j];
-            }
-            bytes32 chunkBytes = bytes32ArrayFromUintArray(chunk);
-            result[i] = chunkBytes;
-        }
+  //       for (uint i = 0; i < numChunks; i++) {
+  //           uint startIndex = i * 32;
+  //           uint endIndex = startIndex + 32;
+  //           if (endIndex > length) {
+  //               endIndex = length;
+  //           }
+  //           uint[] memory chunk = new uint[](endIndex - startIndex);
+  //           for (uint j = startIndex; j < endIndex; j++) {
+  //               chunk[j - startIndex] = uintArray[j];
+  //           }
+  //           bytes32 chunkBytes = bytes32ArrayFromUintArray(chunk);
+  //           result[i] = chunkBytes;
+  //       }
 
-        return result;
-    }
+  //       return result;
+  //   }
 
-    function bytes32ArrayFromUintArray(uint[] memory uintArray) private pure returns (bytes32) {
-        bytes memory byteArray = new bytes(uintArray.length * 32);
-        for (uint i = 0; i < uintArray.length; i++) {
-            assembly {
-                mstore(add(byteArray, add(32, mul(i, 32))), mload(add(uintArray, add(32, mul(i, 32)))))
-            }
-        }
-        bytes32 result;
-        assembly {
-            result := mload(add(byteArray, 32))
-        }
-        return result;
-    }
-    function convertIntToBytes32Array(int256[] memory intArray) public pure returns (bytes32[] memory) {
-        bytes memory byteArray = abi.encodePacked(intArray);
-        uint256 length = intArray.length;
-        require(length > 0, "Array is empty");
+  //   function bytes32ArrayFromUintArray(uint[] memory uintArray) private pure returns (bytes32) {
+  //       bytes memory byteArray = new bytes(uintArray.length * 32);
+  //       for (uint i = 0; i < uintArray.length; i++) {
+  //           assembly {
+  //               mstore(add(byteArray, add(32, mul(i, 32))), mload(add(uintArray, add(32, mul(i, 32)))))
+  //           }
+  //       }
+  //       bytes32 result;
+  //       assembly {
+  //           result := mload(add(byteArray, 32))
+  //       }
+  //       return result;
+  //   }
+  //   function convertIntToBytes32Array(int256[] memory intArray) public pure returns (bytes32[] memory) {
+  //       bytes memory byteArray = abi.encodePacked(intArray);
+  //       uint256 length = intArray.length;
+  //       require(length > 0, "Array is empty");
 
-        require(byteArray.length % 32 == 0, "Invalid array length");
+  //       require(byteArray.length % 32 == 0, "Invalid array length");
 
-        bytes32[] memory bytes32Array = new bytes32[](length);
-        for (uint256 i = 0; i < length; i++) {
-            bytes32Array[i] = bytes32FromIntAtIndex(byteArray, i);
-        }
+  //       bytes32[] memory bytes32Array = new bytes32[](length);
+  //       for (uint256 i = 0; i < length; i++) {
+  //           bytes32Array[i] = bytes32FromIntAtIndex(byteArray, i);
+  //       }
 
-        return bytes32Array;
-    }
+  //       return bytes32Array;
+  //   }
 
-    function bytes32FromIntAtIndex(bytes memory byteArray, uint256 index) private pure returns (bytes32) {
-        bytes32 result;
-        assembly {
-            result := mload(add(byteArray, add(32, mul(index, 32))))
-        }
-        return result;
-    }
+  //   function bytes32FromIntAtIndex(bytes memory byteArray, uint256 index) private pure returns (bytes32) {
+  //       bytes32 result;
+  //       assembly {
+  //           result := mload(add(byteArray, add(32, mul(index, 32))))
+  //       }
+  //       return result;
+  //   }
 
-    function convertStringToBytes32Array(string[] memory stringArray) public pure returns (bytes32[] memory) {
-        uint256 length = stringArray.length;
-        require(length > 0, "Array is empty");
+    // function convertStringToBytes32Array(string[] memory stringArray) public pure returns (bytes32[] memory) {
+    //     uint256 length = stringArray.length;
+    //     require(length > 0, "Array is empty");
 
-        bytes32[] memory bytes32Array = new bytes32[](length);
-        for (uint256 i = 0; i < length; i++) {
-            bytes32Array[i] = stringToBytes32(stringArray[i]);
-        }
+    //     bytes32[] memory bytes32Array = new bytes32[](length);
+    //     for (uint256 i = 0; i < length; i++) {
+    //         bytes32Array[i] = stringToBytes32(stringArray[i]);
+    //     }
 
-        return bytes32Array;
-    }
+    //     return bytes32Array;
+    // }
 
-    function stringToBytes32(string memory str) private pure returns (bytes32) {
-        bytes32 result;
-        assembly {
-            result := mload(add(str, 32))
-        }
-        return result;
-    }
+    // function stringToBytes32(string memory str) private pure returns (bytes32) {
+    //     bytes32 result;
+    //     assembly {
+    //         result := mload(add(str, 32))
+    //     }
+    //     return result;
+    // }
 
   /**
    * @notice Called by the Chainlink node to fulfill requests
@@ -214,22 +207,22 @@ contract MockApiOracle is ChainlinkRequestInterface, LinkTokenReceiver {
    * @param _requestId The fulfillment request ID that must match the requester's
    * @param _data The data to return to the consuming contract
    */
-  function fulfillOracleOjectRequest(bytes32 _requestId, bytes32 _data)
-    external
-    isValidRequest(_requestId)
-    returns (bool)
-  {
-    Request memory req = commitments[_requestId];
-    delete commitments[_requestId];
-    require(gasleft() >= MINIMUM_CONSUMER_GAS_LIMIT, "Must provide consumer enough gas");
-    // All updates to the oracle's fulfillment should come before calling the
-    // callback(addr+functionId) as it is untrusted.
-    // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
-    (bool success, ) = req.callbackAddr.call(
-      abi.encodeWithSelector(req.callbackFunctionId, _requestId, _data)
-    ); // solhint-disable-line avoid-low-level-calls
-    return success;
-  }
+  // function fulfillOracleOjectRequest(bytes32 _requestId, bytes32 _data)
+  //   external
+  //   isValidRequest(_requestId)
+  //   returns (bool)
+  // {
+  //   Request memory req = commitments[_requestId];
+  //   delete commitments[_requestId];
+  //   require(gasleft() >= MINIMUM_CONSUMER_GAS_LIMIT, "Must provide consumer enough gas");
+  //   // All updates to the oracle's fulfillment should come before calling the
+  //   // callback(addr+functionId) as it is untrusted.
+  //   // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
+  //   (bool success, ) = req.callbackAddr.call(
+  //     abi.encodeWithSelector(req.callbackFunctionId, _requestId, _data)
+  //   ); // solhint-disable-line avoid-low-level-calls
+  //   return success;
+  // }
 
 
   /**
@@ -241,22 +234,22 @@ contract MockApiOracle is ChainlinkRequestInterface, LinkTokenReceiver {
    * @param _data The data to return to the consuming contract
    * @return Status if the external call was successful
    */
-  function fulfillOracleStatusRequest(bytes32 _requestId, string calldata _data)
-    external
-    isValidRequest(_requestId)
-    returns (bool)
-  {
-    Request memory req = commitments[_requestId];
-    delete commitments[_requestId];
-    require(gasleft() >= MINIMUM_CONSUMER_GAS_LIMIT, "Must provide consumer enough gas");
-    // All updates to the oracle's fulfillment should come before calling the
-    // callback(addr+functionId) as it is untrusted.
-    // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
-    (bool success, ) = req.callbackAddr.call(
-      abi.encodeWithSelector(req.callbackFunctionId, _requestId, _data)
-    ); // solhint-disable-line avoid-low-level-calls
-    return success;
-  }
+  // function fulfillOracleStatusRequest(bytes32 _requestId, string calldata _data)
+  //   external
+  //   isValidRequest(_requestId)
+  //   returns (bool)
+  // {
+  //   Request memory req = commitments[_requestId];
+  //   delete commitments[_requestId];
+  //   require(gasleft() >= MINIMUM_CONSUMER_GAS_LIMIT, "Must provide consumer enough gas");
+  //   // All updates to the oracle's fulfillment should come before calling the
+  //   // callback(addr+functionId) as it is untrusted.
+  //   // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
+  //   (bool success, ) = req.callbackAddr.call(
+  //     abi.encodeWithSelector(req.callbackFunctionId, _requestId, _data)
+  //   ); // solhint-disable-line avoid-low-level-calls
+  //   return success;
+  // }
 
   /**
    * @notice Allows requesters to cancel requests sent to this oracle contract. Will transfer the LINK

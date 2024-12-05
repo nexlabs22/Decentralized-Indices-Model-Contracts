@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 // import "uniswap-v3-periphery-0.8/contracts/libraries/OracleLibrary.sol";
 // import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
-import "../libraries/OracleLibrary.sol";
+// import "../libraries/OracleLibrary.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
@@ -18,6 +18,7 @@ import "../interfaces/IWETH.sol";
 import "../interfaces/IUniswapV2Router02.sol";
 import "../interfaces/IUniswapV2Factory.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "./IPriceOracle.sol";
 
 /// @title Index Token
 /// @author NEX Labs Protocol
@@ -57,6 +58,8 @@ contract IndexFactory is
     string public methodology;
 
     uint256 public supplyCeiling;
+
+    address public priceOracle;
 
     mapping(address => bool) public isRestricted;
 
@@ -157,6 +160,7 @@ contract IndexFactory is
         address _oracleAddress,
         bytes32 _externalJobId,
         address _toUsdPriceFeed,
+        // address _priceOracle,
         //addresses
         address _weth,
         address _quoter,
@@ -175,6 +179,7 @@ contract IndexFactory is
         // externalJobId = "81027ac9198848d79a8d14235bf30e16";
         oraclePayment = ((1 * LINK_DIVISIBILITY) / 10); // n * 10**18
         toUsdPriceFeed = AggregatorV3Interface(_toUsdPriceFeed);
+        // priceOracle = _priceOracle;
         //set addresses
         weth = IWETH(_weth);
         quoter = IQuoter(_quoter);
@@ -211,6 +216,14 @@ contract IndexFactory is
             "ICO: Price feed address cannot be zero address"
         );
         toUsdPriceFeed = AggregatorV3Interface(_toUsdPricefeed);
+    }
+
+    function setPriceOracle(address _priceOracle) external onlyOwner {
+        require(
+            _priceOracle != address(0),
+            "Price oracle address cannot be zero address"
+        );
+        priceOracle = _priceOracle;
     }
 
     /**
@@ -830,16 +843,20 @@ contract IndexFactory is
         address tokenOut,
         uint128 amountIn
     ) public view returns (uint amountOut) {
-        address _pool = factoryV3.getPool(tokenIn, tokenOut, 3000);
-
-        // (int24 tick, ) = OracleLibrary.consult(_pool, secondsAgo);
-        int24 tick = OracleLibrary.getLatestTick(_pool);
-        amountOut = OracleLibrary.getQuoteAtTick(
-            tick,
-            amountIn,
+        amountOut = IPriceOracle(priceOracle).estimateAmountOut(
+            address(factoryV3),
             tokenIn,
-            tokenOut
+            tokenOut,
+            amountIn
         );
+        // address _pool = factoryV3.getPool(tokenIn, tokenOut, 3000);
+        // int24 tick = OracleLibrary.getLatestTick(_pool);
+        // amountOut = OracleLibrary.getQuoteAtTick(
+        //     tick,
+        //     amountIn,
+        //     tokenIn,
+        //     tokenOut
+        // );
     }
 
     /**
