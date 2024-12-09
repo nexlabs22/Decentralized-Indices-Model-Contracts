@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 import "../proposable/ProposableOwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -93,14 +93,7 @@ contract IndexToken is
         string memory tokenSymbol,
         uint256 _feeRatePerDayScaled,
         address _feeReceiver,
-        uint256 _supplyCeiling,
-        //addresses
-        address _weth,
-        address _quoter,
-        address _swapRouterV3,
-        address _factoryV3,
-        address _swapRouterV2,
-        address _factoryV2
+        uint256 _supplyCeiling
     ) external initializer {
         require(_feeReceiver != address(0));
 
@@ -113,13 +106,6 @@ contract IndexToken is
         feeReceiver = _feeReceiver;
         supplyCeiling = _supplyCeiling;
         feeTimestamp = block.timestamp;
-        //set addresses
-        weth = IWETH(_weth);
-        quoter = IQuoter(_quoter);
-        swapRouterV3 = ISwapRouter(_swapRouterV3);
-        factoryV3 = IUniswapV3Factory(_factoryV3);
-        swapRouterV2 = IUniswapV2Router02(_swapRouterV2);
-        factoryV2 = IUniswapV2Factory(_factoryV2);
     }
 
 

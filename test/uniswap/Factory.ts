@@ -283,7 +283,7 @@ import { ethers, upgrades } from "hardhat";
       // console.log(link.balanceOf(address(this)));
       // link.transfer(address(factory), 1e18);
       await fixtureObject.linkToken.transfer(fixtureObject.indexFactoryAddress, parseEther("1"));
-      const transaction = await fixtureObject.indexFactory.requestAssetsData();
+      const transaction = await fixtureObject.indexfactoryStorage.requestAssetsData();
       // console.log("transaction:", transaction)
       const transactionReceipt = await transaction.wait()
       // console.log("receipt:", transactionReceipt.logs[0].topics[1])

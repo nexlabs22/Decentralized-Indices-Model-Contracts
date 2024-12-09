@@ -30,16 +30,16 @@ contract IndexFactory is
     PausableUpgradeable
 {
     
-    factoryStorage public factoryStorage;
+    IndexFactoryStorage public factoryStorage;
 
     
 
     /**
      * @dev Initializes the contract with the given parameters.
-     * @param _factorySrorage The address of the Uniswap V2 factory.
+     * @param _factoryStorage The address of the Uniswap V2 factory.
      */
     function initialize(
-        address _factoryStorage
+        address payable _factoryStorage
     ) external initializer {
         __Ownable_init();
         __Pausable_init();
@@ -96,7 +96,7 @@ contract IndexFactory is
      * @param tokenOut The address of the output token.
      * @param amountIn The amount of input token.
      * @param _recipient The address of the recipient.
-     * @param _swapVersion The swap version (2 for Uniswap V2, 3 for Uniswap V3).
+     * @param _swapFee The swap fee.
      * @return The amount of output token.
      */
     function swap(
@@ -104,17 +104,18 @@ contract IndexFactory is
         address tokenOut,
         uint amountIn,
         address _recipient,
-        uint _swapVersion
+        uint24 _swapFee
     ) internal returns (uint) {
+        ISwapRouter swapRouterV3 = factoryStorage.swapRouterV3();
+        IUniswapV2Router02 swapRouterV2 = factoryStorage.swapRouterV2();
         SwapHelpers.swap(
-            swapRouter,
+            swapRouterV3,
             swapRouterV2,
-            poolFee,
+            _swapFee,
             tokenIn,
             tokenOut,
             amountIn,
-            _recipient,
-            _swapVersion
+            _recipient
         );
     }
 
@@ -122,6 +123,7 @@ contract IndexFactory is
      * @dev Reindexes and reweights the portfolio.
      */
     function reIndexAndReweight() public onlyOwner {
+        IWETH weth = factoryStorage.weth();
         Vault vault = factoryStorage.vault();
         uint totalCurrentList = factoryStorage.totalCurrentList();
         uint totalOracleList = factoryStorage.totalOracleList();
@@ -130,9 +132,9 @@ contract IndexFactory is
             uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
             if (tokenAddress != address(weth)) {
                 vault.withdrawFunds(
-                    currentList[i],
+                    tokenAddress,
                     address(this),
-                    IERC20(currentList[i]).balanceOf(address(vault))
+                    IERC20(tokenAddress).balanceOf(address(vault))
                 );
                 swap(
                     tokenAddress,
@@ -157,13 +159,13 @@ contract IndexFactory is
                 swap(
                     address(weth),
                     tokenAddress,
-                    (wethBalance * tokenOracleMarketShare[oracleList[i]]) /
+                    (wethBalance * tokenOracleMarketShare) /
                         100e18,
                     address(vault),
-                    tokenSwapFee[oracleList[i]]
+                    tokenSwapFee
                 );
             }
             //update current list
-            
+        }
     }
 }

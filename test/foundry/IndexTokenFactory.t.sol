@@ -95,36 +95,36 @@ contract CounterTest is Test, ContractDeployer {
         swapVersions[4] = 3;
         
         link.transfer(address(factory), 1e17);
-        bytes32 requestId = factory.requestAssetsData();
+        bytes32 requestId = factoryStorage.requestAssetsData();
         oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
     }
     function testOracleList() public {
         updateOracleList();
         // token  oracle list
-        assertEq(factory.oracleList(0), address(token0));
-        assertEq(factory.oracleList(1), address(token1));
-        assertEq(factory.oracleList(2), address(token2));
-        assertEq(factory.oracleList(3), address(token3));
-        assertEq(factory.oracleList(4), address(token4));
+        assertEq(factoryStorage.oracleList(0), address(token0));
+        assertEq(factoryStorage.oracleList(1), address(token1));
+        assertEq(factoryStorage.oracleList(2), address(token2));
+        assertEq(factoryStorage.oracleList(3), address(token3));
+        assertEq(factoryStorage.oracleList(4), address(token4));
         // token current list
-        assertEq(factory.currentList(0), address(token0));
-        assertEq(factory.currentList(1), address(token1));
-        assertEq(factory.currentList(2), address(token2));
-        assertEq(factory.currentList(3), address(token3));
-        assertEq(factory.currentList(4), address(token4));
+        assertEq(factoryStorage.currentList(0), address(token0));
+        assertEq(factoryStorage.currentList(1), address(token1));
+        assertEq(factoryStorage.currentList(2), address(token2));
+        assertEq(factoryStorage.currentList(3), address(token3));
+        assertEq(factoryStorage.currentList(4), address(token4));
         // token shares
-        assertEq(factory.tokenOracleMarketShare(address(token0)), 20e18);
-        assertEq(factory.tokenOracleMarketShare(address(token1)), 20e18);
-        assertEq(factory.tokenOracleMarketShare(address(token2)), 20e18);
-        assertEq(factory.tokenOracleMarketShare(address(token3)), 20e18);
-        assertEq(factory.tokenOracleMarketShare(address(token4)), 20e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token0)), 20e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token1)), 20e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token2)), 20e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token3)), 20e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token4)), 20e18);
         
         // token shares
-        assertEq(factory.tokenSwapVersion(address(token0)), 3);
-        assertEq(factory.tokenSwapVersion(address(token1)), 3);
-        assertEq(factory.tokenSwapVersion(address(token2)), 3);
-        assertEq(factory.tokenSwapVersion(address(token3)), 3);
-        assertEq(factory.tokenSwapVersion(address(token4)), 3);
+        assertEq(factoryStorage.tokenSwapFee(address(token0)), 3);
+        assertEq(factoryStorage.tokenSwapFee(address(token1)), 3);
+        assertEq(factoryStorage.tokenSwapFee(address(token2)), 3);
+        assertEq(factoryStorage.tokenSwapFee(address(token3)), 3);
+        assertEq(factoryStorage.tokenSwapFee(address(token4)), 3);
         
     }
 
@@ -181,10 +181,10 @@ contract CounterTest is Test, ContractDeployer {
         usdt.approve(address(factory), 1001e18);
         factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
-        console.log("portfolio value after issuance", factory.getPortfolioBalance());
+        console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
         uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3);
         console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
-        console.log("portfolio value after redemption", factory.getPortfolioBalance());
+        console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
         console.log("real out", reallOut);
         console.log("usdt after redemption", usdt.balanceOf(add1));
     }

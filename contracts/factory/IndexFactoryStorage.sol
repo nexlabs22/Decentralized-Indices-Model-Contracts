@@ -18,11 +18,14 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./IPriceOracle.sol";
 import "../vault/Vault.sol";
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 /// @title Index Token
 /// @author NEX Labs Protocol
 /// @notice The main token contract for Index Token (NEX Labs Protocol)
 /// @dev This contract uses an upgradeable pattern
 contract IndexFactoryStorage is
+    Initializable,
     ChainlinkClient,
     ContextUpgradeable,
     ProposableOwnableUpgradeable,
@@ -62,6 +65,8 @@ contract IndexFactoryStorage is
     mapping(address => uint) public tokenOracleMarketShare;
     mapping(address => uint24) public tokenSwapFee;
 
+    address public factoryAddress;
+    address public factoryBalancerAddress;
     ISwapRouter public swapRouterV3;
     IUniswapV3Factory public factoryV3;
     IUniswapV2Router02 public swapRouterV2;
@@ -69,6 +74,7 @@ contract IndexFactoryStorage is
     IWETH public weth;
     IQuoter public quoter;
     Vault public vault;
+
 
     event FeeReceiverSet(address indexed feeReceiver);
     
@@ -79,7 +85,7 @@ contract IndexFactoryStorage is
      * @dev Throws if the caller is not a factory contract.
      */
     modifier onlyFactory() {
-        require(msg.sender == factoryAddress || msg.sender == factoryProcessorAddress || msg.sender == factoryBalancerAddress, "Caller is not a factory contract");
+        require(msg.sender == factoryAddress || msg.sender == factoryBalancerAddress, "Caller is not a factory contract");
         _;
     }
 
@@ -378,15 +384,15 @@ contract IndexFactoryStorage is
         address tokenIn,
         address tokenOut,
         uint amountIn,
-        uint24 _swapVersion
+        uint24 _swapFee
     ) public view returns (uint finalAmountOut) {
         if (amountIn > 0) {
-            if (_swapVersion > 0) {
+            if (_swapFee > 0) {
                 finalAmountOut = estimateAmountOut(
                     tokenIn,
                     tokenOut,
                     uint128(amountIn),
-                    _swapVersion
+                    _swapFee
                 );
             } else {
                 address[] memory path = new address[](2);

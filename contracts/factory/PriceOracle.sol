@@ -5,12 +5,11 @@ pragma solidity >=0.5.0 <0.8.0;
 import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import "./IPriceOracle.sol";
 
 /// @title PriceOracle
 /// @author NEX Labs Protocol
 /// @notice The main token contract forPriceOracle (NEX Labs Protocol)
-contract PriceOracle is IPriceOracle
+contract PriceOracle
 {
 
     /**

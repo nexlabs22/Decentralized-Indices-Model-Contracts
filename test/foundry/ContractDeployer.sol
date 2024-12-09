@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // pragma solidity ^0.8.13;
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 import "forge-std/Test.sol";
 
@@ -14,6 +14,8 @@ import "../../contracts/test/UniswapRouterByteCode.sol";
 import "../../contracts/test/UniswapPositionManagerByteCode.sol";
 import "../../contracts/test/PriceOracleByteCode.sol";
 import "../../contracts/factory/IndexFactory.sol";
+import "../../contracts/factory/IndexFactoryStorage.sol";
+import "../../contracts/vault/Vault.sol";
 // import "../../contracts/test/TestSwap.sol";
 import "../../contracts/uniswap/Token.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -25,6 +27,7 @@ import "../../contracts/interfaces/IUniswapV3Pool.sol";
 import "../../contracts/uniswap/INonfungiblePositionManager.sol";
 import "../../contracts/interfaces/IUniswapV3Factory2.sol";
 import "../../contracts/interfaces/IWETH.sol";
+
 
 
 // import "../../contracts/Swap.sol";
@@ -89,6 +92,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     LinkToken link;
     // PriceOracle public priceOracle;
     IndexFactory public factory;
+    IndexFactoryStorage public factoryStorage;
     // TestSwap public testSwap;
     MockV3Aggregator public ethPriceOracle;
     ERC20 public dai;
@@ -132,7 +136,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         MockApiOracle,
         IndexToken,
         MockV3Aggregator,
-        IndexFactory
+        IndexFactory,
+        IndexFactoryStorage
         // TestSwap
     ) {
         LinkToken link = new LinkToken();
@@ -152,20 +157,12 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             "ANFI",
             1e18,
             feeReceiver,
-            1000000e18,
-            //swap addresses
-            wethAddress,
-            QUOTER,
-            router,
-            factoryAddress,
-            router,
-            factoryAddress
+            1000000e18
         );
         
-
-
-        IndexFactory factory = new IndexFactory();
-        factory.initialize(
+        Vault vault = new Vault();
+        factoryStorage = new IndexFactoryStorage();
+        factoryStorage.initialize(
             payable(address(indexToken)),
             // address(0),
             address(link),
@@ -180,11 +177,31 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             router,
             factoryAddress
         );
+
+        IndexFactory factory = new IndexFactory();
+        factory.initialize(
+           payable(address(factoryStorage))
+            /**
+            payable(address(indexToken)),
+            // address(0),
+            address(link),
+            address(oracle),
+            jobId,
+            address(ethPriceOracle),
+            //swap addresses
+            wethAddress,
+            QUOTER,
+            router,
+            factoryAddress,
+            router,
+            factoryAddress
+             */
+        );
         
 
         indexToken.setMinter(address(factory));
-        factory.setFeeReceiver(address(feeReceiver));
-        factory.setPriceOracle(priceOracleAddress);
+        // factoryStorage.setFeeReceiver(address(feeReceiver));
+        // factoryStorage.setPriceOracle(priceOracleAddress);
         
         
 
@@ -196,7 +213,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             oracle,
             indexToken,
             ethPriceOracle,
-            factory
+            factory,
+            factoryStorage
             // testSwap
         );
 
@@ -242,7 +260,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         factoryV3 = IUniswapV3Factory(factoryAddress);
         swapRouter = ISwapRouter(router);
         weth = IWETH(wethAddress);
-        (link, oracle, indexToken, ethPriceOracle, factory) = deployContracts();
+        (link, oracle, indexToken, ethPriceOracle, factory, factoryStorage) = deployContracts();
     }
 
     function deployByteCode(bytes memory bytecode) public returns(address){
