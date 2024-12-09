@@ -5,12 +5,12 @@ pragma solidity >=0.5.0 <0.8.0;
 import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-
+import "./IPriceOracle.sol";
 
 /// @title PriceOracle
 /// @author NEX Labs Protocol
 /// @notice The main token contract forPriceOracle (NEX Labs Protocol)
-contract PriceOracle
+contract PriceOracle is IPriceOracle
 {
 
     /**
@@ -24,9 +24,10 @@ contract PriceOracle
         address factoryAddress,
         address tokenIn,
         address tokenOut,
-        uint128 amountIn
+        uint128 amountIn,
+        uint24 swapFee
     ) public view returns (uint amountOut) {
-        address _pool = IUniswapV3Factory(factoryAddress).getPool(tokenIn, tokenOut, 3000);
+        address _pool = IUniswapV3Factory(factoryAddress).getPool(tokenIn, tokenOut, swapFee);
 
         (, int24 tick , , , , , ) = IUniswapV3Pool(_pool).slot0();
         amountOut = OracleLibrary.getQuoteAtTick(
