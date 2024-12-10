@@ -67,11 +67,7 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(indexToken.minter(), address(factory));
     }
 
-    enum DexStatus {
-        UNISWAP_V2,
-        UNISWAP_V3
-    }
-
+    
     function updateOracleList() public {
         address[] memory assetList = new address[](5);
         assetList[0] = address(token0);
@@ -88,16 +84,17 @@ contract CounterTest is Test, ContractDeployer {
         tokenShares[4] = 20e18;
 
         uint[] memory swapVersions = new uint[](5);
-        swapVersions[0] = 3;
-        swapVersions[1] = 3;
-        swapVersions[2] = 3;
-        swapVersions[3] = 3;
-        swapVersions[4] = 3;
+        swapVersions[0] = 3000;
+        swapVersions[1] = 3000;
+        swapVersions[2] = 3000;
+        swapVersions[3] = 3000;
+        swapVersions[4] = 3000;
         
-        link.transfer(address(factory), 1e17);
+        link.transfer(address(factoryStorage), 1e17);
         bytes32 requestId = factoryStorage.requestAssetsData();
         oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
     }
+
     function testOracleList() public {
         updateOracleList();
         // token  oracle list
@@ -120,11 +117,11 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(factoryStorage.tokenOracleMarketShare(address(token4)), 20e18);
         
         // token shares
-        assertEq(factoryStorage.tokenSwapFee(address(token0)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token1)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token2)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token3)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token4)), 3);
+        assertEq(factoryStorage.tokenSwapFee(address(token0)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token1)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token2)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token3)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token4)), 3000);
         
     }
 
@@ -141,12 +138,10 @@ contract CounterTest is Test, ContractDeployer {
         vm.stopPrank();
         payable(add1).transfer(11e18);
         vm.startPrank(add1);
-        // console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
         
         factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
     }
-
 
     function testIssuanceWithTokens() public {
         uint startAmount = 1e14;
@@ -161,11 +156,11 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
+        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
     }
 
-
+    
     function testIssuanceWithTokensOutput() public {
         uint startAmount = 1e14;
         
@@ -179,10 +174,10 @@ contract CounterTest is Test, ContractDeployer {
         usdt.transfer(add1, 1001e18);
         vm.startPrank(add1);
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
+        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
-        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3);
+        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3000);
         console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
         console.log("real out", reallOut);
@@ -191,7 +186,7 @@ contract CounterTest is Test, ContractDeployer {
     
 
     
-
+    /**
     function testGetPrice() public {
         
         address pool = factoryV3.getPool(
@@ -232,7 +227,7 @@ contract CounterTest is Test, ContractDeployer {
     }
 
 
-    
+    */
 
     
 }

@@ -113,7 +113,7 @@ contract IndexFactory is
      * @param amountIn The amount of input token.
      * @param _recipient The address of the recipient.
      * @param _swapFee The swap version (2 for Uniswap V2, 3 for Uniswap V3).
-     * @return The amount of output token.
+     * @return outputAmount The amount of output token.
      */
     function swap(
         address tokenIn,
@@ -121,10 +121,10 @@ contract IndexFactory is
         uint amountIn,
         address _recipient,
         uint24 _swapFee
-    ) internal returns (uint) {
+    ) internal returns (uint outputAmount) {
         ISwapRouter swapRouterV3 = factoryStorage.swapRouterV3();
         IUniswapV2Router02 swapRouterV2 = factoryStorage.swapRouterV2();
-        SwapHelpers.swap(
+        outputAmount = SwapHelpers.swap(
             swapRouterV3,
             swapRouterV2,
             _swapFee,
@@ -229,7 +229,14 @@ contract IndexFactory is
         
         //giving fee to the fee receiver
         weth.transfer(address(feeReceiver), feeWethAmount);
-        _issuance(_tokenIn, _amountIn, totalCurrentList, vault, wethAmount, firstPortfolioValue);
+        _issuance(
+            _tokenIn,
+            _amountIn,
+            totalCurrentList,
+            vault,
+            wethAmount,
+            firstPortfolioValue
+        );
     }
 
     /**

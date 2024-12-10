@@ -41,6 +41,7 @@ contract IndexFactory is
     function initialize(
         address payable _factoryStorage
     ) external initializer {
+        require(_factoryStorage != address(0), "Invalid factory storage address");
         __Ownable_init();
         __Pausable_init();
         factoryStorage = IndexFactoryStorage(_factoryStorage);
@@ -74,7 +75,11 @@ contract IndexFactory is
         // revert DoNotSendFundsDirectlyToTheContract();
     }
 
-    
+    // Function to withdraw Ether from the contract
+    function withdraw(uint256 amount) external onlyOwner {
+        require(amount <= address(this).balance, "Insufficient balance");
+        payable(owner()).transfer(amount);
+    }
 
     /**
      * @dev Pauses the contract.
@@ -108,6 +113,8 @@ contract IndexFactory is
     ) internal returns (uint) {
         ISwapRouter swapRouterV3 = factoryStorage.swapRouterV3();
         IUniswapV2Router02 swapRouterV2 = factoryStorage.swapRouterV2();
+        // Ensure the transfer is successful
+        require(IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn), "Transfer failed");
         SwapHelpers.swap(
             swapRouterV3,
             swapRouterV2,
@@ -131,11 +138,12 @@ contract IndexFactory is
             address tokenAddress = factoryStorage.currentList(i);
             uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
             if (tokenAddress != address(weth)) {
-                vault.withdrawFunds(
+                bool success = vault.withdrawFunds(
                     tokenAddress,
                     address(this),
                     IERC20(tokenAddress).balanceOf(address(vault))
                 );
+                require(success, "Vault withdrawal failed");
                 swap(
                     tokenAddress,
                     address(weth),
@@ -151,11 +159,12 @@ contract IndexFactory is
             uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
             uint tokenOracleMarketShare = factoryStorage.tokenOracleMarketShare(tokenAddress);
             if (tokenAddress != address(weth)) {
-                vault.withdrawFunds(
+                bool success = vault.withdrawFunds(
                     address(weth),
                     address(this),
                     wethBalance
                 );
+                require(success, "Vault withdrawal failed");
                 swap(
                     address(weth),
                     tokenAddress,
@@ -166,6 +175,7 @@ contract IndexFactory is
                 );
             }
             //update current list
+            factoryStorage.updateCurrentList();
         }
     }
 }

@@ -38,11 +38,11 @@ library SwapHelpers {
         address tokenOut,
         uint256 amountIn,
         address recipient
-    ) internal {
+    ) internal returns (uint amountOut) {
         address[] memory path = new address[](2);
         path[0] = tokenIn;
         path[1] = tokenOut;
-
+        uint[] memory v2AmountOut = uniswapRouter.getAmountsOut(amountIn, path);
         IERC20(tokenIn).approve(address(uniswapRouter), amountIn);
         uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountIn, //amountIn
@@ -51,6 +51,7 @@ library SwapHelpers {
             recipient, //to
             block.timestamp //deadline
         );
+        amountOut = v2AmountOut[1];
     }
 
     function swap(
@@ -61,11 +62,11 @@ library SwapHelpers {
         address tokenOut,
         uint256 amountIn,
         address recipient
-    ) internal {
+    ) internal returns (uint256 amountOut) {
         if (poolFee > 0) {
-            swapVersion3(uniswapRouter, poolFee, tokenIn, tokenOut, amountIn, recipient);
+            amountOut = swapVersion3(uniswapRouter, poolFee, tokenIn, tokenOut, amountIn, recipient);
         } else {
-            swapTokensV2(uniswapRouterV2, tokenIn, tokenOut, amountIn, recipient);
+            amountOut = swapTokensV2(uniswapRouterV2, tokenIn, tokenOut, amountIn, recipient);
         }
     }
 

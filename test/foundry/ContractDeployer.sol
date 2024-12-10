@@ -93,6 +93,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     // PriceOracle public priceOracle;
     IndexFactory public factory;
     IndexFactoryStorage public factoryStorage;
+    Vault public vault;
     // TestSwap public testSwap;
     MockV3Aggregator public ethPriceOracle;
     ERC20 public dai;
@@ -137,7 +138,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         IndexToken,
         MockV3Aggregator,
         IndexFactory,
-        IndexFactoryStorage
+        IndexFactoryStorage,
+        Vault
         // TestSwap
     ) {
         LinkToken link = new LinkToken();
@@ -161,6 +163,9 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         );
         
         Vault vault = new Vault();
+        vault.initialize(
+        );
+
         factoryStorage = new IndexFactoryStorage();
         factoryStorage.initialize(
             payable(address(indexToken)),
@@ -181,27 +186,15 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         IndexFactory factory = new IndexFactory();
         factory.initialize(
            payable(address(factoryStorage))
-            /**
-            payable(address(indexToken)),
-            // address(0),
-            address(link),
-            address(oracle),
-            jobId,
-            address(ethPriceOracle),
-            //swap addresses
-            wethAddress,
-            QUOTER,
-            router,
-            factoryAddress,
-            router,
-            factoryAddress
-             */
         );
         
 
         indexToken.setMinter(address(factory));
-        // factoryStorage.setFeeReceiver(address(feeReceiver));
-        // factoryStorage.setPriceOracle(priceOracleAddress);
+        factoryStorage.setFeeReceiver(address(feeReceiver));
+        factoryStorage.setPriceOracle(priceOracleAddress);
+        factoryStorage.setVault(address(vault));
+        vault.setOperator(address(factory), true);
+        
         
         
 
@@ -214,7 +207,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             indexToken,
             ethPriceOracle,
             factory,
-            factoryStorage
+            factoryStorage,
+            vault
             // testSwap
         );
 
@@ -260,7 +254,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         factoryV3 = IUniswapV3Factory(factoryAddress);
         swapRouter = ISwapRouter(router);
         weth = IWETH(wethAddress);
-        (link, oracle, indexToken, ethPriceOracle, factory, factoryStorage) = deployContracts();
+        (link, oracle, indexToken, ethPriceOracle, factory, factoryStorage, vault) = deployContracts();
     }
 
     function deployByteCode(bytes memory bytecode) public returns(address){

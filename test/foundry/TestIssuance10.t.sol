@@ -102,18 +102,18 @@ contract CounterTest is Test, ContractDeployer {
         tokenShares[9] = 10e18;
 
         uint[] memory swapVersions = new uint[](10);
-        swapVersions[0] = 3;
-        swapVersions[1] = 3;
-        swapVersions[2] = 3;
-        swapVersions[3] = 3;
-        swapVersions[4] = 3;
-        swapVersions[5] = 3;
-        swapVersions[6] = 3;
-        swapVersions[7] = 3;
-        swapVersions[8] = 3;
-        swapVersions[9] = 3;
+        swapVersions[0] = 3000;
+        swapVersions[1] = 3000;
+        swapVersions[2] = 3000;
+        swapVersions[3] = 3000;
+        swapVersions[4] = 3000;
+        swapVersions[5] = 3000;
+        swapVersions[6] = 3000;
+        swapVersions[7] = 3000;
+        swapVersions[8] = 3000;
+        swapVersions[9] = 3000;
         
-        link.transfer(address(factory), 1e17);
+        link.transfer(address(factoryStorage), 1e17);
         bytes32 requestId = factoryStorage.requestAssetsData();
         oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
     }
@@ -142,12 +142,12 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(factoryStorage.tokenOracleMarketShare(address(token9)), 10e18);
         
         // token shares
-        assertEq(factoryStorage.tokenSwapFee(address(token0)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token1)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token2)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token3)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token4)), 3);
-        assertEq(factoryStorage.tokenSwapFee(address(token9)), 3);
+        assertEq(factoryStorage.tokenSwapFee(address(token0)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token1)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token2)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token3)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token4)), 3000);
+        assertEq(factoryStorage.tokenSwapFee(address(token9)), 3000);
         
     }
 
@@ -167,7 +167,7 @@ contract CounterTest is Test, ContractDeployer {
         // console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
         
         factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3000);
     }
 
 
@@ -184,8 +184,8 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3000);
     }
 
 
@@ -202,10 +202,10 @@ contract CounterTest is Test, ContractDeployer {
         usdt.transfer(add1, 1001e18);
         vm.startPrank(add1);
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3);
+        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
-        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3);
+        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3000);
         console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
         console.log("real out", reallOut);
@@ -215,45 +215,7 @@ contract CounterTest is Test, ContractDeployer {
 
     
 
-    function testGetPrice() public {
-        
-        address pool = factoryV3.getPool(
-            wethAddress,
-            address(token0),
-            3000
-        );
-        
-       (
-            uint160 sqrtPriceX96,
-            int24 tick,
-            uint16 observationIndex,
-            uint16 observationCardinality,
-            uint16 observationCardinalityNext,
-            uint8 feeProtocol,
-            bool unlocked
-        ) = IUniswapV3Pool(pool).slot0();
-        //swap
-        weth.deposit{value:1e16}();
-        weth.approve(address(swapRouter), 1e16);
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-        .ExactInputSingleParams({
-            tokenIn: wethAddress,
-            tokenOut: address(token0),
-            // pool fee 0.3%
-            fee: 3000,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: 1e16,
-            amountOutMinimum: 0,
-            // NOTE: In production, this value can be used to set the limit
-            // for the price the swap will push the pool to,
-            // which can help protect against price impact
-            sqrtPriceLimitX96: 0
-        });
-        uint finalAmountOut = swapRouter.exactInputSingle(params);
-
-    }
-
+    
 
     
 

@@ -16,19 +16,23 @@ contract Vault is Initializable, OwnableUpgradeable {
         require(isOperator[msg.sender], "NexVault: caller is not an operator");
         _;
     }
-    function initialize(address _operator) external initializer {
+
+    function initialize() external initializer {
         __Ownable_init();
-        isOperator[_operator] = true;
     }
 
     function setOperator(address _operator, bool _status) external onlyOwner {
+        require(_operator != address(0), "NexVault: operator address is zero");
         isOperator[_operator] = _status;
     }
 
-    function withdrawFunds(address _token, address _to, uint256 _amount) external onlyOperator {
+    function withdrawFunds(address _token, address _to, uint256 _amount) external onlyOperator returns(bool success) {
+        require(_token != address(0), "NexVault: token address is zero");
+        require(_to != address(0), "NexVault: recipient address is zero");
+        require(_amount > 0, "NexVault: amount is zero");
         emit FundsWithdrawn(_token, _to, _amount);
         IERC20(_token).safeTransfer(_to, _amount);
+        require(IERC20(_token).balanceOf(_to) >= _amount, "Transfer failed");
+        success = true;
     }
-
-    
 }
