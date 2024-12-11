@@ -19,19 +19,13 @@ import "../../contracts/test/MockV3Aggregator.sol";
 import "./ContractDeployer.sol";
 
 contract CounterTest is Test, ContractDeployer {
-
     using stdStorage for StdStorage;
 
     uint256 internal constant SCALAR = 1e20;
 
-    
     uint256 mainnetFork;
 
-    
-
     string MAINNET_RPC_URL = vm.envString("MAINNET_RPC_URL");
-
-    
 
     event FeeReceiverSet(address indexed feeReceiver);
     event FeeRateSet(uint256 indexed feeRatePerDayScaled);
@@ -45,7 +39,6 @@ contract CounterTest is Test, ContractDeployer {
     receive() external payable {}
 
     function setUp() public {
-        
         deployAllContracts();
         addLiquidityETH(positionManager, factoryAddress, token0, wethAddress, 1000e18, 1e18);
         addLiquidityETH(positionManager, factoryAddress, token1, wethAddress, 1000e18, 1e18);
@@ -53,7 +46,6 @@ contract CounterTest is Test, ContractDeployer {
         addLiquidityETH(positionManager, factoryAddress, token3, wethAddress, 1000e18, 1e18);
         addLiquidityETH(positionManager, factoryAddress, token4, wethAddress, 1000e18, 1e18);
         addLiquidityETH(positionManager, factoryAddress, usdt, wethAddress, 1000e18, 1e18);
-        
     }
 
     function testInitialized() public {
@@ -67,7 +59,6 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(indexToken.minter(), address(factory));
     }
 
-    
     function updateOracleList() public {
         address[] memory assetList = new address[](5);
         assetList[0] = address(token0);
@@ -76,20 +67,20 @@ contract CounterTest is Test, ContractDeployer {
         assetList[3] = address(token3);
         assetList[4] = address(token4);
 
-        uint[] memory tokenShares = new uint[](5);
+        uint256[] memory tokenShares = new uint256[](5);
         tokenShares[0] = 20e18;
         tokenShares[1] = 20e18;
         tokenShares[2] = 20e18;
         tokenShares[3] = 20e18;
         tokenShares[4] = 20e18;
 
-        uint[] memory swapVersions = new uint[](5);
+        uint256[] memory swapVersions = new uint256[](5);
         swapVersions[0] = 3000;
         swapVersions[1] = 3000;
         swapVersions[2] = 3000;
         swapVersions[3] = 3000;
         swapVersions[4] = 3000;
-        
+
         link.transfer(address(factoryStorage), 1e17);
         bytes32 requestId = factoryStorage.requestAssetsData();
         oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
@@ -115,58 +106,53 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(factoryStorage.tokenOracleMarketShare(address(token2)), 20e18);
         assertEq(factoryStorage.tokenOracleMarketShare(address(token3)), 20e18);
         assertEq(factoryStorage.tokenOracleMarketShare(address(token4)), 20e18);
-        
+
         // token shares
         assertEq(factoryStorage.tokenSwapFee(address(token0)), 3000);
         assertEq(factoryStorage.tokenSwapFee(address(token1)), 3000);
         assertEq(factoryStorage.tokenSwapFee(address(token2)), 3000);
         assertEq(factoryStorage.tokenSwapFee(address(token3)), 3000);
         assertEq(factoryStorage.tokenSwapFee(address(token4)), 3000);
-        
     }
 
-    
     function testIssuanceWithEth() public {
-        uint startAmount = 1e14;
-        
+        uint256 startAmount = 1e14;
 
         updateOracleList();
-        
+
         factory.proposeOwner(owner);
         vm.startPrank(owner);
         factory.transferOwnership(owner);
         vm.stopPrank();
         payable(add1).transfer(11e18);
         vm.startPrank(add1);
-        
-        factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
+
+        factory.issuanceIndexTokensWithEth{value: (1e18 * 1001) / 1000}(1e18);
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
     }
 
     function testIssuanceWithTokens() public {
-        uint startAmount = 1e14;
-        
+        uint256 startAmount = 1e14;
+
         updateOracleList();
-        
+
         factory.proposeOwner(owner);
         vm.startPrank(owner);
         factory.transferOwnership(owner);
         vm.stopPrank();
         usdt.transfer(add1, 1001e18);
         vm.startPrank(add1);
-        
+
         usdt.approve(address(factory), 1001e18);
         factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
     }
 
-    
     function testIssuanceWithTokensOutput() public {
-        uint startAmount = 1e14;
-        
-       
+        uint256 startAmount = 1e14;
+
         updateOracleList();
-        
+
         factory.proposeOwner(owner);
         vm.startPrank(owner);
         factory.transferOwnership(owner);
@@ -177,57 +163,121 @@ contract CounterTest is Test, ContractDeployer {
         factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
-        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3000);
+        uint256 reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3000);
         console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
         console.log("real out", reallOut);
         console.log("usdt after redemption", usdt.balanceOf(add1));
     }
-    
 
-    
-    /**
-    function testGetPrice() public {
-        
-        address pool = factoryV3.getPool(
-            wethAddress,
-            address(token0),
-            3000
-        );
-        
-       (
-            uint160 sqrtPriceX96,
-            int24 tick,
-            uint16 observationIndex,
-            uint16 observationCardinality,
-            uint16 observationCardinalityNext,
-            uint8 feeProtocol,
-            bool unlocked
-        ) = IUniswapV3Pool(pool).slot0();
-        //swap
-        weth.deposit{value:1e16}();
-        weth.approve(address(swapRouter), 1e16);
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-        .ExactInputSingleParams({
-            tokenIn: wethAddress,
-            tokenOut: address(token0),
-            // pool fee 0.3%
-            fee: 3000,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: 1e16,
-            amountOutMinimum: 0,
-            // NOTE: In production, this value can be used to set the limit
-            // for the price the swap will push the pool to,
-            // which can help protect against price impact
-            sqrtPriceLimitX96: 0
-        });
-        uint finalAmountOut = swapRouter.exactInputSingle(params);
+    ///////////////////////////////////////////////////////////////
 
+    function testFailIssuanceWithTokensWithZeroAmount() public {
+        uint256 startAmount = 0;
+
+        updateOracleList();
+
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+        usdt.transfer(add1, 1001e18);
+        vm.startPrank(add1);
+
+        usdt.approve(address(factory), 1001e18);
+        vm.expectRevert("Invalid number");
+        factory.issuanceIndexTokens(address(usdt), startAmount, 3000);
+
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
     }
 
+    function testFailIssuanceWithTokensWithAddressZero() public {
+        uint256 startAmount = 1000e18;
 
-    */
+        updateOracleList();
 
-    
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+        usdt.transfer(add1, 1001e18);
+        vm.startPrank(add1);
+
+        usdt.approve(address(factory), 1001e18);
+        vm.expectRevert("Invalid address");
+        factory.issuanceIndexTokens(address(0), startAmount, 3000);
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+    }
+
+    function testFailIssuanceWithEthWithZeroAmount() public {
+        uint256 startAmount = 0;
+
+        updateOracleList();
+
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+        payable(add1).transfer(11e18);
+        vm.startPrank(add1);
+
+        vm.expectRevert("Invalid Amount");
+        factory.issuanceIndexTokensWithEth{value: (1e18 * 1001) / 1000}(startAmount);
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+    }
+
+    function testAssertIssuanceWithTokensOutput() public {
+        uint256 startAmount = 1001e18;
+        updateOracleList();
+
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+
+        vm.stopPrank();
+        usdt.transfer(add1, startAmount);
+
+        vm.startPrank(add1);
+        usdt.approve(address(factory), startAmount);
+        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
+
+        uint256 userUsdtBalanceBeforeRedemption = usdt.balanceOf(address(add1));
+        uint256 userIndexTokenBalanceBeforeRedemption = indexToken.balanceOf(address(add1));
+
+        uint256 reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3000);
+
+        uint256 userUsdtBalanceAfterRedemption = usdt.balanceOf(address(add1));
+        uint256 userIndexTokenBalanceAfterRedemption = indexToken.balanceOf(address(add1));
+
+        assertGt(userUsdtBalanceAfterRedemption, userUsdtBalanceBeforeRedemption);
+        assertLt(userIndexTokenBalanceAfterRedemption, userIndexTokenBalanceBeforeRedemption);
+    }
+
+    function testFailPauseAndUnpause() public {
+        // Only the owner should be able to pause
+
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+
+        vm.startPrank(owner);
+        factory.pause();
+        vm.stopPrank();
+
+        uint256 inputAmount = 10e18;
+        vm.startPrank(add1);
+        weth.approve(address(factory), inputAmount);
+        vm.expectRevert("Pausable: paused");
+        factory.issuanceIndexTokens(address(weth), inputAmount, 500);
+        vm.stopPrank();
+
+        vm.prank(owner);
+        factory.unpause();
+        vm.stopPrank();
+
+        vm.startPrank(add1);
+        factory.issuanceIndexTokens(address(weth), inputAmount, 500);
+        vm.stopPrank();
+    }
 }
