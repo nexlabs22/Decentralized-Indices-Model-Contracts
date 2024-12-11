@@ -18,6 +18,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./IPriceOracle.sol";
 import "../libraries/SwapHelpers.sol";
 import "./IndexFactoryStorage.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /// @title Index Token
 /// @author NEX Labs Protocol
@@ -27,7 +28,8 @@ contract IndexFactory is
     ChainlinkClient,
     ContextUpgradeable,
     ProposableOwnableUpgradeable,
-    PausableUpgradeable
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable
 {
     
     IndexFactoryStorage public factoryStorage;
@@ -59,6 +61,7 @@ contract IndexFactory is
     ) external initializer {
         __Ownable_init();
         __Pausable_init();
+        __ReentrancyGuard_init();
         factoryStorage = IndexFactoryStorage(_factoryStorage);
     }
 
@@ -201,7 +204,7 @@ contract IndexFactory is
         address _tokenIn,
         uint _amountIn,
         uint24 _tokenInSwapFee
-    ) public {
+    ) public nonReentrant {
         IWETH weth = factoryStorage.weth();
         Vault vault = factoryStorage.vault();
         uint totalCurrentList = factoryStorage.totalCurrentList();
@@ -243,7 +246,7 @@ contract IndexFactory is
      * @dev Issues index tokens with ETH.
      * @param _inputAmount The amount of ETH input.
      */
-    function issuanceIndexTokensWithEth(uint _inputAmount) public payable {
+    function issuanceIndexTokensWithEth(uint _inputAmount) public payable nonReentrant {
         Vault vault = factoryStorage.vault();
         IWETH weth = factoryStorage.weth();
         address feeReceiver = factoryStorage.feeReceiver();
@@ -379,7 +382,7 @@ contract IndexFactory is
         uint amountIn,
         address _tokenOut,
         uint24 _tokenOutSwapFee
-    ) public returns (uint) {
+    ) public nonReentrant returns (uint) {
         Vault vault = factoryStorage.vault();
         uint totalCurrentList = factoryStorage.totalCurrentList();
         uint feeRate = factoryStorage.feeRate();
