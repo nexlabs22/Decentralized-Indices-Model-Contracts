@@ -103,7 +103,7 @@ contract IndexFactory is
      * @param amountIn The amount of input token.
      * @param _recipient The address of the recipient.
      * @param _swapFee The swap fee.
-     * @return The amount of output token.
+     * @return outputAmount The amount of output token.
      */
     function swap(
         address tokenIn,
