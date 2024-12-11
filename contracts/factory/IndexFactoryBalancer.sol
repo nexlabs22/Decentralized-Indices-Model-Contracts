@@ -23,7 +23,7 @@ import "./IndexFactoryStorage.sol";
 /// @author NEX Labs Protocol
 /// @notice The main token contract for Index Token (NEX Labs Protocol)
 /// @dev This contract uses an upgradeable pattern
-contract IndexFactory is
+contract IndexFactoryBalancer is
     ChainlinkClient,
     ContextUpgradeable,
     ProposableOwnableUpgradeable,
