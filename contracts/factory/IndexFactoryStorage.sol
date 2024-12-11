@@ -117,6 +117,7 @@ contract IndexFactoryStorage is
         address _swapRouterV2,
         address _factoryV2
     ) external initializer {
+
         __Ownable_init();
         __Pausable_init();
         indexToken = IndexToken(_token);
@@ -234,13 +235,7 @@ contract IndexFactoryStorage is
         latestFeeUpdate = block.timestamp;
     }
 
-    /**
-     * @dev The contract's fallback function that does not allow direct payments to the contract.
-     * @notice Prevents users from sending ether directly to the contract by reverting the transaction.
-     */
-    receive() external payable {
-        // revert DoNotSendFundsDirectlyToTheContract();
-    }
+    
 
     /**
      * @dev Concatenates two strings.
@@ -304,6 +299,12 @@ contract IndexFactoryStorage is
         uint256[] memory _marketShares,
         uint24[] memory _swapFees
     ) public recordChainlinkFulfillment(requestId) {
+        
+        require(
+            _tokens.length == _marketShares.length &&
+                _marketShares.length == _swapFees.length,
+            "The length of the arrays should be the same"
+        );
         address[] memory tokens0 = _tokens;
         uint[] memory marketShares0 = _marketShares;
         uint24[] memory _swapFees = _swapFees;

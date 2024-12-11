@@ -95,6 +95,8 @@ contract IndexToken is
         address _feeReceiver,
         uint256 _supplyCeiling
     ) external initializer {
+        require(_feeRatePerDayScaled > 0);
+        require(_supplyCeiling > 0);
         require(_feeReceiver != address(0));
 
         __Ownable_init();
@@ -109,13 +111,7 @@ contract IndexToken is
     }
 
 
-   /**
-    * @dev The contract's fallback function that does not allow direct payments to the contract.
-    * @notice Prevents users from sending ether directly to the contract by reverting the transaction.
-    */
-    receive() external payable {
-        // revert DoNotSendFundsDirectlyToTheContract();
-    }
+   
 
 
 
@@ -161,6 +157,8 @@ contract IndexToken is
     /// @param from address
     /// @param amount uint256
     function burn(address from, uint256 amount) public whenNotPaused onlyMinter {
+        require(address(from) != address(0), "burn from the zero address");
+        require(amount > 0, "burn amount must be greater than zero");
         require(!isRestricted[from], "from is restricted");
         require(!isRestricted[msg.sender], "msg.sender is restricted");
         _mintToFeeReceiver();
@@ -209,6 +207,7 @@ contract IndexToken is
     /// @notice Callable only by the methodoligst to store on chain data about the underlying weight of the token
     /// @param _methodology string
     function setMethodology(string memory _methodology) external onlyMethodologist {
+        require(bytes(_methodology).length > 0, "methodology cannot be empty");
         methodology = _methodology;
         emit MethodologySet(_methodology);
     }

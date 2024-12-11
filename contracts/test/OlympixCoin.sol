@@ -11,6 +11,8 @@ contract OlympixCoin is ERC20 {
         address _treasury,
         address _owner
     ) ERC20("OlympixCoin", "OLX") {
+        require(_treasury != address(0), "Treasury address cannot be zero");
+        require(_owner != address(0), "Owner address cannot be zero");
         owner = _owner;
         treasury = _treasury;
         taxEnabled = true;
@@ -19,6 +21,8 @@ contract OlympixCoin is ERC20 {
     }
 
     function transfer(address recipient, uint256 amount) public override returns (bool) {
+        require(recipient != address(0), "Recipient address cannot be zero");
+        require(amount > 0, "Transfer amount must be greater than zero");
         if (taxEnabled) {
             uint256 tax = 2;
             uint256 taxedAmount = amount - tax;
@@ -33,6 +37,7 @@ contract OlympixCoin is ERC20 {
 
     function toggleTax(bool _taxEnabled) public {
         require(msg.sender == owner, "Only owner can set taxEnabled");
+        require(_taxEnabled == true || _taxEnabled == false, "Invalid taxEnabled value");
         taxEnabled = _taxEnabled;
     }
 

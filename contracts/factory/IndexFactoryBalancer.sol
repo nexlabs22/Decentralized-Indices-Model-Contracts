@@ -72,13 +72,14 @@ contract IndexFactory is
      * @notice Prevents users from sending ether directly to the contract by reverting the transaction.
      */
     receive() external payable {
-        // revert DoNotSendFundsDirectlyToTheContract();
+        revert("DoNotSendFundsDirectlyToTheContract");
     }
 
     // Function to withdraw Ether from the contract
     function withdraw(uint256 amount) external onlyOwner {
         require(amount <= address(this).balance, "Insufficient balance");
-        payable(owner()).transfer(amount);
+        (bool success, ) = payable(owner()).call{value: amount}("");
+        require(success, "Transfer failed");
     }
 
     /**
@@ -110,12 +111,12 @@ contract IndexFactory is
         uint amountIn,
         address _recipient,
         uint24 _swapFee
-    ) internal returns (uint) {
+    ) internal returns (uint outputAmount) {
         ISwapRouter swapRouterV3 = factoryStorage.swapRouterV3();
         IUniswapV2Router02 swapRouterV2 = factoryStorage.swapRouterV2();
         // Ensure the transfer is successful
         require(IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn), "Transfer failed");
-        SwapHelpers.swap(
+        outputAmount = SwapHelpers.swap(
             swapRouterV3,
             swapRouterV2,
             _swapFee,
@@ -124,6 +125,7 @@ contract IndexFactory is
             amountIn,
             _recipient
         );
+
     }
 
     /**
@@ -144,13 +146,14 @@ contract IndexFactory is
                     IERC20(tokenAddress).balanceOf(address(vault))
                 );
                 require(success, "Vault withdrawal failed");
-                swap(
-                    tokenAddress,
-                    address(weth),
-                    IERC20(tokenAddress).balanceOf(address(vault)),
-                    address(vault),
-                    tokenSwapFee
-                );
+                uint outputAmount = swap(
+                        tokenAddress,
+                        address(weth),
+                        IERC20(tokenAddress).balanceOf(address(vault)),
+                        address(vault),
+                        tokenSwapFee
+                    );
+                require(outputAmount > 0, "Swap failed");
             }
         }
         uint wethBalance = weth.balanceOf(address(this));
@@ -165,7 +168,7 @@ contract IndexFactory is
                     wethBalance
                 );
                 require(success, "Vault withdrawal failed");
-                swap(
+                uint outputAmount = swap(
                     address(weth),
                     tokenAddress,
                     (wethBalance * tokenOracleMarketShare) /
@@ -173,6 +176,7 @@ contract IndexFactory is
                     address(vault),
                     tokenSwapFee
                 );
+                require(outputAmount > 0, "Swap failed");
             }
             //update current list
             factoryStorage.updateCurrentList();
