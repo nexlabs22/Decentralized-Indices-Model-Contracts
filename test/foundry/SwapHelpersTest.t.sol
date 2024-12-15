@@ -169,4 +169,107 @@ contract SwapHelpersTest is Test {
 
         assertEq(amountOut, 250e18, "Incorrect output amount for swap falling back to Uniswap V2");
     }
+
+    function testFailSwapTokensV2RevertOnInsufficientApproval() public {
+        address[] memory path = new address[](2);
+        path[0] = tokenInAddress;
+        path[1] = tokenOutAddress;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = amountIn;
+        amounts[1] = 200e18;
+
+        vm.mockCall(
+            address(uniswapV2Router),
+            abi.encodeWithSelector(IUniswapV2Router02.getAmountsOut.selector, amountIn, path),
+            abi.encode(amounts)
+        );
+
+        vm.mockCall(
+            tokenInAddress,
+            abi.encodeWithSelector(IERC20.approve.selector, address(uniswapV2Router), amountIn),
+            abi.encode(false)
+        );
+
+        vm.expectRevert("ERC20: approve failed");
+
+        SwapHelpers.swapTokensV2(uniswapV2Router, tokenInAddress, tokenOutAddress, amountIn, recipient);
+    }
+
+    function testFailSwapTokensV2RevertOnGetAmountsOutFailure() public {
+        address[] memory path = new address[](2);
+        path[0] = tokenInAddress;
+        path[1] = tokenOutAddress;
+
+        vm.mockCall(
+            address(uniswapV2Router),
+            abi.encodeWithSelector(IUniswapV2Router02.getAmountsOut.selector, amountIn, path),
+            abi.encode()
+        );
+
+        vm.expectRevert("UniswapV2: getAmountsOut failed");
+
+        SwapHelpers.swapTokensV2(uniswapV2Router, tokenInAddress, tokenOutAddress, amountIn, recipient);
+    }
+
+    function testFailSwapTokensV2WithZeroAmount() public {
+        address[] memory path = new address[](2);
+        path[0] = tokenInAddress;
+        path[1] = tokenOutAddress;
+
+        vm.expectRevert("SwapHelpers: amountIn must be greater than zero");
+
+        SwapHelpers.swapTokensV2(uniswapV2Router, tokenInAddress, tokenOutAddress, 0, recipient);
+    }
+
+    function testSwapPoolFeeSelection() public {
+        address[] memory path = new address[](2);
+        path[0] = tokenInAddress;
+        path[1] = tokenOutAddress;
+
+        vm.mockCall(
+            tokenInAddress,
+            abi.encodeWithSelector(IERC20.approve.selector, address(uniswapV2Router), amountIn),
+            abi.encode(true)
+        );
+
+        vm.mockCall(
+            address(uniswapV3Router),
+            abi.encodeWithSelector(
+                ISwapRouter.exactInputSingle.selector,
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: tokenInAddress,
+                    tokenOut: tokenOutAddress,
+                    fee: poolFee,
+                    recipient: recipient,
+                    deadline: block.timestamp + 300,
+                    amountIn: amountIn,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                })
+            ),
+            abi.encode(300e18)
+        );
+
+        uint256 amountOutV3 = SwapHelpers.swap(
+            uniswapV3Router, uniswapV2Router, poolFee, tokenInAddress, tokenOutAddress, amountIn, recipient
+        );
+
+        assertEq(amountOutV3, 300e18, "Incorrect output amount for V3 path");
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = amountIn;
+        amounts[1] = 250e18;
+
+        vm.mockCall(
+            address(uniswapV2Router),
+            abi.encodeWithSelector(IUniswapV2Router02.getAmountsOut.selector, amountIn, path),
+            abi.encode(amounts)
+        );
+
+        uint256 amountOutV2 =
+            SwapHelpers.swap(uniswapV3Router, uniswapV2Router, 0, tokenInAddress, tokenOutAddress, amountIn, recipient);
+
+        assertEq(amountOutV2, 250e18, "Incorrect output amount for V2 path");
+    }
 }
