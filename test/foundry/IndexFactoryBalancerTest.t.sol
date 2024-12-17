@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
+import "forge-std/Vm.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "../../contracts/interfaces/IUniswapV2Router02.sol";
 import "../../contracts/factory/IndexFactoryBalancer.sol";
 import "../../contracts/factory/IndexFactoryStorage.sol";
 import "../../contracts/libraries/SwapHelpers.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract IndexFactoryBalancerTest is Test {
     IndexFactoryBalancer indexFactoryBalancer;
@@ -19,6 +21,9 @@ contract IndexFactoryBalancerTest is Test {
     address wethAddress = address(0x1234);
     address vaultAddress = address(0x5678);
 
+    address token1 = address(0x1111);
+    address token2 = address(0x2222);
+
     function setUp() external {
         vm.startPrank(owner);
 
@@ -26,7 +31,8 @@ contract IndexFactoryBalancerTest is Test {
         factoryStorage.initialize(
             payable(address(0)),
             address(0),
-            address(0),
+            owner,
+            // address(0),
             0x0,
             address(0),
             wethAddress,
@@ -39,10 +45,12 @@ contract IndexFactoryBalancerTest is Test {
 
         factoryStorage.setVault(vaultAddress);
 
-        factoryStorageAddress = address(factoryStorage);
-
         indexFactoryBalancer = new IndexFactoryBalancer();
         indexFactoryBalancer.initialize(payable(address(factoryStorage)));
+
+        factoryStorage.setFactoryBalancer(address(indexFactoryBalancer));
+
+        factoryStorageAddress = address(factoryStorage);
 
         vm.stopPrank();
     }
@@ -62,7 +70,6 @@ contract IndexFactoryBalancerTest is Test {
         uint256 deposit = 5 ether;
         uint256 withdrawAmount = 3 ether;
 
-        // Deposit Ether into contract
         vm.deal(address(indexFactoryBalancer), deposit);
 
         vm.startPrank(owner);
@@ -240,6 +247,311 @@ contract IndexFactoryBalancerTest is Test {
         SwapHelpers.swap(
             ISwapRouter(address(0)), IUniswapV2Router02(address(0)), 3000, address(0), address(0), 100, owner
         );
+        vm.stopPrank();
+    }
+
+    function testFailWithdraw_RevertWhenPaused() public {
+        uint256 deposit = 5 ether;
+        uint256 withdrawAmount = 3 ether;
+
+        vm.deal(address(indexFactoryBalancer), deposit);
+
+        vm.startPrank(owner);
+        indexFactoryBalancer.pause();
+        vm.expectRevert("Pausable: paused");
+        indexFactoryBalancer.withdraw(withdrawAmount);
+        vm.stopPrank();
+    }
+
+    function testReIndexAndReweight_WithWETHOnly() public {
+        vm.startPrank(owner);
+
+        address weth = address(factoryStorage.weth());
+
+        vm.mockCall(address(factoryStorage), bytes4(keccak256("totalCurrentList()")), abi.encode(uint256(1)));
+        vm.mockCall(address(factoryStorage), bytes4(keccak256("totalOracleList()")), abi.encode(uint256(1)));
+
+        {
+            bytes memory callDataCurrent = abi.encodeWithSelector(bytes4(keccak256("currentList(uint256)")), uint256(0));
+            vm.mockCall(address(factoryStorage), callDataCurrent, abi.encode(weth));
+
+            bytes memory callDataOracle = abi.encodeWithSelector(bytes4(keccak256("oracleList(uint256)")), uint256(0));
+            vm.mockCall(address(factoryStorage), callDataOracle, abi.encode(weth));
+        }
+
+        vm.mockCall(
+            address(factoryStorage),
+            abi.encodeWithSelector(bytes4(keccak256("tokenSwapFee(address)")), weth),
+            abi.encode(uint24(3000))
+        );
+
+        vm.mockCall(
+            address(factoryStorage),
+            abi.encodeWithSelector(bytes4(keccak256("tokenOracleMarketShare(address)")), weth),
+            abi.encode(uint256(100e18))
+        );
+
+        vm.mockCall(address(factoryStorage), bytes4(keccak256("vault()")), abi.encode(vaultAddress));
+        vm.mockCall(
+            weth,
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
+            abi.encode(uint256(1000e18))
+        );
+
+        indexFactoryBalancer.reIndexAndReweight();
+        vm.stopPrank();
+    }
+
+    function testFailFulfillAssetsData_ArrayLengthMismatch() public {
+        vm.startPrank(owner);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = token1;
+        tokens[1] = token2;
+
+        uint256[] memory marketShares = new uint256[](1);
+        marketShares[0] = 100e18;
+
+        uint24[] memory swapFees = new uint24[](2);
+        swapFees[0] = 3000;
+        swapFees[1] = 10000;
+
+        vm.expectRevert("The length of the arrays should be the same");
+        factoryStorage.fulfillAssetsData(bytes32("requestId"), tokens, marketShares, swapFees);
+
+        vm.stopPrank();
+    }
+
+    function testInitialize_SecondInitializationReverts() public {
+        vm.startPrank(owner);
+        vm.expectRevert("Initializable: contract is already initialized");
+        indexFactoryBalancer.initialize(payable(address(factoryStorage)));
+        vm.stopPrank();
+    }
+
+    function testCurrentListFunctionsWithoutMocking() public {
+        address[] memory tokens = new address[](3);
+        tokens[0] = token1;
+        tokens[1] = token2;
+        tokens[2] = wethAddress;
+
+        uint256[] memory marketShares = new uint256[](3);
+        marketShares[0] = 100e18;
+        marketShares[1] = 200e18;
+        marketShares[2] = 300e18;
+
+        uint24[] memory swapFees = new uint24[](3);
+        swapFees[0] = 3000;
+        swapFees[1] = 10000;
+        swapFees[2] = 500;
+
+        vm.startPrank(owner);
+        factoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+        vm.stopPrank();
+
+        uint256 total = factoryStorage.totalCurrentList();
+        assertEq(total, 3, "Expected totalCurrentList to be 3");
+
+        assertEq(factoryStorage.currentList(0), token1, "currentList(0) should be token1");
+        assertEq(factoryStorage.currentList(1), token2, "currentList(1) should be token2");
+        assertEq(factoryStorage.currentList(2), wethAddress, "currentList(2) should be wethAddress");
+    }
+
+    function testSetAndCheckCurrentList() public {
+        vm.startPrank(owner);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = token1;
+        tokens[1] = token2;
+
+        uint256[] memory marketShares = new uint256[](2);
+        marketShares[0] = 100e18;
+        marketShares[1] = 200e18;
+
+        uint24[] memory swapFees = new uint24[](2);
+        swapFees[0] = 3000;
+        swapFees[1] = 10000;
+
+        factoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+
+        vm.stopPrank();
+
+        uint256 total = factoryStorage.totalCurrentList();
+        assertEq(total, 2, "totalCurrentList should be 2 after mockFillAssetsList");
+
+        address listToken0 = factoryStorage.currentList(0);
+        address listToken1 = factoryStorage.currentList(1);
+
+        assertEq(listToken0, token1, "currentList(0) should return token1");
+        assertEq(listToken1, token2, "currentList(1) should return token2");
+
+        uint256 shareToken1 = factoryStorage.tokenCurrentMarketShare(token1);
+        uint256 shareToken2 = factoryStorage.tokenCurrentMarketShare(token2);
+        assertEq(shareToken1, 100e18, "tokenCurrentMarketShare for token1 mismatch");
+        assertEq(shareToken2, 200e18, "tokenCurrentMarketShare for token2 mismatch");
+    }
+
+    function testMockCurrentListFunctions() public {
+        address[] memory tokens = new address[](3);
+        tokens[0] = token1;
+        tokens[1] = token2;
+        tokens[2] = wethAddress;
+
+        uint256[] memory marketShares = new uint256[](3);
+        marketShares[0] = 100e18;
+        marketShares[1] = 200e18;
+        marketShares[2] = 300e18;
+
+        uint24[] memory swapFees = new uint24[](3);
+        swapFees[0] = 3000;
+        swapFees[1] = 10000;
+        swapFees[2] = 500;
+
+        vm.startPrank(owner);
+        factoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+        vm.stopPrank();
+
+        uint256 total = factoryStorage.totalCurrentList();
+        assertEq(total, 3, "Expected totalCurrentList to be 3");
+
+        assertEq(factoryStorage.currentList(0), token1, "currentList(0) should be token1");
+        assertEq(factoryStorage.currentList(1), token2, "currentList(1) should be token2");
+        assertEq(factoryStorage.currentList(2), wethAddress, "currentList(2) should be wethAddress");
+    }
+
+    function testSetFeeRate_TooSoon() public {
+        vm.startPrank(owner);
+
+        vm.expectRevert("You should wait at least 12 hours after the latest update");
+        factoryStorage.setFeeRate(50);
+        vm.stopPrank();
+    }
+
+    function testInitialize_CannotInitializeTwice() public {
+        vm.startPrank(owner);
+        vm.expectRevert("Initializable: contract is already initialized");
+        indexFactoryBalancer.initialize(payable(address(factoryStorage)));
+        vm.stopPrank();
+    }
+
+    function testSetFeeRate_InvalidRange() public {
+        skip(13 hours);
+
+        vm.startPrank(owner);
+        vm.expectRevert("The newFee should be between 1 and 100 (0.01% - 1%)");
+        factoryStorage.setFeeRate(0);
+
+        vm.expectRevert("The newFee should be between 1 and 100 (0.01% - 1%)");
+        factoryStorage.setFeeRate(101);
+
+        factoryStorage.setFeeRate(50);
+        assertEq(factoryStorage.feeRate(), 50, "Fee rate should be updated to 50");
+        vm.stopPrank();
+    }
+
+    function testConcatenation() public {
+        string memory a = "Hello";
+        string memory b = "World";
+        string memory result = factoryStorage.concatenation(a, b);
+        assertEq(result, "HelloWorld", "Concatenation function failed");
+    }
+
+    function testPriceInWei() public {
+        vm.mockCall(
+            address(factoryStorage.toUsdPriceFeed()),
+            abi.encodeWithSelector(AggregatorV3Interface.latestRoundData.selector),
+            abi.encode(uint80(0), int256(123456789000000000), uint256(0), uint256(0), uint80(0))
+        );
+
+        vm.mockCall(
+            address(factoryStorage.toUsdPriceFeed()),
+            abi.encodeWithSelector(AggregatorV3Interface.decimals.selector),
+            abi.encode(uint8(8))
+        );
+
+        uint256 price = factoryStorage.priceInWei();
+        assertTrue(price > 0, "priceInWei should return a positive value");
+    }
+
+    function testGetPortfolioBalance_Empty() public {
+        vm.mockCall(address(factoryStorage), bytes4(keccak256("totalCurrentList()")), abi.encode(uint256(0)));
+        uint256 balance = factoryStorage.getPortfolioBalance();
+        assertEq(balance, 0, "Empty portfolio should have 0 balance");
+    }
+
+    function testReIndexAndReweight_EmptyLists() public {
+        vm.startPrank(owner);
+
+        address[] memory tokens = new address[](1);
+        tokens[0] = wethAddress;
+        uint256[] memory shares = new uint256[](1);
+        shares[0] = 100e18;
+        uint24[] memory fees = new uint24[](1);
+        fees[0] = 3000;
+
+        factoryStorage.mockFillAssetsList(tokens, shares, fees);
+        factoryStorage.setFactoryBalancer(address(indexFactoryBalancer));
+
+        vm.mockCall(
+            wethAddress,
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
+            abi.encode(uint256(1000e18))
+        );
+
+        vm.mockCall(
+            address(factoryStorage.vault()),
+            abi.encodeWithSelector(Vault.withdrawFunds.selector, wethAddress, address(indexFactoryBalancer), 1000e18),
+            abi.encode(true)
+        );
+
+        indexFactoryBalancer.reIndexAndReweight();
+
+        vm.stopPrank();
+    }
+
+    function testSwap_SuccessPath() public {
+        vm.startPrank(owner);
+
+        uint256 amountIn = 500e18;
+        address recipient = address(0x444);
+        uint24 poolFee = 3000;
+
+        vm.mockCall(
+            address(factoryStorage), bytes4(keccak256("swapRouterV3()")), abi.encode(ISwapRouter(address(0xABC1)))
+        );
+        vm.mockCall(
+            address(factoryStorage),
+            bytes4(keccak256("swapRouterV2()")),
+            abi.encode(IUniswapV2Router02(address(0xABC2)))
+        );
+
+        vm.mockCall(
+            address(0x1111),
+            abi.encodeWithSelector(IERC20.transferFrom.selector, owner, address(indexFactoryBalancer), amountIn),
+            abi.encode(true)
+        );
+
+        vm.mockCall(
+            address(0x1111),
+            abi.encodeWithSelector(IERC20.approve.selector, address(0xABC1), amountIn),
+            abi.encode(true)
+        );
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: token1,
+            tokenOut: token2,
+            fee: poolFee,
+            recipient: recipient,
+            deadline: block.timestamp + 300,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        });
+
+        vm.mockCall(
+            address(0xABC1), abi.encodeWithSelector(ISwapRouter.exactInputSingle.selector, params), abi.encode(300e18)
+        );
+
         vm.stopPrank();
     }
 }
