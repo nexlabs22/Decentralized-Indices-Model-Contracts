@@ -9,12 +9,15 @@ import "@chainlink/contracts/src/v0.8/Chainlink.sol";
 import "@chainlink/contracts/src/v0.8/Chainlink.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/ENSInterface.sol";
 import "@chainlink/contracts/src/v0.8/vendor/ENSResolver.sol";
+import "./OlympixUnitTest.sol";
 
-contract ChainlinkClientTest is Test, ChainlinkClient {
+contract ChainlinkClientTest is Test, ChainlinkClient, OlympixUnitTest("ChainlinkClient") {
     using Chainlink for Chainlink.Request;
 
     MockApiOracle private mockOracle;
     LinkTokenInterface private linkToken;
+
+    bytes32 private constant ENS_ORACLE_SUBNAME = keccak256("oracle");
 
     mapping(bytes32 => address) internal s_pendingRequests;
 
@@ -82,8 +85,6 @@ contract ChainlinkClientTest is Test, ChainlinkClient {
         // Fulfillment logic
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
-
     function testAddChainlinkExternalRequest() public {
         bytes32 requestId = keccak256("externalRequest");
         address externalOracle = address(mockOracle);
@@ -137,8 +138,6 @@ contract ChainlinkClientTest is Test, ChainlinkClient {
         fulfill(requestId, keccak256("data"));
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
-
     function testSetPublicChainlinkToken() public {
         address mockLinkAddress = address(linkToken);
         MockPointerInterface mockPointer = new MockPointerInterface(mockLinkAddress);
@@ -179,31 +178,72 @@ contract ChainlinkClientTest is Test, ChainlinkClient {
         fulfill(requestId, keccak256("data"));
     }
 
-    // function testUseChainlinkWithENS() public {
-    //     MockENS mockENS = new MockENS();
-    //     MockENSResolver mockResolver = new MockENSResolver();
+    function testFailSendChainlinkRequest_RevertsOnZeroPayment() public {
+        bytes32 specId = "specId";
+        Chainlink.Request memory req = buildChainlinkRequest(specId, address(this), this.fulfill.selector);
 
-    //     bytes32 linkNode = keccak256(abi.encodePacked("mockNode", keccak256("link")));
-    //     mockENS.setResolver(linkNode, address(mockResolver));
-    //     mockResolver.setAddr(linkNode, address(linkToken));
+        vm.expectRevert("unable to transferAndCall to oracle");
+        sendChainlinkRequest(req, 0);
+    }
 
-    //     useChainlinkWithENS(address(mockENS), keccak256("mockNode"));
+    function test_failsCancelChainlinkRequest_RevertsIfNotExpired() public {
+        bytes32 requestId = sendChainlinkRequest(
+            buildChainlinkRequest("specId", address(this), this.fulfill.selector), 1 * LINK_DIVISIBILITY
+        );
 
-    //     assertEq(chainlinkTokenAddress(), address(linkToken));
-    // }
+        uint256 expiration = block.timestamp + 1 days;
 
-    // function testUpdateChainlinkOracleWithENS() public {
-    //     MockENS mockENS = new MockENS();
-    //     MockENSResolver mockResolver = new MockENSResolver();
+        vm.expectRevert("Request is not expired");
+        cancelChainlinkRequest(requestId, 1 * LINK_DIVISIBILITY, this.fulfill.selector, expiration);
+    }
 
-    //     bytes32 oracleNode = keccak256(abi.encodePacked("mockNode", keccak256("oracle")));
-    //     mockENS.setResolver(oracleNode, address(mockResolver));
-    //     mockResolver.setAddr(oracleNode, address(mockOracle));
+    function testAddChainlinkExternalRequest_RevertsOnDuplicateRequest() public {
+        bytes32 requestId = keccak256("externalRequest");
+        address externalOracle = address(mockOracle);
 
-    //     updateChainlinkOracleWithENS();
+        addChainlinkExternalRequest(externalOracle, requestId);
 
-    //     assertEq(chainlinkOracleAddress(), address(mockOracle));
-    // }
+        vm.expectRevert("Request is already pending");
+        addChainlinkExternalRequest(externalOracle, requestId);
+    }
+
+    function testFulfill_RevertsForInvalidOracle() public {
+        bytes32 requestId = sendChainlinkRequest(
+            buildChainlinkRequest("specId", address(this), this.fulfill.selector), 1 * LINK_DIVISIBILITY
+        );
+
+        vm.prank(address(0xdeadbeef));
+        vm.expectRevert("Source must be the oracle of the request");
+        fulfill(requestId, keccak256("data"));
+    }
+
+    function testSetPublicChainlinkToken_Success() public {
+        address mockLinkAddress = address(linkToken);
+        MockPointerInterface mockPointer = new MockPointerInterface(mockLinkAddress);
+
+        vm.mockCall(
+            0xC89bD4E1632D3A43CB03AAAd5262cbe4038Bc571,
+            abi.encodeWithSelector(PointerInterface.getAddress.selector),
+            abi.encode(mockLinkAddress)
+        );
+
+        setPublicChainlinkToken();
+        assertEq(chainlinkTokenAddress(), mockLinkAddress);
+    }
+
+    function testRequestIdUniqueness() public {
+        uint256 initialCount = getNextRequestCount();
+
+        sendChainlinkRequest(
+            buildChainlinkRequest("specId1", address(this), this.fulfill.selector), 1 * LINK_DIVISIBILITY
+        );
+        sendChainlinkRequest(
+            buildChainlinkRequest("specId2", address(this), this.fulfill.selector), 1 * LINK_DIVISIBILITY
+        );
+
+        uint256 newCount = getNextRequestCount();
+        assertEq(newCount, initialCount + 2, "Request count did not increment correctly");
+    }
 
     function testChainlinkTokenAddress() public {
         assertEq(chainlinkTokenAddress(), address(linkToken));
@@ -234,20 +274,22 @@ contract MockENS is ENSInterface {
     }
 
     function resolver(bytes32 node) external view override returns (address) {
-        return resolvers[node];
+        address res = resolvers[node];
+        require(res != address(0), "Resolver not set for this node");
+        return res;
     }
 
-    function owner(bytes32 node) external view override returns (address) {
+    function owner(bytes32) external pure override returns (address) {
         return address(0);
     }
 
-    function setOwner(bytes32 node, address owner) external override {}
+    function setOwner(bytes32, address) external pure override {}
 
-    function setSubnodeOwner(bytes32 node, bytes32 label, address owner) external override {}
+    function setSubnodeOwner(bytes32, bytes32, address) external pure override {}
 
-    function setTTL(bytes32 node, uint64 ttl) external override {}
+    function setTTL(bytes32, uint64) external pure override {}
 
-    function ttl(bytes32 node) external view override returns (uint64) {
+    function ttl(bytes32) external pure override returns (uint64) {
         return 0;
     }
 }
@@ -260,6 +302,8 @@ contract MockENSResolver is ENSResolver_Chainlink {
     }
 
     function addr(bytes32 node) public view override returns (address) {
-        return addresses[node];
+        address addr = addresses[node];
+        require(addr != address(0), "Address not set for this node");
+        return addr;
     }
 }
