@@ -2,15 +2,21 @@
 pragma solidity ^0.8.7;
 
 import "forge-std/Test.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "../../contracts/vault/Vault.sol";
 import "./OlympixUnitTest.sol";
+import "../mocks/MockERC20.sol";
 
 contract VaultTest is Test {
     Vault vault;
+    MockERC20 token;
 
     function setUp() external {
         vault = new Vault();
         vault.initialize();
+        token = new MockERC20("Test", "TST");
+        token.mint(address(this), 10000e18);
     }
 
     function test_withdrawFunds_FailWhenCallerIsNotOperator() public {
@@ -67,5 +73,27 @@ contract VaultTest is Test {
         vm.expectRevert("NexVault: amount is zero");
         vault.withdrawFunds(token, to, amount);
         vm.stopPrank();
+    }
+
+    function testWithdrawFundsSuccessfully() public {
+        uint256 initialAmount = 1000e18;
+        // address token = address(0x2);
+        address to = address(0x3);
+        uint256 amount = initialAmount;
+
+        deal(address(token), address(vault), initialAmount);
+
+        address operator = address(0x1);
+        vault.setOperator(operator, true);
+
+        uint256 userBalanceBeforeWithdraw = IERC20(token).balanceOf(to);
+
+        vm.startPrank(operator);
+        vault.withdrawFunds(address(token), to, amount);
+        vm.stopPrank();
+
+        uint256 userBalanceAfterWithdraw = IERC20(token).balanceOf(to);
+
+        assertGt(userBalanceAfterWithdraw, userBalanceBeforeWithdraw);
     }
 }
