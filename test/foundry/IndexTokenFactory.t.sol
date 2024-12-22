@@ -162,7 +162,6 @@ contract CounterTest is Test, ContractDeployer {
 
     
     function testIssuanceWithTokensOutput() public {
-        uint startAmount = 1e14;
         
        
         updateOracleList();
@@ -183,6 +182,7 @@ contract CounterTest is Test, ContractDeployer {
         console.log("real out", reallOut);
         console.log("usdt after redemption", usdt.balanceOf(add1));
     }
+    
     
 
     

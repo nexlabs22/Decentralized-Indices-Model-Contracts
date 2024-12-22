@@ -25,7 +25,7 @@ contract PriceOracle
         address tokenOut,
         uint128 amountIn,
         uint24 swapFee
-    ) public view returns (uint amountOut) {
+    ) external view returns (uint amountOut) {
         address _pool = IUniswapV3Factory(factoryAddress).getPool(tokenIn, tokenOut, swapFee);
 
         (, int24 tick , , , , , ) = IUniswapV3Pool(_pool).slot0();

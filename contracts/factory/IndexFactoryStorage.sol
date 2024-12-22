@@ -418,19 +418,39 @@ contract IndexFactoryStorage is
         for (uint i = 0; i < totalCurrentList; i++) {
             if (currentList[i] == address(weth)) {
                 totalValue += IERC20(currentList[i]).balanceOf(
-                    address(indexToken)
+                    address(vault)
                 );
             } else {
                 uint value = getAmountOut(
                     currentList[i],
                     address(weth),
-                    IERC20(currentList[i]).balanceOf(address(indexToken)),
+                    IERC20(currentList[i]).balanceOf(address(vault)),
                     tokenSwapFee[currentList[i]]
                 );
                 totalValue += value;
             }
         }
         return totalValue;
+    }
+
+    function getPortfolioBalance2(address token) public view returns (address) {
+        uint totalValue;
+        // uint value = getAmountOut(
+        //             token,
+        //             address(weth),
+        //             1e18,
+        //             3000
+        //         );
+        // totalValue += value;
+
+        totalValue = IPriceOracle(priceOracle).estimateAmountOut(
+            address(factoryV3),
+            token,
+            address(weth),
+            1e18,
+            3000
+        );
+        return priceOracle;
     }
 
     /**
