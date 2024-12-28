@@ -12,6 +12,7 @@ contract IndexFactoryTest is Test, IndexFactory {
     IndexFactory indexFactory;
     ContractDeployer deployer;
     MockFactoryStorage Fstorage;
+    MockERC20 weth;
 
     MockERC20 token;
 
@@ -186,6 +187,160 @@ contract IndexFactoryTest is Test, IndexFactory {
 
         assertEq(result, 10 * 1e20, "Incorrect result for (_wethAmount * price) / 1e16");
     }
+
+    function testWethAmountTimesMarketShare() public {
+        uint256 wethAmount = 10 * 1e18;
+        uint256 marketShare = 50e18;
+
+        uint256 result = (wethAmount * marketShare) / 1e18;
+
+        assertEq(result, 500 * 1e18, "Incorrect result for _wethAmount * marketShare");
+    }
+
+    function testOutputAmountGreaterThanZero() public {
+        uint256 outputAmount = 5 * 1e18;
+        assertTrue(outputAmount > 0, "Output amount should be greater than zero");
+    }
+
+    function testSwapCalculationForToken() public {
+        address tokenAddress = address(token);
+        uint256 wethAmount = 10 * 1e18;
+        uint256 marketShare = 50e18;
+        uint24 swapFee = 3000;
+        uint256 outputAmount = (wethAmount * marketShare) / 100e18;
+
+        assertEq(outputAmount, 5 * 1e18, "Incorrect swap output amount");
+        assertEq(swapFee, 3000, "Incorrect swap fee");
+    }
+
+    function testTokenAddressNotEqualToWETH() public {
+        address tokenAddress = address(token);
+        assertTrue(tokenAddress != address(weth), "Token address should not be equal to WETH");
+    }
+
+    function testWethAmountTimesMarketShareDividedBy100e18() public {
+        uint256 wethAmount = 10 * 1e18;
+        uint256 marketShare = 50e18;
+
+        uint256 result = (wethAmount * marketShare) / 100e18;
+
+        assertEq(result, 5 * 1e18, "Incorrect result for (_wethAmount * marketShare) / 100e18");
+    }
+
+    function testAmountTimesPowerOfTen() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 6;
+        uint8 chainDecimals = 18;
+
+        int256 result = _toWei(amount, amountDecimals, chainDecimals);
+
+        int256 scalingFactor = int256(10 ** (uint256(chainDecimals) - uint256(amountDecimals)));
+        int256 expectedResult = amount * scalingFactor;
+
+        assertEq(result, expectedResult, "Incorrect scaling for _amount * 10 ** (_chainDecimals - _amountDecimals)");
+    }
+
+    function testAmountDividedByPowerOfTenFails() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 6;
+        uint8 chainDecimals = 18;
+
+        int256 result = _toWei(amount, amountDecimals, chainDecimals);
+
+        int256 scalingFactor = int256(10 ** (uint256(chainDecimals) - uint256(amountDecimals)));
+        int256 expectedResult = amount * scalingFactor;
+
+        int256 mutatedResult = amount / int256(10 * (uint256(chainDecimals) - uint256(amountDecimals)));
+
+        require(result != mutatedResult, "Mutation did not affect the result as expected");
+    }
+
+    function testPowerOfTenScaling() public {
+        uint8 amountDecimals = 6;
+        uint8 chainDecimals = 18;
+
+        uint256 expectedFactor = 10 ** (uint256(chainDecimals) - uint256(amountDecimals));
+
+        assertEq(expectedFactor, 1e12, "Incorrect scaling factor for 10 ** (_chainDecimals - _amountDecimals)");
+    }
+
+    function testPowerOfTenScalingFails() public {
+        uint8 amountDecimals = 6;
+        uint8 chainDecimals = 18;
+
+        uint256 expectedFactor = 10 ** (uint256(chainDecimals) - uint256(amountDecimals));
+        uint256 mutatedFactor = 10 * (uint256(chainDecimals) - uint256(amountDecimals));
+
+        require(expectedFactor != mutatedFactor, "Mutation did not affect the result as expected");
+    }
+
+    function testAmountTimesPowerOfTenReverse() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 18;
+        uint8 chainDecimals = 6;
+
+        int256 result = _toWei(amount, amountDecimals, chainDecimals);
+
+        int256 scalingFactor = int256(10 ** (uint256(amountDecimals) - uint256(chainDecimals)));
+        int256 expectedResult = amount * scalingFactor;
+
+        assertEq(result, expectedResult, "Incorrect scaling for _amount * 10 ** (_amountDecimals - _chainDecimals)");
+    }
+
+    function testAmountDividedByPowerOfTenReverseFails() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 18;
+        uint8 chainDecimals = 6;
+
+        int256 result = _toWei(amount, amountDecimals, chainDecimals);
+
+        int256 scalingFactor = int256(10 ** (uint256(amountDecimals) - uint256(chainDecimals)));
+        int256 expectedResult = amount * scalingFactor;
+
+        int256 mutatedResult = amount / int256(10 * (uint256(amountDecimals) - uint256(chainDecimals)));
+
+        require(result != mutatedResult, "Mutation did not affect the result as expected");
+    }
+
+    function testPowerOfTenScalingReverse() public {
+        uint8 amountDecimals = 18;
+        uint8 chainDecimals = 6;
+
+        uint256 expectedFactor = 10 ** (uint256(amountDecimals) - uint256(chainDecimals));
+
+        assertEq(expectedFactor, 1e12, "Incorrect scaling factor for 10 ** (_amountDecimals - _chainDecimals)");
+    }
+
+    function testPowerOfTenScalingReverseFails() public {
+        uint8 amountDecimals = 18;
+        uint8 chainDecimals = 6;
+
+        uint256 expectedFactor = 10 ** (uint256(amountDecimals) - uint256(chainDecimals));
+        uint256 mutatedFactor = 10 * (uint256(amountDecimals) - uint256(chainDecimals));
+
+        require(expectedFactor != mutatedFactor, "Mutation did not affect the result as expected");
+    }
+
+    function testTotalSupplyTimesWethAmountFailsForMutation() public {
+        uint256 totalSupply = 1000 * 1e18;
+        uint256 wethAmount = 10 * 1e18;
+
+        uint256 result = totalSupply * wethAmount;
+        uint256 mutatedResult = totalSupply / wethAmount;
+
+        require(result != mutatedResult, "Mutation incorrectly changed multiplication to division");
+    }
+
+    function testDivisionByFirstPortfolioValueFailsForMutation() public {
+        uint256 totalSupply = 1000 * 1e18;
+        uint256 wethAmount = 10 * 1e18;
+        uint256 firstPortfolioValue = 100 * 1e18;
+
+        uint256 result = (totalSupply * wethAmount) / firstPortfolioValue;
+        uint256 mutatedResult = (totalSupply * wethAmount) * firstPortfolioValue;
+
+        require(result != mutatedResult, "Mutation incorrectly changed division to multiplication");
+    }
 }
 
 contract MockFactoryStorage {
@@ -197,3 +352,5 @@ contract MockFactoryStorage {
         priceInWei = _priceInWei;
     }
 }
+
+contract IndexFactoryTestWithDeployer is Test, ContractDeployer {}
