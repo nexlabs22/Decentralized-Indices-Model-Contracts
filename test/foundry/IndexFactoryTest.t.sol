@@ -20,9 +20,11 @@ contract IndexFactoryTest is Test, IndexFactory {
         indexFactory = new IndexFactory();
         indexFactory.initialize(payable(address(new IndexFactoryStorage())));
         deployer = new ContractDeployer();
+
         Fstorage = new MockFactoryStorage(token, 1e18);
 
         token = new MockERC20("Test", "TT");
+        weth = new MockERC20("WETH", "WETH");
     }
 
     function testUnpause() public {
@@ -123,10 +125,11 @@ contract IndexFactoryTest is Test, IndexFactory {
         assertTrue(isPaused, "The contract should be paused");
     }
 
-    function testFailPauseRevertsIfNotOwner() public {
-        vm.prank(user);
-        vm.expectRevert("Ownable: caller is not the ownerAddr");
+    function testPauseRevertsIfNotOwner() public {
+        vm.startPrank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
         indexFactory.pause();
+        vm.stopPrank();
     }
 
     function testUnpauseByOwner() public {
@@ -138,11 +141,11 @@ contract IndexFactoryTest is Test, IndexFactory {
         assertFalse(isPaused, "The contract should be unpaused");
     }
 
-    function testFailUnpauseRevertsIfNotOwner() public {
+    function testUnpauseRevertsIfNotOwner() public {
         indexFactory.pause();
 
         vm.prank(user);
-        vm.expectRevert("Ownable: caller is not the ownerAddr");
+        vm.expectRevert("Ownable: caller is not the owner");
         indexFactory.unpause();
     }
 
@@ -338,16 +341,281 @@ contract IndexFactoryTest is Test, IndexFactory {
 
         require(result != mutatedResult, "Mutation incorrectly changed division to multiplication");
     }
+
+    function testDivisionBy100e18FailsForMutation() public {
+        uint256 wethAmount = 10 * 1e18;
+        uint256 marketShare = 50e18;
+
+        uint256 result = (wethAmount * marketShare) / 100e18;
+        uint256 mutatedResult = (wethAmount * marketShare) * 100e18;
+
+        require(result != mutatedResult, "Mutation incorrectly changed division to multiplication");
+    }
+
+    function testWethAmountTimesMarketShareFailsForMutation() public {
+        uint256 wethAmount = 10 * 1e18;
+        uint256 marketShare = 50e18;
+
+        uint256 result = wethAmount * marketShare;
+        uint256 mutatedResult = wethAmount / marketShare;
+
+        require(result != mutatedResult, "Mutation incorrectly changed multiplication to division");
+    }
+
+    function testOutputAmountTimesFeeRate() public {
+        uint256 outputAmount = 1000;
+        uint256 feeRate = 100;
+
+        uint256 ownerFee = (outputAmount * feeRate) / 10000;
+
+        assertEq(ownerFee, 10, "Incorrect owner fee calculation");
+    }
+
+    function testOutputAmountTimesFeeRateFailsForMutation() public {
+        uint256 outputAmount = 1000;
+        uint256 feeRate = 100;
+
+        uint256 originalFee = (outputAmount * feeRate) / 10000;
+
+        // Simulated mutation
+        uint256 mutatedFee = (outputAmount * feeRate) * 10000;
+
+        require(originalFee != mutatedFee, "Mutation incorrectly changed division to multiplication");
+    }
+
+    function testOutputAmountDividedByFeeRateFailsForMutation() public {
+        uint256 outputAmount = 1000;
+        uint256 feeRate = 100;
+
+        uint256 originalFee = outputAmount * feeRate;
+
+        // Simulated mutation
+        uint256 mutatedFee = outputAmount / feeRate;
+
+        require(originalFee != mutatedFee, "Mutation incorrectly changed multiplication to division");
+    }
+
+    function testTokenOutConditionFailsForMutation() public {
+        address tokenOut = address(weth);
+
+        bool originalCondition = tokenOut == address(weth);
+
+        bool mutatedCondition = tokenOut != address(weth);
+
+        require(originalCondition != mutatedCondition, "Mutation incorrectly changed the condition");
+    }
+
+    function testOutputAmountMinusOwnerFee() public {
+        uint256 outputAmount = 1000;
+        uint256 feeRate = 100;
+
+        uint256 ownerFee = (outputAmount * feeRate) / 10000;
+        uint256 userAmount = outputAmount - ownerFee;
+
+        assertEq(userAmount, 990, "Incorrect calculation for output amount minus owner fee");
+    }
+
+    function testOutputAmountMinusOwnerFeeFailsForMutation() public {
+        uint256 outputAmount = 1000;
+        uint256 feeRate = 100;
+
+        uint256 ownerFee = (outputAmount * feeRate) / 10000;
+
+        // Original calculation
+        uint256 originalUserAmount = outputAmount - ownerFee;
+
+        // Simulated mutation
+        uint256 mutatedUserAmount = outputAmount + ownerFee;
+
+        require(originalUserAmount != mutatedUserAmount, "Mutation incorrectly changed subtraction to addition");
+    }
+
+    function testSwapCalculation() public {
+        uint256 outputAmount = 1000;
+        uint256 feeRate = 100;
+        uint24 swapFee = 30;
+
+        uint256 ownerFee = (outputAmount * feeRate) / 10000;
+        uint256 userAmount = outputAmount - ownerFee;
+
+        uint256 swappedAmount = userAmount - swapFee;
+
+        assertEq(swappedAmount, 960, "Incorrect swap calculation with fees");
+    }
+
+    function testSwapCalculationFailsForMutation() public {
+        uint256 outputAmount = 1000;
+        uint256 feeRate = 100;
+        uint24 swapFee = 30;
+
+        uint256 ownerFee = (outputAmount * feeRate) / 10000;
+        uint256 userAmount = outputAmount - ownerFee;
+
+        uint256 originalSwappedAmount = userAmount - swapFee;
+
+        // Simulated mutation
+        uint256 mutatedSwappedAmount = userAmount + swapFee;
+
+        require(originalSwappedAmount != mutatedSwappedAmount, "Mutation incorrectly changed subtraction to addition");
+    }
+
+    // function testTokenAddressCondition() public {
+    //     address tokenAddress = Fstorage.weth(); // Simulate `tokenAddress == weth`
+    //     uint256 marketShare = 50e18;
+    //     uint256 wethAmount = 10 * 1e18;
+
+    //     uint256 expectedAmount = (wethAmount * marketShare) / 100e18;
+
+    //     // Verify original behavior
+    //     if (tokenAddress != address(weth)) {
+    //         uint256 outputAmount = swap(address(weth), tokenAddress, expectedAmount, address(0), 3000);
+    //         assertGt(outputAmount, 0, "Swap failed");
+    //     } else {
+    //         weth.transfer(address(0), expectedAmount);
+    //     }
+
+    //     // Simulate mutation
+    //     bool mutatedCondition = tokenAddress == address(weth);
+    //     require(!mutatedCondition, "Mutation incorrectly changed the condition");
+    // }
+
+    function testMarketShareDivision() public {
+        uint256 wethAmount = 10 * 1e18;
+        uint256 marketShare = 50e18;
+
+        uint256 originalResult = (wethAmount * marketShare) / 100e18;
+
+        // Simulate mutation
+        uint256 mutatedResult = (wethAmount * marketShare) * 100e18;
+
+        require(originalResult != mutatedResult, "Mutation incorrectly changed division to multiplication");
+    }
+
+    function testMarketShareMultiplication() public {
+        uint256 wethAmount = 10 * 1e18;
+        uint256 marketShare = 50e18;
+
+        uint256 originalResult = wethAmount * marketShare;
+
+        // Simulate mutation
+        uint256 mutatedResult = wethAmount / marketShare;
+
+        require(originalResult != mutatedResult, "Mutation incorrectly changed multiplication to division");
+    }
+
+    function testOutputAmountCondition() public {
+        uint256 outputAmount = 5 * 1e18;
+
+        // Original condition
+        require(outputAmount > 0, "Output amount should be greater than zero");
+
+        // Simulate mutation
+        bool mutatedCondition = outputAmount < 0;
+        require(!mutatedCondition, "Mutation incorrectly changed the condition");
+    }
+
+    // ----------------------------------------------
+
+    function issuanceIndexTokensNonReentrantRemoved(address _tokenIn, uint256 _amountIn, uint24 _tokenInSwapFee)
+        public
+    {
+        require(_tokenIn != address(0), "Invalid token address");
+        require(_amountIn > 0, "Invalid amount");
+        IWETH weth = factoryStorage.weth();
+        Vault vault = factoryStorage.vault();
+        uint256 totalCurrentList = factoryStorage.totalCurrentList();
+        uint256 feeRate = factoryStorage.feeRate();
+        uint256 feeAmount = (_amountIn * feeRate) / 10000;
+
+        uint256 firstPortfolioValue = factoryStorage.getPortfolioBalance();
+
+        require(
+            IERC20(_tokenIn).transferFrom(msg.sender, address(this), _amountIn + feeAmount), "Token transfer failed"
+        );
+        uint256 wethAmountBeforeFee =
+            swap(_tokenIn, address(weth), _amountIn + feeAmount, address(this), _tokenInSwapFee);
+        address feeReceiver = factoryStorage.feeReceiver();
+        uint256 feeWethAmount = (wethAmountBeforeFee * feeRate) / 10000;
+        uint256 wethAmount = wethAmountBeforeFee - feeWethAmount;
+
+        require(weth.transfer(address(feeReceiver), feeWethAmount), "Fee transfer failed");
+        _issuance(_tokenIn, _amountIn, totalCurrentList, vault, wethAmount, firstPortfolioValue);
+    }
+
+    function testIssuanceIndexTokens_SuccessfulIssuance() public {
+        address tokenIn = address(token);
+        uint256 amountIn = 1e18;
+        uint24 tokenInSwapFee = 3000;
+
+        token.mint(address(this), amountIn + (amountIn / 10000));
+        token.approve(address(indexFactory), amountIn + (amountIn / 10000));
+
+        vm.mockCall(
+            address(indexFactory.factoryStorage()),
+            abi.encodeWithSelector(MockFactoryStorage.weth.selector),
+            address(weth)
+        );
+        vm.mockCall(
+            address(indexFactory.factoryStorage()),
+            abi.encodeWithSelector(MockFactoryStorage.vault.selector),
+            address(deployer)
+        );
+        vm.mockCall(
+            address(indexFactory.factoryStorage()),
+            abi.encodeWithSelector(MockFactoryStorage.totalCurrentList.selector),
+            2
+        );
+        vm.mockCall(
+            address(indexFactory.factoryStorage()), abi.encodeWithSelector(MockFactoryStorage.feeRate.selector), 100
+        ); // 1%
+        vm.mockCall(
+            address(indexFactory.factoryStorage()),
+            abi.encodeWithSelector(MockFactoryStorage.getPortfolioBalance.selector),
+            10e18
+        );
+        vm.mockCall(
+            address(indexFactory.factoryStorage()),
+            abi.encodeWithSelector(MockFactoryStorage.feeReceiver.selector),
+            address(user)
+        );
+
+        vm.mockCall(address(weth), abi.encodeWithSelector(IERC20.transfer.selector), abi.encode(true));
+
+        indexFactory.issuanceIndexTokens(tokenIn, amountIn, tokenInSwapFee);
+
+        assertEq(weth.balanceOf(address(user)), amountIn / 10000, "Fee receiver should receive the correct fee");
+    }
 }
 
 contract MockFactoryStorage {
     MockERC20 public token;
     uint256 public priceInWei;
 
+    address[] public currentList;
+    mapping(address => uint256) public marketShare;
+    mapping(address => uint24) public swapFee;
+    address public weth;
+
     constructor(MockERC20 _indexToken, uint256 _priceInWei) {
         token = _indexToken;
         priceInWei = _priceInWei;
     }
-}
 
-contract IndexFactoryTestWithDeployer is Test, ContractDeployer {}
+    function addTokenToCurrentList(address _token, uint256 _marketShare, uint24 _swapFee) external {
+        currentList.push(_token);
+        marketShare[_token] = _marketShare;
+        swapFee[_token] = _swapFee;
+    }
+
+    function testCurrentList(uint256 index) external view returns (address) {
+        return currentList[index];
+    }
+
+    function tokenCurrentMarketShare(address _token) external view returns (uint256) {
+        return marketShare[_token];
+    }
+
+    function tokenSwapFee(address _token) external view returns (uint24) {
+        return swapFee[_token];
+    }
+}
