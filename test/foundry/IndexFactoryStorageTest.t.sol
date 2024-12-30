@@ -8,8 +8,43 @@ import "./OlympixUnitTest.sol";
 contract IndexFactoryStorageTest is Test {
     IndexFactoryStorage indexFactoryStorage;
 
+    address user = address(2);
+    address factoryBalancer = address(3);
+
     function setUp() external {
         indexFactoryStorage = new IndexFactoryStorage();
+        indexFactoryStorage.initialize(
+            payable(address(0x1)),
+            address(0x2),
+            address(0x3),
+            bytes32(0),
+            address(0x4),
+            address(0x5),
+            address(0x6),
+            address(0x7),
+            address(0x8),
+            address(0x9),
+            address(0x10)
+        );
+    }
+
+    function testInitializeSetsParametersCorrectly() public {
+        assertEq(address(indexFactoryStorage.indexToken()), address(0x1), "IndexToken address mismatch");
+        assertEq(indexFactoryStorage.externalJobId(), bytes32(0), "External job ID mismatch");
+        assertEq(address(indexFactoryStorage.toUsdPriceFeed()), address(0x4), "Price feed address mismatch");
+        assertEq(address(indexFactoryStorage.weth()), address(0x5), "WETH address mismatch");
+        assertEq(address(indexFactoryStorage.quoter()), address(0x6), "Quoter address mismatch");
+        assertEq(address(indexFactoryStorage.swapRouterV3()), address(0x7), "SwapRouterV3 address mismatch");
+        assertEq(address(indexFactoryStorage.factoryV3()), address(0x8), "FactoryV3 address mismatch");
+        assertEq(address(indexFactoryStorage.swapRouterV2()), address(0x9), "SwapRouterV2 address mismatch");
+        assertEq(address(indexFactoryStorage.factoryV2()), address(0x10), "FactoryV2 address mismatch");
+
+        assertEq(indexFactoryStorage.feeRate(), 10, "Fee rate mismatch");
+        assertEq(indexFactoryStorage.feeReceiver(), address(this), "Fee receiver mismatch");
+    }
+
+    function testInitializeRevertsWhenCalledTwice() public {
+        vm.expectRevert("Initializable: contract is already initialized");
         indexFactoryStorage.initialize(
             payable(address(0x1)),
             address(0x2),
@@ -32,11 +67,25 @@ contract IndexFactoryStorageTest is Test {
         assertEq(indexFactoryStorage.factoryAddress(), newFactoryAddress);
     }
 
+    function testSetFactoryRevertWithNonOwnerAddress() public {
+        address newFactoryAddress = address(0x123);
+        vm.prank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.setFactory(newFactoryAddress);
+    }
+
     function test_setFactoryBalancer_SuccessfulSetFactoryBalancer() public {
         address newFactoryBalancerAddress = address(0x123);
         vm.prank(indexFactoryStorage.owner());
         indexFactoryStorage.setFactoryBalancer(newFactoryBalancerAddress);
         assertEq(indexFactoryStorage.factoryBalancerAddress(), newFactoryBalancerAddress);
+    }
+
+    function testSetFactoryBalancerRevertWithNonOwnerAddress() public {
+        address newFactoryBalancerAddress = address(0x123);
+        vm.prank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.setFactoryBalancer(newFactoryBalancerAddress);
     }
 
     function test_setPriceFeed_FailWhenPriceFeedAddressIsZero() public {
@@ -49,6 +98,146 @@ contract IndexFactoryStorageTest is Test {
         vm.prank(indexFactoryStorage.owner());
         indexFactoryStorage.setPriceFeed(newPriceFeed);
         assertEq(address(indexFactoryStorage.toUsdPriceFeed()), newPriceFeed);
+    }
+
+    function testSetPriceFeedRevertWithNonOwnerAddress() public {
+        address newPriceFeed = address(0x123);
+        vm.prank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.setPriceFeed(newPriceFeed);
+    }
+
+    function testSetVaultSuccessful() public {
+        address newVault = address(0x123);
+        vm.startPrank(indexFactoryStorage.owner());
+        indexFactoryStorage.setVault(newVault);
+        assertEq(address(indexFactoryStorage.vault()), newVault);
+    }
+
+    function testSetVaultRevertWithNonOwnerAddress() public {
+        address newVault = address(0x123);
+        vm.startPrank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.setVault(newVault);
+    }
+
+    function testSetPriceOracleSuccessful() public {
+        address newPriceOracle = address(0x123);
+        vm.startPrank(indexFactoryStorage.owner());
+        indexFactoryStorage.setPriceOracle(newPriceOracle);
+        assertEq(address(indexFactoryStorage.priceOracle()), newPriceOracle);
+    }
+
+    function testSetPriceOracleRevertWithNonOwnerAddress() public {
+        address newPriceOracle = address(0x123);
+        vm.startPrank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.setPriceOracle(newPriceOracle);
+    }
+
+    function testSetUrlByOwner() public {
+        string memory beforeAddress = "https://example.com/";
+        string memory afterAddress = "api/endpoint";
+
+        indexFactoryStorage.setUrl(beforeAddress, afterAddress);
+    }
+
+    function testSetUrlRevertsForNonOwner() public {
+        string memory beforeAddress = "https://example.com/";
+        string memory afterAddress = "api/endpoint";
+
+        vm.prank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.setUrl(beforeAddress, afterAddress);
+    }
+
+    function testSetFeeRateByOwner() public {
+        vm.warp(block.timestamp + 13 hours);
+
+        uint8 newFee = 50;
+
+        indexFactoryStorage.setFeeRate(newFee);
+
+        assertEq(indexFactoryStorage.feeRate(), newFee, "Fee rate was not updated correctly");
+        assertEq(indexFactoryStorage.latestFeeUpdate(), block.timestamp, "Latest fee update timestamp not updated");
+    }
+
+    function testSetFeeRateRevertsIfTooSoon() public {
+        uint8 newFee = 50;
+
+        vm.warp(block.timestamp + 10 hours);
+
+        vm.expectRevert("You should wait at least 12 hours after the latest update");
+        indexFactoryStorage.setFeeRate(newFee);
+    }
+
+    function testSetFeeRateRevertsForNonOwner() public {
+        uint8 newFee = 50;
+
+        vm.warp(block.timestamp + 13 hours);
+
+        vm.prank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.setFeeRate(newFee);
+    }
+
+    function testSetFeeReceiverSuccessful() public {
+        address newFeeReceiver = address(0x123);
+        vm.startPrank(indexFactoryStorage.owner());
+        indexFactoryStorage.setFeeReceiver(newFeeReceiver);
+        assertEq(address(indexFactoryStorage.feeReceiver()), newFeeReceiver);
+    }
+
+    function testSetFeeReceiverRevertWithNonOwnerAddress() public {
+        address newFeeReceiver = address(0x123);
+        vm.startPrank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.setFeeReceiver(newFeeReceiver);
+    }
+
+    function testUpdateCurrentListByFactory() public {
+        vm.prank(indexFactoryStorage.owner());
+
+        indexFactoryStorage.setFactoryBalancer(factoryBalancer);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(0x1);
+        tokens[1] = address(0x2);
+
+        uint256[] memory marketShares = new uint256[](2);
+        marketShares[0] = 100;
+        marketShares[1] = 200;
+
+        uint24[] memory swapFees = new uint24[](2);
+        swapFees[0] = 300;
+        swapFees[1] = 400;
+
+        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+
+        vm.prank(factoryBalancer);
+        indexFactoryStorage.updateCurrentList();
+
+        assertEq(indexFactoryStorage.totalCurrentList(), 2, "Total current list not updated correctly");
+
+        assertEq(indexFactoryStorage.currentList(0), address(tokens[0]), "First token not updated correctly");
+        assertEq(
+            indexFactoryStorage.tokenCurrentMarketShare(address(tokens[0])),
+            100,
+            "Market share not updated for first token"
+        );
+
+        assertEq(indexFactoryStorage.currentList(1), address(tokens[1]), "Second token not updated correctly");
+        assertEq(
+            indexFactoryStorage.tokenCurrentMarketShare(address(tokens[1])),
+            200,
+            "Market share not updated for second token"
+        );
+    }
+
+    function testUpdateCurrentListRevertsForNonFactory() public {
+        vm.prank(user);
+        vm.expectRevert("Caller is not a factory contract");
+        indexFactoryStorage.updateCurrentList();
     }
 
     function test_priceInWei_SuccessfulPriceInWei() public {
@@ -126,6 +315,25 @@ contract IndexFactoryStorageTest is Test {
 
         assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x1)), 0);
         assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x2)), 1);
+    }
+
+    function testMockFillAssetsList_RevertWithNonOwnerAddress() public {
+        vm.prank(user);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(0x1);
+        tokens[1] = address(0x2);
+
+        uint256[] memory marketShares = new uint256[](2);
+        marketShares[0] = 100;
+        marketShares[1] = 200;
+
+        uint24[] memory swapFees = new uint24[](2);
+        swapFees[0] = 300;
+        swapFees[1] = 400;
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
     }
 
     function test_mockFillAssetsList_FillWhenTotalCurrentListIsNotZero() public {

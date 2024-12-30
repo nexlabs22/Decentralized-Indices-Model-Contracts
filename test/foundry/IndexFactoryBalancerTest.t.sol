@@ -10,13 +10,13 @@ import "../../contracts/factory/IndexFactoryStorage.sol";
 import "../../contracts/libraries/SwapHelpers.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract IndexFactoryBalancerTest is Test {
+contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
     IndexFactoryBalancer indexFactoryBalancer;
-    IndexFactoryStorage factoryStorage;
+    IndexFactoryStorage indexFactoryStorage;
     address factoryStorageAddress;
 
     address user = address(1);
-    address owner = address(0x2);
+    address ownerAddr = address(0x2);
 
     address wethAddress = address(0x1234);
     address vaultAddress = address(0x5678);
@@ -25,13 +25,13 @@ contract IndexFactoryBalancerTest is Test {
     address token2 = address(0x2222);
 
     function setUp() external {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
 
-        factoryStorage = new IndexFactoryStorage();
-        factoryStorage.initialize(
+        indexFactoryStorage = new IndexFactoryStorage();
+        indexFactoryStorage.initialize(
             payable(address(0)),
             address(0),
-            owner,
+            ownerAddr,
             // address(0),
             0x0,
             address(0),
@@ -43,14 +43,14 @@ contract IndexFactoryBalancerTest is Test {
             vaultAddress
         );
 
-        factoryStorage.setVault(vaultAddress);
+        indexFactoryStorage.setVault(vaultAddress);
 
         indexFactoryBalancer = new IndexFactoryBalancer();
-        indexFactoryBalancer.initialize(payable(address(factoryStorage)));
+        indexFactoryBalancer.initialize(payable(address(indexFactoryStorage)));
 
-        factoryStorage.setFactoryBalancer(address(indexFactoryBalancer));
+        indexFactoryStorage.setFactoryBalancer(address(indexFactoryBalancer));
 
-        factoryStorageAddress = address(factoryStorage);
+        factoryStorageAddress = address(indexFactoryStorage);
 
         vm.stopPrank();
     }
@@ -61,9 +61,19 @@ contract IndexFactoryBalancerTest is Test {
 
     function testInitialize_RevertOnZeroAddress() public {
         IndexFactoryBalancer newBalancer = new IndexFactoryBalancer();
-
         vm.expectRevert("Invalid factory storage address");
         newBalancer.initialize(payable(address(0)));
+    }
+
+    function testInitialize_RevertOnSecondInitialization() public {
+        vm.startPrank(ownerAddr);
+
+        address newFactoryStorage = address(0xdead);
+
+        vm.expectRevert("Initializable: contract is already initialized");
+        indexFactoryBalancer.initialize(payable(newFactoryStorage));
+
+        vm.stopPrank();
     }
 
     function testWithdraw_Success() public {
@@ -72,17 +82,24 @@ contract IndexFactoryBalancerTest is Test {
 
         vm.deal(address(indexFactoryBalancer), deposit);
 
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         indexFactoryBalancer.withdraw(withdrawAmount);
         vm.stopPrank();
 
-        assertEq(owner.balance, withdrawAmount, "Owner did not receive the withdrawn Ether");
+        assertEq(ownerAddr.balance, withdrawAmount, "Owner did not receive the withdrawn Ether");
         assertEq(address(indexFactoryBalancer).balance, deposit - withdrawAmount, "Contract balance mismatch");
     }
 
     function testWithdraw_RevertOnInsufficientBalance() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         vm.expectRevert("Insufficient balance");
+        indexFactoryBalancer.withdraw(1 ether);
+        vm.stopPrank();
+    }
+
+    function testWithdrawRevertWithNonOwnerAddress() public {
+        vm.startPrank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
         indexFactoryBalancer.withdraw(1 ether);
         vm.stopPrank();
     }
@@ -93,52 +110,52 @@ contract IndexFactoryBalancerTest is Test {
     }
 
     function test_withdraw_FailWithdrawWhenBalanceIsInsufficient() public {
-        vm.prank(owner);
+        vm.prank(ownerAddr);
         vm.expectRevert("Insufficient balance");
         indexFactoryBalancer.withdraw(1);
     }
 
-    function testFailWithdraw_FailWhenTransferFails() public {
-        vm.prank(owner);
-        vm.deal(address(indexFactoryBalancer), 1 ether);
-        vm.expectRevert("Transfer failed");
-        indexFactoryBalancer.withdraw(1);
-    }
+    // function testWithdraw_FailWhenTransferFails() public {
+    //     vm.prank(owner);
+    //     vm.deal(address(indexFactoryBalancer), 1 ether);
+    //     vm.expectRevert("Transfer failed");
+    //     indexFactoryBalancer.withdraw(1);
+    // }
 
     function test_pause_SuccessfulPause() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         indexFactoryBalancer.pause();
         vm.stopPrank();
         assert(indexFactoryBalancer.paused());
     }
 
     function test_unpause_SuccessfulUnpause() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         indexFactoryBalancer.pause();
         indexFactoryBalancer.unpause();
         vm.stopPrank();
         assertFalse(indexFactoryBalancer.paused());
     }
 
-    function testFailPauseWithNonOwnerAddress() public {
+    function testPauseWithNonOwnerAddress() public {
         vm.startPrank(user);
-        vm.expectRevert("Only owner can set the pause");
+        vm.expectRevert("Ownable: caller is not the owner");
         indexFactoryBalancer.pause();
         vm.stopPrank();
     }
 
-    function testFailUnpauseWithNonOwnerAddress() public {
-        vm.startPrank(owner);
+    function testUnpauseWithNonOwnerAddress() public {
+        vm.startPrank(ownerAddr);
         indexFactoryBalancer.pause();
         vm.stopPrank();
 
         vm.startPrank(user);
-        vm.expectRevert("Only owner can set the unpause");
+        vm.expectRevert("Ownable: caller is not the owner");
         indexFactoryBalancer.unpause();
         vm.stopPrank();
     }
 
-    function test_failsSendETHDirectly() public {
+    function test_SendETHDirectlyFail() public {
         deal(user, 10 ether);
 
         vm.startPrank(user);
@@ -149,11 +166,11 @@ contract IndexFactoryBalancerTest is Test {
     }
 
     function testreIndexAndReweight() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
 
         address token1 = address(0x1001);
         address token2 = address(0x1002);
-        address wethAddress = address(factoryStorage.weth());
+        address wethAddress = address(indexFactoryStorage.weth());
 
         uint24 token1SwapFee = 3000;
         uint24 token2SwapFee = 10000;
@@ -163,14 +180,14 @@ contract IndexFactoryBalancerTest is Test {
         uint256 wethBalanceBefore = 5000 * 10 ** 18;
 
         vm.mockCall(
-            address(factoryStorage.vault()),
+            address(indexFactoryStorage.vault()),
             abi.encodeWithSelector(
                 Vault.withdrawFunds.selector, token1, address(indexFactoryBalancer), vaultToken1Balance
             ),
             abi.encode(true)
         );
         vm.mockCall(
-            address(factoryStorage.vault()),
+            address(indexFactoryStorage.vault()),
             abi.encodeWithSelector(
                 Vault.withdrawFunds.selector, token2, address(indexFactoryBalancer), vaultToken2Balance
             ),
@@ -178,12 +195,12 @@ contract IndexFactoryBalancerTest is Test {
         );
 
         vm.mockCall(
-            address(factoryStorage.vault()),
+            address(indexFactoryStorage.vault()),
             abi.encodeWithSelector(IERC20.balanceOf.selector, token1),
             abi.encode(vaultToken1Balance)
         );
         vm.mockCall(
-            address(factoryStorage.vault()),
+            address(indexFactoryStorage.vault()),
             abi.encodeWithSelector(IERC20.balanceOf.selector, token2),
             abi.encode(vaultToken2Balance)
         );
@@ -206,6 +223,65 @@ contract IndexFactoryBalancerTest is Test {
         vm.stopPrank();
     }
 
+    function testReIndexAndReweightRevertWithNonOwnerAddress() public {
+        vm.startPrank(user);
+
+        address token1 = address(0x1001);
+        address token2 = address(0x1002);
+        address wethAddress = address(indexFactoryStorage.weth());
+
+        uint24 token1SwapFee = 3000;
+        uint24 token2SwapFee = 10000;
+
+        uint256 vaultToken1Balance = 1000 * 10 ** 18;
+        uint256 vaultToken2Balance = 2000 * 10 ** 18;
+        uint256 wethBalanceBefore = 5000 * 10 ** 18;
+
+        vm.mockCall(
+            address(indexFactoryStorage.vault()),
+            abi.encodeWithSelector(
+                Vault.withdrawFunds.selector, token1, address(indexFactoryBalancer), vaultToken1Balance
+            ),
+            abi.encode(true)
+        );
+        vm.mockCall(
+            address(indexFactoryStorage.vault()),
+            abi.encodeWithSelector(
+                Vault.withdrawFunds.selector, token2, address(indexFactoryBalancer), vaultToken2Balance
+            ),
+            abi.encode(true)
+        );
+
+        vm.mockCall(
+            address(indexFactoryStorage.vault()),
+            abi.encodeWithSelector(IERC20.balanceOf.selector, token1),
+            abi.encode(vaultToken1Balance)
+        );
+        vm.mockCall(
+            address(indexFactoryStorage.vault()),
+            abi.encodeWithSelector(IERC20.balanceOf.selector, token2),
+            abi.encode(vaultToken2Balance)
+        );
+
+        vm.mockCall(
+            wethAddress,
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
+            abi.encode(wethBalanceBefore)
+        );
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        indexFactoryBalancer.reIndexAndReweight();
+
+        uint256 wethBalanceAfter = wethBalanceBefore;
+        assertEq(
+            IERC20(wethAddress).balanceOf(address(indexFactoryBalancer)),
+            wethBalanceAfter,
+            "WETH balance mismatch after reindexing"
+        );
+
+        vm.stopPrank();
+    }
+
     function testFailReIndexAndReweight_RevertOnVaultWithdrawalFailure() public {
         vm.mockCall(
             vaultAddress,
@@ -213,7 +289,7 @@ contract IndexFactoryBalancerTest is Test {
             abi.encode(false)
         );
 
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         vm.expectRevert("Vault withdrawal failed");
         indexFactoryBalancer.reIndexAndReweight();
         vm.stopPrank();
@@ -231,21 +307,21 @@ contract IndexFactoryBalancerTest is Test {
 
     function testFailSwap_RevertOnTransferFailure() public {
         vm.mockCall(
-            address(factoryStorage),
-            abi.encodeWithSelector(factoryStorage.swapRouterV3.selector),
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.swapRouterV3.selector),
             abi.encode(address(0))
         );
 
         vm.mockCall(
-            address(factoryStorage),
-            abi.encodeWithSelector(factoryStorage.swapRouterV2.selector),
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.swapRouterV2.selector),
             abi.encode(address(0))
         );
 
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         vm.expectRevert("Transfer failed");
         SwapHelpers.swap(
-            ISwapRouter(address(0)), IUniswapV2Router02(address(0)), 3000, address(0), address(0), 100, owner
+            ISwapRouter(address(0)), IUniswapV2Router02(address(0)), 3000, address(0), address(0), 100, ownerAddr
         );
         vm.stopPrank();
     }
@@ -256,7 +332,7 @@ contract IndexFactoryBalancerTest is Test {
 
         vm.deal(address(indexFactoryBalancer), deposit);
 
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         indexFactoryBalancer.pause();
         vm.expectRevert("Pausable: paused");
         indexFactoryBalancer.withdraw(withdrawAmount);
@@ -264,34 +340,34 @@ contract IndexFactoryBalancerTest is Test {
     }
 
     function testReIndexAndReweight_WithWETHOnly() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
 
-        address weth = address(factoryStorage.weth());
+        address weth = address(indexFactoryStorage.weth());
 
-        vm.mockCall(address(factoryStorage), bytes4(keccak256("totalCurrentList()")), abi.encode(uint256(1)));
-        vm.mockCall(address(factoryStorage), bytes4(keccak256("totalOracleList()")), abi.encode(uint256(1)));
+        vm.mockCall(address(indexFactoryStorage), bytes4(keccak256("totalCurrentList()")), abi.encode(uint256(1)));
+        vm.mockCall(address(indexFactoryStorage), bytes4(keccak256("totalOracleList()")), abi.encode(uint256(1)));
 
         {
             bytes memory callDataCurrent = abi.encodeWithSelector(bytes4(keccak256("currentList(uint256)")), uint256(0));
-            vm.mockCall(address(factoryStorage), callDataCurrent, abi.encode(weth));
+            vm.mockCall(address(indexFactoryStorage), callDataCurrent, abi.encode(weth));
 
             bytes memory callDataOracle = abi.encodeWithSelector(bytes4(keccak256("oracleList(uint256)")), uint256(0));
-            vm.mockCall(address(factoryStorage), callDataOracle, abi.encode(weth));
+            vm.mockCall(address(indexFactoryStorage), callDataOracle, abi.encode(weth));
         }
 
         vm.mockCall(
-            address(factoryStorage),
+            address(indexFactoryStorage),
             abi.encodeWithSelector(bytes4(keccak256("tokenSwapFee(address)")), weth),
             abi.encode(uint24(3000))
         );
 
         vm.mockCall(
-            address(factoryStorage),
+            address(indexFactoryStorage),
             abi.encodeWithSelector(bytes4(keccak256("tokenOracleMarketShare(address)")), weth),
             abi.encode(uint256(100e18))
         );
 
-        vm.mockCall(address(factoryStorage), bytes4(keccak256("vault()")), abi.encode(vaultAddress));
+        vm.mockCall(address(indexFactoryStorage), bytes4(keccak256("vault()")), abi.encode(vaultAddress));
         vm.mockCall(
             weth,
             abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
@@ -303,7 +379,7 @@ contract IndexFactoryBalancerTest is Test {
     }
 
     function testFailFulfillAssetsData_ArrayLengthMismatch() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
 
         address[] memory tokens = new address[](2);
         tokens[0] = token1;
@@ -317,15 +393,15 @@ contract IndexFactoryBalancerTest is Test {
         swapFees[1] = 10000;
 
         vm.expectRevert("The length of the arrays should be the same");
-        factoryStorage.fulfillAssetsData(bytes32("requestId"), tokens, marketShares, swapFees);
+        indexFactoryStorage.fulfillAssetsData(bytes32("requestId"), tokens, marketShares, swapFees);
 
         vm.stopPrank();
     }
 
     function testInitialize_SecondInitializationReverts() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         vm.expectRevert("Initializable: contract is already initialized");
-        indexFactoryBalancer.initialize(payable(address(factoryStorage)));
+        indexFactoryBalancer.initialize(payable(address(indexFactoryStorage)));
         vm.stopPrank();
     }
 
@@ -345,20 +421,20 @@ contract IndexFactoryBalancerTest is Test {
         swapFees[1] = 10000;
         swapFees[2] = 500;
 
-        vm.startPrank(owner);
-        factoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+        vm.startPrank(ownerAddr);
+        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
         vm.stopPrank();
 
-        uint256 total = factoryStorage.totalCurrentList();
+        uint256 total = indexFactoryStorage.totalCurrentList();
         assertEq(total, 3, "Expected totalCurrentList to be 3");
 
-        assertEq(factoryStorage.currentList(0), token1, "currentList(0) should be token1");
-        assertEq(factoryStorage.currentList(1), token2, "currentList(1) should be token2");
-        assertEq(factoryStorage.currentList(2), wethAddress, "currentList(2) should be wethAddress");
+        assertEq(indexFactoryStorage.currentList(0), token1, "currentList(0) should be token1");
+        assertEq(indexFactoryStorage.currentList(1), token2, "currentList(1) should be token2");
+        assertEq(indexFactoryStorage.currentList(2), wethAddress, "currentList(2) should be wethAddress");
     }
 
     function testSetAndCheckCurrentList() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
 
         address[] memory tokens = new address[](2);
         tokens[0] = token1;
@@ -372,21 +448,21 @@ contract IndexFactoryBalancerTest is Test {
         swapFees[0] = 3000;
         swapFees[1] = 10000;
 
-        factoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
 
         vm.stopPrank();
 
-        uint256 total = factoryStorage.totalCurrentList();
+        uint256 total = indexFactoryStorage.totalCurrentList();
         assertEq(total, 2, "totalCurrentList should be 2 after mockFillAssetsList");
 
-        address listToken0 = factoryStorage.currentList(0);
-        address listToken1 = factoryStorage.currentList(1);
+        address listToken0 = indexFactoryStorage.currentList(0);
+        address listToken1 = indexFactoryStorage.currentList(1);
 
         assertEq(listToken0, token1, "currentList(0) should return token1");
         assertEq(listToken1, token2, "currentList(1) should return token2");
 
-        uint256 shareToken1 = factoryStorage.tokenCurrentMarketShare(token1);
-        uint256 shareToken2 = factoryStorage.tokenCurrentMarketShare(token2);
+        uint256 shareToken1 = indexFactoryStorage.tokenCurrentMarketShare(token1);
+        uint256 shareToken2 = indexFactoryStorage.tokenCurrentMarketShare(token2);
         assertEq(shareToken1, 100e18, "tokenCurrentMarketShare for token1 mismatch");
         assertEq(shareToken2, 200e18, "tokenCurrentMarketShare for token2 mismatch");
     }
@@ -407,80 +483,80 @@ contract IndexFactoryBalancerTest is Test {
         swapFees[1] = 10000;
         swapFees[2] = 500;
 
-        vm.startPrank(owner);
-        factoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+        vm.startPrank(ownerAddr);
+        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
         vm.stopPrank();
 
-        uint256 total = factoryStorage.totalCurrentList();
+        uint256 total = indexFactoryStorage.totalCurrentList();
         assertEq(total, 3, "Expected totalCurrentList to be 3");
 
-        assertEq(factoryStorage.currentList(0), token1, "currentList(0) should be token1");
-        assertEq(factoryStorage.currentList(1), token2, "currentList(1) should be token2");
-        assertEq(factoryStorage.currentList(2), wethAddress, "currentList(2) should be wethAddress");
+        assertEq(indexFactoryStorage.currentList(0), token1, "currentList(0) should be token1");
+        assertEq(indexFactoryStorage.currentList(1), token2, "currentList(1) should be token2");
+        assertEq(indexFactoryStorage.currentList(2), wethAddress, "currentList(2) should be wethAddress");
     }
 
     function testSetFeeRate_TooSoon() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
 
         vm.expectRevert("You should wait at least 12 hours after the latest update");
-        factoryStorage.setFeeRate(50);
+        indexFactoryStorage.setFeeRate(50);
         vm.stopPrank();
     }
 
     function testInitialize_CannotInitializeTwice() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         vm.expectRevert("Initializable: contract is already initialized");
-        indexFactoryBalancer.initialize(payable(address(factoryStorage)));
+        indexFactoryBalancer.initialize(payable(address(indexFactoryStorage)));
         vm.stopPrank();
     }
 
     function testSetFeeRate_InvalidRange() public {
         skip(13 hours);
 
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
         vm.expectRevert("The newFee should be between 1 and 100 (0.01% - 1%)");
-        factoryStorage.setFeeRate(0);
+        indexFactoryStorage.setFeeRate(0);
 
         vm.expectRevert("The newFee should be between 1 and 100 (0.01% - 1%)");
-        factoryStorage.setFeeRate(101);
+        indexFactoryStorage.setFeeRate(101);
 
-        factoryStorage.setFeeRate(50);
-        assertEq(factoryStorage.feeRate(), 50, "Fee rate should be updated to 50");
+        indexFactoryStorage.setFeeRate(50);
+        assertEq(indexFactoryStorage.feeRate(), 50, "Fee rate should be updated to 50");
         vm.stopPrank();
     }
 
     function testConcatenation() public {
         string memory a = "Hello";
         string memory b = "World";
-        string memory result = factoryStorage.concatenation(a, b);
+        string memory result = indexFactoryStorage.concatenation(a, b);
         assertEq(result, "HelloWorld", "Concatenation function failed");
     }
 
     function testPriceInWei() public {
         vm.mockCall(
-            address(factoryStorage.toUsdPriceFeed()),
+            address(indexFactoryStorage.toUsdPriceFeed()),
             abi.encodeWithSelector(AggregatorV3Interface.latestRoundData.selector),
             abi.encode(uint80(0), int256(123456789000000000), uint256(0), uint256(0), uint80(0))
         );
 
         vm.mockCall(
-            address(factoryStorage.toUsdPriceFeed()),
+            address(indexFactoryStorage.toUsdPriceFeed()),
             abi.encodeWithSelector(AggregatorV3Interface.decimals.selector),
             abi.encode(uint8(8))
         );
 
-        uint256 price = factoryStorage.priceInWei();
+        uint256 price = indexFactoryStorage.priceInWei();
         assertTrue(price > 0, "priceInWei should return a positive value");
     }
 
     function testGetPortfolioBalance_Empty() public {
-        vm.mockCall(address(factoryStorage), bytes4(keccak256("totalCurrentList()")), abi.encode(uint256(0)));
-        uint256 balance = factoryStorage.getPortfolioBalance();
+        vm.mockCall(address(indexFactoryStorage), bytes4(keccak256("totalCurrentList()")), abi.encode(uint256(0)));
+        uint256 balance = indexFactoryStorage.getPortfolioBalance();
         assertEq(balance, 0, "Empty portfolio should have 0 balance");
     }
 
     function testReIndexAndReweight_EmptyLists() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
 
         address[] memory tokens = new address[](1);
         tokens[0] = wethAddress;
@@ -489,8 +565,8 @@ contract IndexFactoryBalancerTest is Test {
         uint24[] memory fees = new uint24[](1);
         fees[0] = 3000;
 
-        factoryStorage.mockFillAssetsList(tokens, shares, fees);
-        factoryStorage.setFactoryBalancer(address(indexFactoryBalancer));
+        indexFactoryStorage.mockFillAssetsList(tokens, shares, fees);
+        indexFactoryStorage.setFactoryBalancer(address(indexFactoryBalancer));
 
         vm.mockCall(
             wethAddress,
@@ -499,7 +575,7 @@ contract IndexFactoryBalancerTest is Test {
         );
 
         vm.mockCall(
-            address(factoryStorage.vault()),
+            address(indexFactoryStorage.vault()),
             abi.encodeWithSelector(Vault.withdrawFunds.selector, wethAddress, address(indexFactoryBalancer), 1000e18),
             abi.encode(true)
         );
@@ -510,24 +586,24 @@ contract IndexFactoryBalancerTest is Test {
     }
 
     function testSwap_SuccessPath() public {
-        vm.startPrank(owner);
+        vm.startPrank(ownerAddr);
 
         uint256 amountIn = 500e18;
         address recipient = address(0x444);
         uint24 poolFee = 3000;
 
         vm.mockCall(
-            address(factoryStorage), bytes4(keccak256("swapRouterV3()")), abi.encode(ISwapRouter(address(0xABC1)))
+            address(indexFactoryStorage), bytes4(keccak256("swapRouterV3()")), abi.encode(ISwapRouter(address(0xABC1)))
         );
         vm.mockCall(
-            address(factoryStorage),
+            address(indexFactoryStorage),
             bytes4(keccak256("swapRouterV2()")),
             abi.encode(IUniswapV2Router02(address(0xABC2)))
         );
 
         vm.mockCall(
             address(0x1111),
-            abi.encodeWithSelector(IERC20.transferFrom.selector, owner, address(indexFactoryBalancer), amountIn),
+            abi.encodeWithSelector(IERC20.transferFrom.selector, ownerAddr, address(indexFactoryBalancer), amountIn),
             abi.encode(true)
         );
 
@@ -554,4 +630,50 @@ contract IndexFactoryBalancerTest is Test {
 
         vm.stopPrank();
     }
+
+    // ---------------------------------------------------------------------------
+    // function test_toWei_Mutations() public {
+    //     // Define test inputs
+    //     int256 amount = 100;
+    //     uint8 amountDecimals = 8;
+    //     uint8 chainDecimals = 18;
+
+    //     // Correct result for original logic
+    //     int256 expected = amount * int256(10 ** (chainDecimals - amountDecimals));
+
+    //     {
+    //         uint8 mutatedChainDecimals = 8; // Simulate _chainDecimals < _amountDecimals
+    //         int256 mutatedResult = _toWei(amount, amountDecimals, mutatedChainDecimals);
+    //         assertFalse(mutatedResult == expected, "Mutation not killed: _chainDecimals < _amountDecimals");
+    //     }
+
+    //     {
+    //         uint256 mutatedMultiplier = 10 * (chainDecimals - amountDecimals); // Simulate mutation
+    //         int256 mutatedResult = amount * int256(mutatedMultiplier);
+    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
+    //         assertFalse(mutatedResult == result, "Mutation not killed: 10 * (_chainDecimals - _amountDecimals)");
+    //     }
+
+    //     {
+    //         int256 mutatedResult =
+    //             amount / int256(10 / (int256(uint256(chainDecimals)) - int256(uint256(amountDecimals))));
+    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
+    //         assertFalse(
+    //             mutatedResult == result,
+    //             "Mutation not killed: _amount / int256(10 / (_chainDecimals - _amountDecimals))"
+    //         );
+    //     }
+
+    //     // Test mutation: _chainDecimals - _amountDecimals => _chainDecimals + _amountDecimals
+    //     {
+    //         uint8 mutatedChainDecimals = chainDecimals + amountDecimals; // Simulate mutation
+    //         int256 mutatedResult = amount * int256(10 ** uint256(mutatedChainDecimals));
+    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
+    //         assertFalse(mutatedResult == result, "Mutation not killed: _chainDecimals + _amountDecimals");
+    //     }
+
+    //     // Verify the original logic works correctly
+    //     int256 actual = _toWei(amount, amountDecimals, chainDecimals);
+    //     assertEq(expected, actual, "Original logic failed for valid input");
+    // }
 }

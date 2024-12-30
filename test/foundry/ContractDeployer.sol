@@ -28,19 +28,23 @@ import "../../contracts/uniswap/INonfungiblePositionManager.sol";
 import "../../contracts/interfaces/IUniswapV3Factory2.sol";
 import "../../contracts/interfaces/IWETH.sol";
 
-
-
 // import "../../contracts/Swap.sol";
 
-contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, UniswapRouterByteCode, UniswapPositionManagerByteCode, PriceOracleByteCode {
-
+contract ContractDeployer is
+    Test,
+    UniswapFactoryByteCode,
+    UniswapWETHByteCode,
+    UniswapRouterByteCode,
+    UniswapPositionManagerByteCode,
+    PriceOracleByteCode
+{
     bytes32 jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
-    
+
     address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-    
+
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    
+
     address public SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE;
     address public constant PEPE = 0x6982508145454Ce325dDbE47a25d4ec3d2311933;
     address public constant FLOKI = 0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E;
@@ -58,7 +62,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     address public constant CURVE = 0xD533a949740bb3306d119CC777fa900bA034cd52;
     address public constant LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
     address public constant UNI = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984;
-    
+
     address feeReceiver = vm.addr(1);
     address newFeeReceiver = vm.addr(2);
     address minter = vm.addr(3);
@@ -67,29 +71,28 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     address owner = vm.addr(6);
     address add1 = vm.addr(7);
 
-
-    Token token0;
-    Token token1;
-    Token token2;
-    Token token3;
-    Token token4;
-    Token token5;
+    Token public token0;
+    Token public token1;
+    Token public token2;
+    Token public token3;
+    Token public token4;
+    Token public token5;
     Token token6;
     Token token7;
     Token token8;
     Token token9;
 
-    Token usdt;
+    Token public usdt;
 
     address priceOracleAddress;
-    address factoryAddress;
-    address wethAddress;
+    address public factoryAddress;
+    address public wethAddress;
     address router;
-    address positionManager;
+    address public positionManager;
     IndexToken public indexToken;
     // Swap public swap;
     MockApiOracle public oracle;
-    LinkToken link;
+    LinkToken public link;
     // PriceOracle public priceOracle;
     IndexFactory public factory;
     IndexFactoryStorage public factoryStorage;
@@ -100,10 +103,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     IWETH public weth;
     IQuoter public quoter;
 
-    IUniswapV3Factory public factoryV3 =
-        IUniswapV3Factory(factoryAddress);
-    ISwapRouter public swapRouter =
-        ISwapRouter(router);
+    IUniswapV3Factory public factoryV3 = IUniswapV3Factory(factoryAddress);
+    ISwapRouter public swapRouter = ISwapRouter(router);
 
     function getMinTick(int24 tickSpacing) public pure returns (int24) {
         return int24((int256(-887272) / int256(tickSpacing) + 1) * int256(tickSpacing));
@@ -113,9 +114,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         return int24((int256(887272) / int256(tickSpacing)) * int256(tickSpacing));
     }
 
-
     function encodePriceSqrt(uint256 reserve1, uint256 reserve0) public pure returns (uint160) {
-        uint256 sqrtPriceX96 = sqrt((reserve1 * 2**192) / reserve0);
+        uint256 sqrtPriceX96 = sqrt((reserve1 * 2 ** 192) / reserve0);
         return uint160(sqrtPriceX96);
     }
 
@@ -132,39 +132,27 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         }
     }
 
-    function deployContracts() public returns(
-        LinkToken,
-        MockApiOracle,
-        IndexToken,
-        MockV3Aggregator,
-        IndexFactory,
-        IndexFactoryStorage,
-        Vault
-        // TestSwap
-    ) {
+    function deployContracts()
+        public
+        returns (LinkToken, MockApiOracle, IndexToken, MockV3Aggregator, IndexFactory, IndexFactoryStorage, Vault)
+    // TestSwap
+    {
         LinkToken link = new LinkToken();
         MockApiOracle oracle = new MockApiOracle(address(link));
 
         MockV3Aggregator ethPriceOracle = new MockV3Aggregator(
             18, //decimals
-            2000e18   //initial data
+            2000e18 //initial data
         );
 
         dai = ERC20(DAI);
         quoter = IQuoter(QUOTER);
 
         IndexToken indexToken = new IndexToken();
-        indexToken.initialize(
-            "Anti Inflation",
-            "ANFI",
-            1e18,
-            feeReceiver,
-            1000000e18
-        );
-        
+        indexToken.initialize("Anti Inflation", "ANFI", 1e18, feeReceiver, 1000000e18);
+
         Vault vault = new Vault();
-        vault.initialize(
-        );
+        vault.initialize();
 
         factoryStorage = new IndexFactoryStorage();
         factoryStorage.initialize(
@@ -184,39 +172,23 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         );
 
         IndexFactory factory = new IndexFactory();
-        factory.initialize(
-           payable(address(factoryStorage))
-        );
-        
+        factory.initialize(payable(address(factoryStorage)));
 
         indexToken.setMinter(address(factory));
         factoryStorage.setFeeReceiver(address(feeReceiver));
         factoryStorage.setPriceOracle(priceOracleAddress);
         factoryStorage.setVault(address(vault));
         vault.setOperator(address(factory), true);
-        
-        
-        
 
         // TestSwap testSwap = new TestSwap();
-        
-        
-        return (
-            link,
-            oracle,
-            indexToken,
-            ethPriceOracle,
-            factory,
-            factoryStorage,
-            vault
-            // testSwap
-        );
 
+        return (link, oracle, indexToken, ethPriceOracle, factory, factoryStorage, vault);
+        // testSwap
     }
 
-    function deployTokens() public returns(Token[11] memory) {
+    function deployTokens() public returns (Token[11] memory) {
         Token[11] memory tokens;
-        
+
         for (uint256 i = 0; i < 11; i++) {
             tokens[i] = new Token(1000000e18);
         }
@@ -224,14 +196,16 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         return tokens;
     }
 
-    function deployUniswap() public returns(address, address, address, address, address){
+    function deployUniswap() public returns (address, address, address, address, address) {
         // bytes memory bytecode = factoryByteCode;
         address priceOracleAddress = deployByteCode(priceOracleByteCode);
         // address priceOracleAddress = address(0);
         address factoryAddress = deployByteCode(factoryByteCode);
         address wethAddress = deployByteCode(WETHByteCode);
         address routerAddress = deployByteCodeWithInputs(routerByteCode, abi.encode(factoryAddress, wethAddress));
-        address positionManagerAddress = deployByteCodeWithInputs(positionManagerByteCode, abi.encode(factoryAddress, wethAddress, 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707));
+        address positionManagerAddress = deployByteCodeWithInputs(
+            positionManagerByteCode, abi.encode(factoryAddress, wethAddress, 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707)
+        );
         // bytes memory bytecodeWithArgs = abi.encodePacked(bytecode, abi.encode(_initData));
         return (priceOracleAddress, factoryAddress, wethAddress, routerAddress, positionManagerAddress);
     }
@@ -249,7 +223,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         token8 = tokens[8];
         token9 = tokens[9];
         usdt = tokens[10];
-        
+
         (priceOracleAddress, factoryAddress, wethAddress, router, positionManager) = deployUniswap();
         factoryV3 = IUniswapV3Factory(factoryAddress);
         swapRouter = ISwapRouter(router);
@@ -257,23 +231,23 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         (link, oracle, indexToken, ethPriceOracle, factory, factoryStorage, vault) = deployContracts();
     }
 
-    function deployByteCode(bytes memory bytecode) public returns(address){
+    function deployByteCode(bytes memory bytecode) public returns (address) {
         bytes memory bytecodeWithArgs = bytecode;
         address deployedContract;
         assembly {
             deployedContract := create(0, add(bytecodeWithArgs, 0x20), mload(bytecodeWithArgs))
         }
-        
+
         return deployedContract;
     }
 
-    function deployByteCodeWithInputs(bytes memory bytecode, bytes memory _initData) public returns(address){
+    function deployByteCodeWithInputs(bytes memory bytecode, bytes memory _initData) public returns (address) {
         bytes memory bytecodeWithArgs = abi.encodePacked(bytecode, _initData);
         address deployedContract;
         assembly {
             deployedContract := create(0, add(bytecodeWithArgs, 0x20), mload(bytecodeWithArgs))
         }
-        
+
         return deployedContract;
     }
 
@@ -282,20 +256,17 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         address factory,
         Token token0,
         Token token1,
-        uint amount0,
-        uint amount1
+        uint256 amount0,
+        uint256 amount1
     ) public {
-       Token[] memory tokens = new Token[](2);
-       tokens[0] = address(token0) < address(token1) ? token0: token1;
-       tokens[1] = address(token0) > address(token1) ? token0: token1;
-       uint[] memory amounts = new uint[](2);
-       amounts[0] = address(tokens[0]) == address(token0) ? amount0 : amount1;
-       amounts[1] = address(tokens[1]) == address(token1) ? amount1 : amount0;
-       INonfungiblePositionManager(positionManager).createAndInitializePoolIfNecessary(
-          address(tokens[0]),
-          address(tokens[1]),
-          3000,
-          encodePriceSqrt(1, 1)
+        Token[] memory tokens = new Token[](2);
+        tokens[0] = address(token0) < address(token1) ? token0 : token1;
+        tokens[1] = address(token0) > address(token1) ? token0 : token1;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = address(tokens[0]) == address(token0) ? amount0 : amount1;
+        amounts[1] = address(tokens[1]) == address(token1) ? amount1 : amount0;
+        INonfungiblePositionManager(positionManager).createAndInitializePoolIfNecessary(
+            address(tokens[0]), address(tokens[1]), 3000, encodePriceSqrt(1, 1)
         );
         address poolAddress = IUniswapV3Factory2(factory).getPool(address(tokens[0]), address(tokens[1]), 3000);
         tokens[0].approve(positionManager, amounts[0]);
@@ -313,29 +284,25 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             address(this),
             block.timestamp
         );
-        INonfungiblePositionManager(positionManager).mint(params); 
+        INonfungiblePositionManager(positionManager).mint(params);
     }
-
 
     function addLiquidityETH(
         address positionManager,
         address factory,
         Token token0,
         address weth,
-        uint amount0,
-        uint amount1
+        uint256 amount0,
+        uint256 amount1
     ) public {
-       Token[] memory tokens = new Token[](2);
-       tokens[0] = address(token0) < address(weth) ? token0: Token(weth);
-       tokens[1] = address(token0) > address(weth) ? token0: Token(weth);
-       uint[] memory amounts = new uint[](2);
-       amounts[0] = address(token0) < address(weth) ? amount0 : amount1;
-       amounts[1] = address(token0) > address(weth) ? amount0 : amount1;
-       INonfungiblePositionManager(positionManager).createAndInitializePoolIfNecessary(
-          address(tokens[0]),
-          address(tokens[1]),
-          3000,
-          encodePriceSqrt(amounts[1]/1e10, amounts[0]/1e10)
+        Token[] memory tokens = new Token[](2);
+        tokens[0] = address(token0) < address(weth) ? token0 : Token(weth);
+        tokens[1] = address(token0) > address(weth) ? token0 : Token(weth);
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = address(token0) < address(weth) ? amount0 : amount1;
+        amounts[1] = address(token0) > address(weth) ? amount0 : amount1;
+        INonfungiblePositionManager(positionManager).createAndInitializePoolIfNecessary(
+            address(tokens[0]), address(tokens[1]), 3000, encodePriceSqrt(amounts[1] / 1e10, amounts[0] / 1e10)
         );
         address poolAddress = IUniswapV3Factory2(factory).getPool(address(tokens[0]), address(tokens[1]), 3000);
         IWETH(weth).deposit{value: amount1}();
@@ -354,6 +321,6 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             address(this),
             block.timestamp
         );
-        INonfungiblePositionManager(positionManager).mint(params); 
+        INonfungiblePositionManager(positionManager).mint(params);
     }
 }
