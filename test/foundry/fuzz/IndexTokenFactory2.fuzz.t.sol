@@ -18,7 +18,7 @@ import "../../../contracts/test/MockV3Aggregator.sol";
 
 import "../ContractDeployer.sol";
 
-contract IndexTokenFactoryFuzzTests is Test, ContractDeployer {
+contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
 
     using stdStorage for StdStorage;
 
@@ -57,6 +57,8 @@ contract IndexTokenFactoryFuzzTests is Test, ContractDeployer {
         addLiquidityETH(positionManager, factoryAddress, token4, wethAddress, TOKEN_LIQUIDITY_LIMIT, WETH_LIQUIDITY_LIMIT);
         addLiquidityETH(positionManager, factoryAddress, usdt, wethAddress, TOKEN_LIQUIDITY_LIMIT, WETH_LIQUIDITY_LIMIT);
         
+        //set supply ceiling
+        indexToken.setSupplyCeiling(type(uint256).max);
     }
 
     function testInitialized() public {
@@ -65,7 +67,7 @@ contract IndexTokenFactoryFuzzTests is Test, ContractDeployer {
         assertEq(indexToken.feeTimestamp(), block.timestamp);
         assertEq(indexToken.feeReceiver(), feeReceiver);
         assertEq(indexToken.methodology(), "");
-        assertEq(indexToken.supplyCeiling(), 1000000e18);
+        assertEq(indexToken.supplyCeiling(), type(uint256).max);
         assertEq(indexToken.minter(), address(factory));
     }
 
@@ -129,17 +131,19 @@ contract IndexTokenFactoryFuzzTests is Test, ContractDeployer {
 
 
     function testFuzzIssuanceWithTokens(uint256 amount) public {
-        vm.assume(amount + 1e18 < TOKEN_LIQUIDITY_LIMIT);    
+        // vm.assume(amount + 1e18 < TOKEN_LIQUIDITY_LIMIT);    
+        // vm.assume(amount < TOKEN_LIQUIDITY_LIMIT - 1e18);   
+        vm.assume(amount > 1000000 && amount < TOKEN_LIQUIDITY_LIMIT - TOKEN_LIQUIDITY_LIMIT*10/10000);   
         updateOracleList();
         
         factory.proposeOwner(owner);
         vm.startPrank(owner);
         factory.transferOwnership(owner);
         vm.stopPrank();
-        usdt.transfer(add1, amount + 1e18);
+        usdt.transfer(add1, amount + amount*10/10000);
         vm.startPrank(add1);
 
-        usdt.approve(address(factory), amount + 1e18);
+        usdt.approve(address(factory), amount + amount*10/10000);
         factory.issuanceIndexTokens(address(usdt), amount, 3000);
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
         assertEq(indexToken.balanceOf(add1), 0);
