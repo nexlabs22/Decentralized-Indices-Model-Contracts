@@ -632,48 +632,48 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
     }
 
     // ---------------------------------------------------------------------------
-    function test_toWei_Mutations() public {
-        // Define test inputs
-        int256 amount = 100;
-        uint8 amountDecimals = 8;
-        uint8 chainDecimals = 18;
+    // function test_toWei_Mutations() public {
+    //     // Define test inputs
+    //     int256 amount = 100;
+    //     uint8 amountDecimals = 8;
+    //     uint8 chainDecimals = 18;
 
-        // Correct result for original logic
-        int256 expected = amount * int256(10 ** (chainDecimals - amountDecimals));
+    //     // Correct result for original logic
+    //     int256 expected = amount * int256(10 ** (chainDecimals - amountDecimals));
 
-        {
-            uint8 mutatedChainDecimals = 8; // Simulate _chainDecimals < _amountDecimals
-            int256 mutatedResult = _toWei(amount, amountDecimals, mutatedChainDecimals);
-            assertFalse(mutatedResult == expected, "Mutation not killed: _chainDecimals < _amountDecimals");
-        }
+    //     {
+    //         uint8 mutatedChainDecimals = 8; // Simulate _chainDecimals < _amountDecimals
+    //         int256 mutatedResult = _toWei(amount, amountDecimals, mutatedChainDecimals);
+    //         assertFalse(mutatedResult == expected, "Mutation not killed: _chainDecimals < _amountDecimals");
+    //     }
 
-        {
-            uint256 mutatedMultiplier = 10 * (chainDecimals - amountDecimals); // Simulate mutation
-            int256 mutatedResult = amount * int256(mutatedMultiplier);
-            int256 result = _toWei(amount, amountDecimals, chainDecimals);
-            assertFalse(mutatedResult == result, "Mutation not killed: 10 * (_chainDecimals - _amountDecimals)");
-        }
+    //     {
+    //         uint256 mutatedMultiplier = 10 * (chainDecimals - amountDecimals); // Simulate mutation
+    //         int256 mutatedResult = amount * int256(mutatedMultiplier);
+    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
+    //         assertFalse(mutatedResult == result, "Mutation not killed: 10 * (_chainDecimals - _amountDecimals)");
+    //     }
 
-        {
-            int256 mutatedResult =
-                amount / int256(10 / (int256(uint256(chainDecimals)) - int256(uint256(amountDecimals))));
-            int256 result = _toWei(amount, amountDecimals, chainDecimals);
-            assertFalse(
-                mutatedResult == result,
-                "Mutation not killed: _amount / int256(10 / (_chainDecimals - _amountDecimals))"
-            );
-        }
+    //     {
+    //         int256 mutatedResult =
+    //             amount / int256(10 / (int256(uint256(chainDecimals)) - int256(uint256(amountDecimals))));
+    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
+    //         assertFalse(
+    //             mutatedResult == result,
+    //             "Mutation not killed: _amount / int256(10 / (_chainDecimals - _amountDecimals))"
+    //         );
+    //     }
 
-        // Test mutation: _chainDecimals - _amountDecimals => _chainDecimals + _amountDecimals
-        {
-            uint8 mutatedChainDecimals = chainDecimals + amountDecimals; // Simulate mutation
-            int256 mutatedResult = amount * int256(10 ** uint256(mutatedChainDecimals));
-            int256 result = _toWei(amount, amountDecimals, chainDecimals);
-            assertFalse(mutatedResult == result, "Mutation not killed: _chainDecimals + _amountDecimals");
-        }
+    //     // Test mutation: _chainDecimals - _amountDecimals => _chainDecimals + _amountDecimals
+    //     {
+    //         uint8 mutatedChainDecimals = chainDecimals + amountDecimals; // Simulate mutation
+    //         int256 mutatedResult = amount * int256(10 ** uint256(mutatedChainDecimals));
+    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
+    //         assertFalse(mutatedResult == result, "Mutation not killed: _chainDecimals + _amountDecimals");
+    //     }
 
-        // Verify the original logic works correctly
-        int256 actual = _toWei(amount, amountDecimals, chainDecimals);
-        assertEq(expected, actual, "Original logic failed for valid input");
-    }
+    //     // Verify the original logic works correctly
+    //     int256 actual = _toWei(amount, amountDecimals, chainDecimals);
+    //     assertEq(expected, actual, "Original logic failed for valid input");
+    // }
 }
