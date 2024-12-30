@@ -214,11 +214,11 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
 
     }
 
-    function deployTokens() public returns(Token[11] memory) {
+    function deployTokens(uint256 initialSupply) public returns(Token[11] memory) {
         Token[11] memory tokens;
         
         for (uint256 i = 0; i < 11; i++) {
-            tokens[i] = new Token(1000000e18);
+            tokens[i] = new Token(initialSupply);
         }
 
         return tokens;
@@ -236,8 +236,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         return (priceOracleAddress, factoryAddress, wethAddress, routerAddress, positionManagerAddress);
     }
 
-    function deployAllContracts() public {
-        Token[11] memory tokens = deployTokens();
+    function deployAllContracts(uint initialSupply) public {
+        Token[11] memory tokens = deployTokens(initialSupply);
         token0 = tokens[0];
         token1 = tokens[1];
         token2 = tokens[2];
