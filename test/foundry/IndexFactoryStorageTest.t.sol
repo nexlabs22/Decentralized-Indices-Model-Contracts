@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "../../contracts/factory/IndexFactoryStorage.sol";
 import "./OlympixUnitTest.sol";
 
-contract IndexFactoryStorageTest is Test {
+contract IndexFactoryStorageTest is Test, IndexFactoryStorage {
     IndexFactoryStorage indexFactoryStorage;
 
     address user = address(2);
@@ -452,53 +452,44 @@ contract IndexFactoryStorageTest is Test {
         indexFactoryStorage.setFeeRate(101);
     }
 
-    // function test_getPortfolioBalance_SuccessfulGetPortfolioBalance() public {
-    //     address[] memory tokens = new address[](2);
-    //     tokens[0] = address(0x1);
-    //     tokens[1] = address(0x2);
+    function test_toWei_Mutations() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 8;
+        uint8 chainDecimals = 18;
 
-    //     uint256[] memory marketShares = new uint256[](2);
-    //     marketShares[0] = 50;
-    //     marketShares[1] = 50;
+        int256 expected = amount * int256(10 ** (chainDecimals - amountDecimals));
 
-    //     uint24[] memory swapFees = new uint24[](2);
-    //     swapFees[0] = 3000;
-    //     swapFees[1] = 3000;
+        {
+            uint8 mutatedChainDecimals = 8;
+            int256 mutatedResult = _toWei(amount, amountDecimals, mutatedChainDecimals);
+            assertFalse(mutatedResult == expected, "Mutation not killed: _chainDecimals < _amountDecimals");
+        }
 
-    //     indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+        {
+            uint256 mutatedMultiplier = 10 * (chainDecimals - amountDecimals);
+            int256 mutatedResult = amount * int256(mutatedMultiplier);
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(mutatedResult == result, "Mutation not killed: 10 * (_chainDecimals - _amountDecimals)");
+        }
 
-    //     address tokenIn = address(0x2);
-    //     address tokenOut = address(indexFactoryStorage.weth());
-    //     uint256 amountIn = 1 ether;
-    //     uint24 swapFee = 3000;
+        {
+            int256 mutatedResult =
+                amount / int256(10 / (int256(uint256(chainDecimals)) - int256(uint256(amountDecimals))));
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(
+                mutatedResult == result,
+                "Mutation not killed: _amount / int256(10 / (_chainDecimals - _amountDecimals))"
+            );
+        }
 
-    //     address priceOracle = address(0x3);
-    //     address factoryV3 = address(0x4);
+        {
+            uint8 mutatedChainDecimals = chainDecimals + amountDecimals;
+            int256 mutatedResult = amount * int256(10 ** uint256(mutatedChainDecimals));
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(mutatedResult == result, "Mutation not killed: _chainDecimals + _amountDecimals");
+        }
 
-    //     vm.mockCall(
-    //         priceOracle,
-    //         abi.encodeWithSelector(
-    //             IPriceOracle.estimateAmountOut.selector, factoryV3, tokenIn, tokenOut, uint128(amountIn), swapFee
-    //         ),
-    //         abi.encode(2 ether)
-    //     );
-
-    //     indexFactoryStorage.setPriceOracle(priceOracle);
-
-    //     vm.mockCall(
-    //         tokenIn,
-    //         abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryStorage.indexToken())),
-    //         abi.encode(amountIn)
-    //     );
-
-    //     vm.mockCall(
-    //         tokens[0],
-    //         abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryStorage.indexToken())),
-    //         abi.encode(0)
-    //     );
-
-    //     uint256 portfolioBalance = indexFactoryStorage.getPortfolioBalance();
-
-    //     assertEq(portfolioBalance, 2 ether);
-    // }
+        int256 actual = _toWei(amount, amountDecimals, chainDecimals);
+        assertEq(expected, actual, "Original logic failed for valid input");
+    }
 }

@@ -10,6 +10,7 @@ import "../mocks/MockERC20.sol";
 import "../../contracts/interfaces/IWETH.sol";
 import "../../contracts/test/LinkToken.sol";
 import "../../contracts/test/MockApiOracle.sol";
+import "../../contracts/vault/Vault.sol";
 
 contract IndexFactoryTest is Test, IndexFactory {
     IndexFactory indexFactory;
@@ -19,6 +20,7 @@ contract IndexFactoryTest is Test, IndexFactory {
     IWETH weth;
     LinkToken link;
     MockApiOracle oracle;
+    Vault vault;
     address factoryAddress;
     address positionManager;
     address wethAddress;
@@ -56,6 +58,7 @@ contract IndexFactoryTest is Test, IndexFactory {
         factoryAddress = deployer.factoryAddress();
         positionManager = deployer.positionManager();
         wethAddress = deployer.wethAddress();
+        vault = deployer.vault();
 
         deployer.addLiquidityETH(positionManager, factoryAddress, token0, wethAddress, 1000e18, 1e18);
         deployer.addLiquidityETH(positionManager, factoryAddress, token1, wethAddress, 1000e18, 1e18);
@@ -526,8 +529,6 @@ contract IndexFactoryTest is Test, IndexFactory {
         require(!mutatedCondition, "Mutation incorrectly changed the condition");
     }
 
-    // ----------------------------------------------
-
     function issuanceIndexTokensNonReentrantRemoved(address _tokenIn, uint256 _amountIn, uint24 _tokenInSwapFee)
         public
     {
@@ -552,5 +553,46 @@ contract IndexFactoryTest is Test, IndexFactory {
 
         require(weth.transfer(address(feeReceiver), feeWethAmount), "Fee transfer failed");
         _issuance(_tokenIn, _amountIn, totalCurrentList, vault, wethAmount, firstPortfolioValue);
+    }
+
+    function test_toWei_Mutations() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 8;
+        uint8 chainDecimals = 18;
+
+        int256 expected = amount * int256(10 ** (chainDecimals - amountDecimals));
+
+        {
+            uint8 mutatedChainDecimals = 8;
+            int256 mutatedResult = _toWei(amount, amountDecimals, mutatedChainDecimals);
+            assertFalse(mutatedResult == expected, "Mutation not killed: _chainDecimals < _amountDecimals");
+        }
+
+        {
+            uint256 mutatedMultiplier = 10 * (chainDecimals - amountDecimals);
+            int256 mutatedResult = amount * int256(mutatedMultiplier);
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(mutatedResult == result, "Mutation not killed: 10 * (_chainDecimals - _amountDecimals)");
+        }
+
+        {
+            int256 mutatedResult =
+                amount / int256(10 / (int256(uint256(chainDecimals)) - int256(uint256(amountDecimals))));
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(
+                mutatedResult == result,
+                "Mutation not killed: _amount / int256(10 / (_chainDecimals - _amountDecimals))"
+            );
+        }
+
+        {
+            uint8 mutatedChainDecimals = chainDecimals + amountDecimals;
+            int256 mutatedResult = amount * int256(10 ** uint256(mutatedChainDecimals));
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(mutatedResult == result, "Mutation not killed: _chainDecimals + _amountDecimals");
+        }
+
+        int256 actual = _toWei(amount, amountDecimals, chainDecimals);
+        assertEq(expected, actual, "Original logic failed for valid input");
     }
 }

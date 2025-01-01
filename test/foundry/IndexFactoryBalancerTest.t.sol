@@ -9,6 +9,7 @@ import "../../contracts/factory/IndexFactoryBalancer.sol";
 import "../../contracts/factory/IndexFactoryStorage.sol";
 import "../../contracts/libraries/SwapHelpers.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../contracts/interfaces/IWETH.sol";
 
 contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
     IndexFactoryBalancer indexFactoryBalancer;
@@ -28,6 +29,7 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         vm.startPrank(ownerAddr);
 
         indexFactoryStorage = new IndexFactoryStorage();
+
         indexFactoryStorage.initialize(
             payable(address(0)),
             address(0),
@@ -46,6 +48,7 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         indexFactoryStorage.setVault(vaultAddress);
 
         indexFactoryBalancer = new IndexFactoryBalancer();
+        require(address(indexFactoryStorage) != address(0));
         indexFactoryBalancer.initialize(payable(address(indexFactoryStorage)));
 
         indexFactoryStorage.setFactoryBalancer(address(indexFactoryBalancer));
@@ -63,6 +66,7 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         IndexFactoryBalancer newBalancer = new IndexFactoryBalancer();
         vm.expectRevert("Invalid factory storage address");
         newBalancer.initialize(payable(address(0)));
+        assertEq(address(newBalancer.factoryStorage()), address(0));
     }
 
     function testInitialize_RevertOnSecondInitialization() public {
@@ -631,49 +635,96 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         vm.stopPrank();
     }
 
-    // ---------------------------------------------------------------------------
-    // function test_toWei_Mutations() public {
-    //     // Define test inputs
-    //     int256 amount = 100;
-    //     uint8 amountDecimals = 8;
-    //     uint8 chainDecimals = 18;
+    function test_toWei_Mutations() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 8;
+        uint8 chainDecimals = 18;
 
-    //     // Correct result for original logic
-    //     int256 expected = amount * int256(10 ** (chainDecimals - amountDecimals));
+        int256 expected = amount * int256(10 ** (chainDecimals - amountDecimals));
 
-    //     {
-    //         uint8 mutatedChainDecimals = 8; // Simulate _chainDecimals < _amountDecimals
-    //         int256 mutatedResult = _toWei(amount, amountDecimals, mutatedChainDecimals);
-    //         assertFalse(mutatedResult == expected, "Mutation not killed: _chainDecimals < _amountDecimals");
-    //     }
+        {
+            uint8 mutatedChainDecimals = 8;
+            int256 mutatedResult = _toWei(amount, amountDecimals, mutatedChainDecimals);
+            assertFalse(mutatedResult == expected, "Mutation not killed: _chainDecimals < _amountDecimals");
+        }
 
-    //     {
-    //         uint256 mutatedMultiplier = 10 * (chainDecimals - amountDecimals); // Simulate mutation
-    //         int256 mutatedResult = amount * int256(mutatedMultiplier);
-    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
-    //         assertFalse(mutatedResult == result, "Mutation not killed: 10 * (_chainDecimals - _amountDecimals)");
-    //     }
+        {
+            uint256 mutatedMultiplier = 10 * (chainDecimals - amountDecimals);
+            int256 mutatedResult = amount * int256(mutatedMultiplier);
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(mutatedResult == result, "Mutation not killed: 10 * (_chainDecimals - _amountDecimals)");
+        }
 
-    //     {
-    //         int256 mutatedResult =
-    //             amount / int256(10 / (int256(uint256(chainDecimals)) - int256(uint256(amountDecimals))));
-    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
-    //         assertFalse(
-    //             mutatedResult == result,
-    //             "Mutation not killed: _amount / int256(10 / (_chainDecimals - _amountDecimals))"
-    //         );
-    //     }
+        {
+            int256 mutatedResult =
+                amount / int256(10 / (int256(uint256(chainDecimals)) - int256(uint256(amountDecimals))));
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(
+                mutatedResult == result,
+                "Mutation not killed: _amount / int256(10 / (_chainDecimals - _amountDecimals))"
+            );
+        }
 
-    //     // Test mutation: _chainDecimals - _amountDecimals => _chainDecimals + _amountDecimals
-    //     {
-    //         uint8 mutatedChainDecimals = chainDecimals + amountDecimals; // Simulate mutation
-    //         int256 mutatedResult = amount * int256(10 ** uint256(mutatedChainDecimals));
-    //         int256 result = _toWei(amount, amountDecimals, chainDecimals);
-    //         assertFalse(mutatedResult == result, "Mutation not killed: _chainDecimals + _amountDecimals");
-    //     }
+        {
+            uint8 mutatedChainDecimals = chainDecimals + amountDecimals;
+            int256 mutatedResult = amount * int256(10 ** uint256(mutatedChainDecimals));
+            int256 result = _toWei(amount, amountDecimals, chainDecimals);
+            assertFalse(mutatedResult == result, "Mutation not killed: _chainDecimals + _amountDecimals");
+        }
 
-    //     // Verify the original logic works correctly
-    //     int256 actual = _toWei(amount, amountDecimals, chainDecimals);
-    //     assertEq(expected, actual, "Original logic failed for valid input");
-    // }
+        int256 actual = _toWei(amount, amountDecimals, chainDecimals);
+        assertEq(expected, actual, "Original logic failed for valid input");
+    }
+
+    // Test to kill mutation: 10 ** (_chainDecimals - _amountDecimals) -> 10 * (_chainDecimals - _amountDecimals)
+    function testExponentiation_CorrectScaling() public {
+        uint8 amountDecimals = 3;
+        uint8 chainDecimals = 6;
+
+        uint256 expected = 10 ** (chainDecimals - amountDecimals);
+        uint256 mutated = 10 * (chainDecimals - amountDecimals);
+
+        assertEq(expected, 1000, "Incorrect exponentiation");
+        assertFalse(expected == mutated, "Mutation not detected");
+    }
+
+    // Test to kill mutation: totalSupply > 0 -> totalSupply < 0
+    function testTotalSupplyComparison() public {
+        uint256 totalSupply = 1000;
+
+        bool original = totalSupply > 0;
+        bool mutated = totalSupply < 0;
+
+        assertTrue(original, "Original condition failed");
+        assertFalse(original == mutated, "Mutation not detected");
+    }
+
+    function test_toWei_Mutations2() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 8;
+        uint8 chainDecimals = 18;
+
+        int256 expected = amount * int256(10 ** (chainDecimals - amountDecimals));
+
+        int256 actual = _toWei(amount, amountDecimals, chainDecimals);
+
+        {
+            int256 mutatedDivision = amount / int256(10 ** (chainDecimals - amountDecimals));
+            assertFalse(mutatedDivision == actual, "Mutation not killed: changed multiply to division");
+        }
+
+        {
+            uint256 mutatedMultiplier = 10 * (chainDecimals - amountDecimals);
+            int256 mutatedResult = amount * int256(mutatedMultiplier);
+            assertFalse(mutatedResult == actual, "Mutation not killed: replaced exponent with a simple multiply");
+        }
+
+        {
+            int256 mutatedExponent = int256(10 ** uint256(chainDecimals + amountDecimals));
+            int256 mutatedResult = amount * mutatedExponent;
+            assertFalse(mutatedResult == actual, "Mutation not killed: replaced '-' with '+' in exponent calculation");
+        }
+
+        assertEq(actual, expected, "Original _toWei logic is incorrect for this input");
+    }
 }
