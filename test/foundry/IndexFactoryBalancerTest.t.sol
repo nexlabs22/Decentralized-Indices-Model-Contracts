@@ -58,6 +58,90 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         vm.stopPrank();
     }
 
+    function testInitializeValidFactoryStorage() public {
+        address payable validFactoryStorage = payable(address(0x12345));
+        indexFactoryBalancer.initialize(validFactoryStorage);
+        assertEq(
+            address(indexFactoryBalancer.factoryStorage()), validFactoryStorage, "Factory storage address mismatch"
+        );
+    }
+
+    function testInitializeInvalidFactoryStorage() public {
+        address payable invalidFactoryStorage = payable(address(0));
+        vm.expectRevert("Invalid factory storage address");
+        indexFactoryBalancer.initialize(invalidFactoryStorage);
+    }
+
+    function testMutatedInitializeWithoutInitializer() public {
+        address payable validFactoryStorage = payable(address(0x12345));
+        indexFactoryBalancer.initialize(validFactoryStorage);
+
+        vm.expectRevert("Initializable: contract is already initialized");
+        indexFactoryBalancer.initialize(validFactoryStorage);
+    }
+
+    function testReIndexAndReweight_MutationLinesCov() public {
+        vm.startPrank(ownerAddr);
+
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.totalCurrentList.selector),
+            abi.encode(uint256(1))
+        );
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.totalOracleList.selector),
+            abi.encode(uint256(1))
+        );
+
+        address someNonWeth1 = address(0xABC1);
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.currentList.selector, 0),
+            abi.encode(someNonWeth1)
+        );
+
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.tokenSwapFee.selector, someNonWeth1),
+            abi.encode(uint24(3000))
+        );
+
+        address someNonWeth2 = address(0xABC2);
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.oracleList.selector, 0),
+            abi.encode(someNonWeth2)
+        );
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.tokenSwapFee.selector, someNonWeth2),
+            abi.encode(uint24(3000))
+        );
+
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.tokenOracleMarketShare.selector, someNonWeth2),
+            abi.encode(uint256(50e18))
+        );
+
+        Vault vault = indexFactoryStorage.vault();
+        vm.mockCall(address(vault), bytes(""), abi.encode(true));
+
+        address wethAddr = address(indexFactoryStorage.weth());
+        vm.mockCall(
+            wethAddr,
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
+            abi.encode(uint256(500e18))
+        );
+
+        vm.mockCall(address(indexFactoryBalancer), bytes(""), abi.encode(uint256(123e18)));
+
+        indexFactoryBalancer.reIndexAndReweight();
+
+        vm.stopPrank();
+    }
+
     function test_initialize_SuccessfulInitialization() public {
         assertEq(address(indexFactoryBalancer.factoryStorage()), factoryStorageAddress);
     }
@@ -118,13 +202,6 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         vm.expectRevert("Insufficient balance");
         indexFactoryBalancer.withdraw(1);
     }
-
-    // function testWithdraw_FailWhenTransferFails() public {
-    //     vm.prank(owner);
-    //     vm.deal(address(indexFactoryBalancer), 1 ether);
-    //     vm.expectRevert("Transfer failed");
-    //     indexFactoryBalancer.withdraw(1);
-    // }
 
     function test_pause_SuccessfulPause() public {
         vm.startPrank(ownerAddr);
@@ -206,38 +283,30 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
             abi.encode(vaultToken2Balance)
         );
 
-        // For the balancer's own WETH balance
         vm.mockCall(
             wethAddress,
             abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
             abi.encode(wethBalanceBefore)
         );
 
-        // === The missing piece ===
-        // Mock WETH's balanceOf(vault) call for "beforeReweight" check
         vm.mockCall(
             wethAddress,
             abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryStorage.vault())),
-            abi.encode(uint256(3000e18)) // or whatever you want the "before" balance to be
+            abi.encode(uint256(3000e18))
         );
 
         uint256 wethBalanceBeforeReweight = IWETH(wethAddress).balanceOf(address(indexFactoryStorage.vault()));
 
-        // Now run the function
         indexFactoryBalancer.reIndexAndReweight();
 
-        // Optionally mock or measure again if reIndexAndReweight calls balanceOf on vault a second time
         vm.mockCall(
             wethAddress,
             abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryStorage.vault())),
-            abi.encode(uint256(4000e18)) // a changed value after reweight?
+            abi.encode(uint256(4000e18))
         );
 
         uint256 wethBalanceAfterReweight = IWETH(wethAddress).balanceOf(address(indexFactoryStorage.vault()));
 
-        // We don't expect the balancer's own WETH balance to have changed in your scenario
-        // If you do expect a change, mock that or verify it.
-        // For now let's keep it as is:
         uint256 wethBalanceAfter = wethBalanceBefore;
         assertEq(
             IERC20(wethAddress).balanceOf(address(indexFactoryBalancer)),
@@ -245,7 +314,6 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
             "WETH balance mismatch after reindexing"
         );
 
-        // e.g., check that the vault's WETH actually increased
         assertGt(wethBalanceAfterReweight, wethBalanceBeforeReweight);
 
         vm.stopPrank();
@@ -700,7 +768,6 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         assertEq(expected, actual, "Original logic failed for valid input");
     }
 
-    // Test to kill mutation: 10 ** (_chainDecimals - _amountDecimals) -> 10 * (_chainDecimals - _amountDecimals)
     function testExponentiation_CorrectScaling() public {
         uint8 amountDecimals = 3;
         uint8 chainDecimals = 6;
@@ -712,7 +779,6 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         assertFalse(expected == mutated, "Mutation not detected");
     }
 
-    // Test to kill mutation: totalSupply > 0 -> totalSupply < 0
     function testTotalSupplyComparison() public {
         uint256 totalSupply = 1000;
 
