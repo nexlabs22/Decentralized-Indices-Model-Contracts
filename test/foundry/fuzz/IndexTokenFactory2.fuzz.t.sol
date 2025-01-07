@@ -145,6 +145,25 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
 
         usdt.approve(address(factory), amount + amount*10/10000);
         factory.issuanceIndexTokens(address(usdt), amount, 3000);
+
+    }
+
+
+    function testFuzzRedemptionWithTokens(uint256 amount) public {
+        // vm.assume(amount + 1e18 < TOKEN_LIQUIDITY_LIMIT);    
+        // vm.assume(amount < TOKEN_LIQUIDITY_LIMIT - 1e18);   
+        vm.assume(amount > 1000000 && amount < TOKEN_LIQUIDITY_LIMIT - TOKEN_LIQUIDITY_LIMIT*10/10000);   
+        updateOracleList();
+        
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+        usdt.transfer(add1, amount + amount*10/10000);
+        vm.startPrank(add1);
+
+        usdt.approve(address(factory), amount + amount*10/10000);
+        factory.issuanceIndexTokens(address(usdt), amount, 3000);
         factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
         assertEq(indexToken.balanceOf(add1), 0);
 
