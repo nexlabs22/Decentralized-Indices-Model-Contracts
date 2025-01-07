@@ -86,6 +86,23 @@ contract IndexFactoryTest is Test, IndexFactory {
         updateOracleList();
     }
 
+    function testSwapToOutputTokenFailsOnNegativeOutput() public {
+        vm.startPrank(ownerAddr);
+
+        vm.mockCall(
+            address(factoryStorage), abi.encodeWithSelector(factoryStorage.weth.selector), abi.encode(address(0x456))
+        );
+
+        vm.mockCall(
+            address(factoryStorage), abi.encodeWithSelector(factoryStorage.feeRate.selector), abi.encode(uint256(100))
+        );
+
+        vm.expectRevert();
+        indexFactory.redemption(1, address(0x123), 3000);
+
+        vm.stopPrank();
+    }
+
     function test_Issuance_MutationKiller() public {
         console.log("Starting test_Issuance_MutationKiller...");
 

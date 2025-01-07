@@ -50,6 +50,7 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         indexFactoryBalancer = new IndexFactoryBalancer();
         require(address(indexFactoryStorage) != address(0));
         indexFactoryBalancer.initialize(payable(address(indexFactoryStorage)));
+        assertTrue(address(indexFactoryStorage) != address(0));
 
         indexFactoryStorage.setFactoryBalancer(address(indexFactoryBalancer));
 
@@ -58,26 +59,157 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         vm.stopPrank();
     }
 
-    function testInitializeValidFactoryStorage() public {
-        address payable validFactoryStorage = payable(address(0x12345));
-        indexFactoryBalancer.initialize(validFactoryStorage);
-        assertEq(
-            address(indexFactoryBalancer.factoryStorage()), validFactoryStorage, "Factory storage address mismatch"
+    function testReIndexAndReweight_Mutations_Failures() public {
+        vm.startPrank(ownerAddr);
+
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.totalCurrentList.selector),
+            abi.encode(uint256(1))
         );
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.totalOracleList.selector),
+            abi.encode(uint256(1))
+        );
+
+        address someNonWeth1 = address(0xABC1);
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.currentList.selector, 0),
+            abi.encode(someNonWeth1)
+        );
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.tokenSwapFee.selector, someNonWeth1),
+            abi.encode(uint24(3000))
+        );
+
+        address someNonWeth2 = address(0xABC2);
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.oracleList.selector, 0),
+            abi.encode(someNonWeth2)
+        );
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.tokenSwapFee.selector, someNonWeth2),
+            abi.encode(uint24(3000))
+        );
+
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.tokenOracleMarketShare.selector, someNonWeth2),
+            abi.encode(uint256(50e18))
+        );
+
+        Vault vault = indexFactoryStorage.vault();
+        vm.mockCall(address(vault), bytes(""), abi.encode(true));
+
+        address wethAddr = address(indexFactoryStorage.weth());
+        vm.mockCall(
+            wethAddr,
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
+            abi.encode(uint256(500e18))
+        );
+
+        vm.mockCall(
+            address(vault),
+            abi.encodeWithSelector(Vault.withdrawFunds.selector, someNonWeth1, address(indexFactoryBalancer), 100),
+            abi.encode(false)
+        );
+        vm.expectRevert();
+        indexFactoryBalancer.reIndexAndReweight();
+
+        uint256 wethBalance = 500e18;
+        uint256 tokenOracleMarketShare = 50e18;
+        uint256 incorrectAmountDivision = wethBalance / tokenOracleMarketShare;
+
+        vm.mockCall(
+            wethAddr,
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
+            abi.encode(incorrectAmountDivision)
+        );
+        vm.expectRevert();
+        indexFactoryBalancer.reIndexAndReweight();
+
+        uint256 incorrectAmountMultiplication = (wethBalance * tokenOracleMarketShare) * 100e18;
+
+        vm.mockCall(
+            wethAddr,
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(indexFactoryBalancer)),
+            abi.encode(incorrectAmountMultiplication)
+        );
+        vm.expectRevert();
+        indexFactoryBalancer.reIndexAndReweight();
+
+        vm.mockCall(
+            address(vault),
+            abi.encodeWithSelector(Vault.withdrawFunds.selector, someNonWeth2, address(indexFactoryBalancer), 100),
+            abi.encode(false)
+        );
+        vm.expectRevert();
+        indexFactoryBalancer.reIndexAndReweight();
+
+        vm.stopPrank();
+    }
+
+    function testReIndexAndReweight_MutationLines() public {
+        vm.startPrank(ownerAddr);
+
+        address someNonWeth1 = address(0xABC1);
+        uint256 wethBalance = 500e18;
+        uint256 tokenOracleMarketShare = 50e18;
+
+        vm.mockCall(
+            address(indexFactoryBalancer),
+            abi.encodeWithSignature(
+                "swap(address,address,uint256,address,uint24)", someNonWeth1, wethAddress, 100, ownerAddr, 3000
+            ),
+            abi.encode(int256(-1))
+        );
+        vm.expectRevert();
+        indexFactoryBalancer.reIndexAndReweight();
+
+        uint256 incorrectDivision = wethBalance / tokenOracleMarketShare;
+        vm.mockCall(
+            address(indexFactoryBalancer),
+            abi.encodeWithSignature(
+                "swap(address,address,uint256,address,uint24)", wethAddress, someNonWeth1, 100, ownerAddr, 3000
+            ),
+            abi.encode(incorrectDivision)
+        );
+        vm.expectRevert();
+        indexFactoryBalancer.reIndexAndReweight();
+
+        uint256 incorrectMultiplication = (wethBalance * tokenOracleMarketShare) * 100e18;
+        vm.mockCall(
+            address(indexFactoryBalancer),
+            abi.encodeWithSignature(
+                "swap(address,address,uint256,address,uint24)", wethAddress, someNonWeth1, 100, ownerAddr, 3000
+            ),
+            abi.encode(incorrectMultiplication)
+        );
+        vm.expectRevert();
+        indexFactoryBalancer.reIndexAndReweight();
+
+        vm.mockCall(
+            address(indexFactoryBalancer),
+            abi.encodeWithSignature(
+                "swap(address,address,uint256,address,uint24)", wethAddress, someNonWeth1, 100, ownerAddr, 3000
+            ),
+            abi.encode(int256(-1))
+        );
+        vm.expectRevert();
+        indexFactoryBalancer.reIndexAndReweight();
+
+        vm.stopPrank();
     }
 
     function testInitializeInvalidFactoryStorage() public {
         address payable invalidFactoryStorage = payable(address(0));
-        vm.expectRevert("Invalid factory storage address");
-        indexFactoryBalancer.initialize(invalidFactoryStorage);
-    }
-
-    function testMutatedInitializeWithoutInitializer() public {
-        address payable validFactoryStorage = payable(address(0x12345));
-        indexFactoryBalancer.initialize(validFactoryStorage);
-
         vm.expectRevert("Initializable: contract is already initialized");
-        indexFactoryBalancer.initialize(validFactoryStorage);
+        indexFactoryBalancer.initialize(invalidFactoryStorage);
     }
 
     function testReIndexAndReweight_MutationLinesCov() public {

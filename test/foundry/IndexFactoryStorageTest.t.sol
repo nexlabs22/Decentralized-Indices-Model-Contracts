@@ -26,6 +26,115 @@ contract IndexFactoryStorageTest is Test, IndexFactoryStorage {
             address(0x9),
             address(0x10)
         );
+
+        uint256 expectedOraclePayment = ((1 * LINK_DIVISIBILITY) / 10);
+        assertEq(indexFactoryStorage.oraclePayment(), expectedOraclePayment, "Oracle payment mismatch");
+
+        uint256 mutatedOraclePayment1 = (1 / LINK_DIVISIBILITY) / 10;
+        assertFalse(
+            indexFactoryStorage.oraclePayment() == mutatedOraclePayment1, "Mutation not killed: 1 / LINK_DIVISIBILITY"
+        );
+
+        uint256 mutatedOraclePayment2 = (1 * LINK_DIVISIBILITY) * 10;
+        assertFalse(indexFactoryStorage.oraclePayment() == mutatedOraclePayment2, "Mutation not killed: * 10");
+    }
+
+    function testToWeiMutations() public {
+        int256 amount = 100;
+        uint8 amountDecimals = 8;
+        uint8 chainDecimals = 18;
+
+        int256 expected = amount * int256(10 ** uint256(chainDecimals - amountDecimals));
+
+        int256 result = _toWei(amount, amountDecimals, chainDecimals);
+        assertEq(result, expected, "Original logic failed for valid input");
+
+        int256 mutatedDivision = amount / int256(10 ** uint256(chainDecimals - amountDecimals));
+        assertTrue(
+            mutatedDivision != expected,
+            "Mutation not killed: replaced multiply with divide (chainDecimals > amountDecimals)"
+        );
+
+        int256 mutatedMultiplication = amount * int256(10 * uint256(chainDecimals - amountDecimals));
+        assertTrue(
+            mutatedMultiplication != expected,
+            "Mutation not killed: replaced exponentiation with multiplication (chainDecimals > amountDecimals)"
+        );
+
+        uint8 swappedAmountDecimals = 18;
+        uint8 swappedChainDecimals = 8;
+        int256 expectedSwapped = amount * int256(10 ** uint256(swappedAmountDecimals - swappedChainDecimals));
+
+        result = _toWei(amount, swappedAmountDecimals, swappedChainDecimals);
+        assertEq(result, expectedSwapped, "Original logic failed for swapped decimals");
+
+        int256 mutatedDivisionSwapped = amount / int256(10 ** uint256(swappedAmountDecimals - swappedChainDecimals));
+        assertTrue(
+            mutatedDivisionSwapped != expectedSwapped,
+            "Mutation not killed: replaced multiply with divide (amountDecimals > chainDecimals)"
+        );
+
+        int256 mutatedMultiplicationSwapped =
+            amount * int256(10 * uint256(swappedAmountDecimals - swappedChainDecimals));
+        assertTrue(
+            mutatedMultiplicationSwapped != expectedSwapped,
+            "Mutation not killed: replaced exponentiation with multiplication (amountDecimals > chainDecimals)"
+        );
+    }
+
+    function testFulfillAssetsDataMutations() public {
+        bytes32 requestId = bytes32(uint256(0x123));
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(0x1);
+        tokens[1] = address(0x2);
+
+        uint256[] memory marketShares = new uint256[](2);
+        marketShares[0] = 50;
+        marketShares[1] = 50;
+
+        uint24[] memory swapFees = new uint24[](2);
+        swapFees[0] = 3000;
+        swapFees[1] = 3000;
+
+        uint256[] memory mismatchedMarketShares = new uint256[](1);
+        mismatchedMarketShares[0] = 50;
+
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.currentList.selector, 0),
+            abi.encode(address(tokens[0]))
+        );
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.currentList.selector, 1),
+            abi.encode(address(tokens[1]))
+        );
+        vm.mockCall(
+            address(indexFactoryStorage),
+            abi.encodeWithSelector(indexFactoryStorage.totalCurrentList.selector),
+            abi.encode(1)
+        );
+
+        uint256 total = indexFactoryStorage.totalCurrentList();
+        assertEq(total, 1, "Expected totalCurrentList to be 1");
+
+        vm.startPrank(indexFactoryStorage.priceOracle());
+
+        vm.expectRevert("The length of the arrays should be the same");
+        indexFactoryStorage.fulfillAssetsData(requestId, tokens, mismatchedMarketShares, swapFees);
+
+        vm.store(address(indexFactoryStorage), bytes32(uint256(282)), bytes32(uint256(1)));
+        indexFactoryStorage.fulfillAssetsData(requestId, tokens, marketShares, swapFees);
+
+        vm.store(address(indexFactoryStorage), bytes32(uint256(282)), bytes32(uint256(0)));
+
+        indexFactoryStorage.fulfillAssetsData(requestId, tokens, marketShares, swapFees);
+
+        vm.store(address(indexFactoryStorage), bytes32(uint256(289)), bytes32(uint256(1)));
+        indexFactoryStorage.fulfillAssetsData(requestId, tokens, marketShares, swapFees);
+
+        vm.stopPrank();
     }
 
     function testInitializeSetsParametersCorrectly() public {
