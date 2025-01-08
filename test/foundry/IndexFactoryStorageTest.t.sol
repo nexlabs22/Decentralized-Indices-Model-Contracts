@@ -137,6 +137,23 @@ contract IndexFactoryStorageTest is Test, IndexFactoryStorage {
         vm.stopPrank();
     }
 
+    function test_MutationToWei() public {
+        {
+            int256 amount = 100;
+            uint8 amountDec = 8;
+            uint8 chainDec = 18;
+            int256 expected1 = amount * int256(10 ** (chainDec - amountDec));
+            int256 actual1 = _toWei(amount, amountDec, chainDec);
+            assertEq(actual1, expected1, "test_MutationCoverage: _toWei failed for chainDecimals > amountDecimals");
+
+            uint8 bigger = 18;
+            uint8 smaller = 8;
+            int256 expected2 = amount * int256(10 ** (bigger - smaller));
+            int256 actual2 = _toWei(amount, bigger, smaller);
+            assertEq(actual2, expected2, "test_MutationCoverage: _toWei failed for chainDecimals < amountDecimals");
+        }
+    }
+
     function testInitializeSetsParametersCorrectly() public {
         assertEq(address(indexFactoryStorage.indexToken()), address(0x1), "IndexToken address mismatch");
         assertEq(indexFactoryStorage.externalJobId(), bytes32(0), "External job ID mismatch");
