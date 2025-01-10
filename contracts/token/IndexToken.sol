@@ -95,6 +95,8 @@ contract IndexToken is
         address _feeReceiver,
         uint256 _supplyCeiling
     ) external initializer {
+        require(bytes(tokenName).length > 0, "tokenName cannot be empty");
+        require(bytes(tokenSymbol).length > 0, "tokenSymbol cannot be empty");
         require(_feeRatePerDayScaled > 0);
         require(_supplyCeiling > 0);
         require(_feeReceiver != address(0));
@@ -268,6 +270,8 @@ contract IndexToken is
     /// @param amount uint256
     /// @return bool
     function transfer(address to, uint256 amount) public override whenNotPaused returns (bool) {
+        require(to != address(0), "transfer to the zero address");
+        require(amount > 0, "transfer amount must be greater than zero");
         require(!isRestricted[msg.sender], "msg.sender is restricted");
         require(!isRestricted[to], "to is restricted");
 
@@ -285,6 +289,9 @@ contract IndexToken is
         address to,
         uint256 amount
     ) public override whenNotPaused returns (bool) {
+        require(from != address(0), "transfer from the zero address");
+        require(to != address(0), "transfer to the zero address");
+        require(amount > 0, "transfer amount must be greater than zero");
         require(!isRestricted[msg.sender], "msg.sender is restricted");
         require(!isRestricted[to], "to is restricted");
         require(!isRestricted[from], "from is restricted");
