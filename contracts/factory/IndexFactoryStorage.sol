@@ -126,6 +126,10 @@ contract IndexFactoryStorage is
             "Chainlink token address cannot be zero address"
         );
         require(
+            externalJobId.length > 0,
+            "External job ID cannot be empty"
+        );
+        require(
             _oracleAddress != address(0),
             "Oracle address cannot be zero address"
         );
