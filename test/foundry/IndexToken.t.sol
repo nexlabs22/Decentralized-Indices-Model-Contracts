@@ -41,7 +41,7 @@ contract CounterTest is Test, ContractDeployer {
     function setUp() public {
         // ContractDeployer deployer = new ContractDeployer();
         // (link, oracle, indexToken) = deployer.deployContracts();
-        deployAllContracts();
+        deployAllContracts(1000000e18);
         // (link, oracle, indexToken,,,) = deployContracts();
         indexToken.setMinter(minter);
         /**

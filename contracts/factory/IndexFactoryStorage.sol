@@ -113,6 +113,50 @@ contract IndexFactoryStorage is
         address _swapRouterV2,
         address _factoryV2
     ) external initializer {
+        require(
+            _token != address(0),
+            "Token address cannot be zero address"
+        );
+        require(
+            _chainlinkToken != address(0),
+            "Chainlink token address cannot be zero address"
+        );
+        require(
+            externalJobId.length > 0,
+            "External job ID cannot be empty"
+        );
+        require(
+            _oracleAddress != address(0),
+            "Oracle address cannot be zero address"
+        );
+        require(
+            _toUsdPriceFeed != address(0),
+            "Price feed address cannot be zero address"
+        );
+        require(
+            _weth != address(0),
+            "WETH address cannot be zero address"
+        );
+        require(
+            _quoter != address(0),
+            "Quoter address cannot be zero address"
+        );
+        require(
+            _swapRouterV3 != address(0),
+            "Swap router V3 address cannot be zero address"
+        );
+        require(
+            _factoryV3 != address(0),
+            "Factory V3 address cannot be zero address"
+        );
+        require(
+            _swapRouterV2 != address(0),
+            "Swap router V2 address cannot be zero address"
+        );
+        require(
+            _factoryV2 != address(0),
+            "Factory V2 address cannot be zero address"
+        );
         __Ownable_init();
         __Pausable_init();
         indexToken = IndexToken(_token);
