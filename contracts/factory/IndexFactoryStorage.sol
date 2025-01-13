@@ -41,8 +41,6 @@ contract IndexFactoryStorage is
     // Address that can claim fees accrued.
     address public feeReceiver;
 
-
-
     string baseUrl;
     string urlParams;
 
@@ -50,19 +48,19 @@ contract IndexFactoryStorage is
     bytes32 public externalJobId;
     uint256 public oraclePayment;
     AggregatorV3Interface public toUsdPriceFeed;
-    uint public lastUpdateTime;
-    
-    uint public totalOracleList;
-    uint public totalCurrentList;
+    uint256 public lastUpdateTime;
 
-    mapping(uint => address) public oracleList;
-    mapping(uint => address) public currentList;
+    uint256 public totalOracleList;
+    uint256 public totalCurrentList;
 
-    mapping(address => uint) public tokenOracleListIndex;
-    mapping(address => uint) public tokenCurrentListIndex;
+    mapping(uint256 => address) public oracleList;
+    mapping(uint256 => address) public currentList;
 
-    mapping(address => uint) public tokenCurrentMarketShare;
-    mapping(address => uint) public tokenOracleMarketShare;
+    mapping(address => uint256) public tokenOracleListIndex;
+    mapping(address => uint256) public tokenCurrentListIndex;
+
+    mapping(address => uint256) public tokenCurrentMarketShare;
+    mapping(address => uint256) public tokenOracleMarketShare;
     mapping(address => uint24) public tokenSwapFee;
 
     address public factoryAddress;
@@ -75,17 +73,15 @@ contract IndexFactoryStorage is
     IQuoter public quoter;
     Vault public vault;
 
-
     event FeeReceiverSet(address indexed feeReceiver);
-    
-
-    
 
     /**
      * @dev Throws if the caller is not a factory contract.
      */
     modifier onlyFactory() {
-        require(msg.sender == factoryAddress || msg.sender == factoryBalancerAddress, "Caller is not a factory contract");
+        require(
+            msg.sender == factoryAddress || msg.sender == factoryBalancerAddress, "Caller is not a factory contract"
+        );
         _;
     }
 
@@ -198,12 +194,13 @@ contract IndexFactoryStorage is
      * @dev Sets the fee receiver address.
      * @param _feeReceiver The address of the fee receiver.
      */
+
     function setFeeReceiver(address _feeReceiver) public onlyOwner {
         feeReceiver = _feeReceiver;
         emit FeeReceiverSet(_feeReceiver);
     }
 
-     /**
+    /**
      * @dev Sets the vault address.
      * @param _vaultAddress The address of the vault.
      */
@@ -216,18 +213,12 @@ contract IndexFactoryStorage is
      * @param _toUsdPricefeed The address of native coin to USD price feed.
      */
     function setPriceFeed(address _toUsdPricefeed) external onlyOwner {
-        require(
-            _toUsdPricefeed != address(0),
-            "ICO: Price feed address cannot be zero address"
-        );
+        require(_toUsdPricefeed != address(0), "ICO: Price feed address cannot be zero address");
         toUsdPriceFeed = AggregatorV3Interface(_toUsdPricefeed);
     }
 
     function setPriceOracle(address _priceOracle) external onlyOwner {
-        require(
-            _priceOracle != address(0),
-            "Price oracle address cannot be zero address"
-        );
+        require(_priceOracle != address(0), "Price oracle address cannot be zero address");
         priceOracle = _priceOracle;
     }
 
@@ -238,14 +229,12 @@ contract IndexFactoryStorage is
      * @param _chainDecimals The decimals of the chain.
      * @return The amount in Wei.
      */
-    function _toWei(
-        int256 _amount,
-        uint8 _amountDecimals,
-        uint8 _chainDecimals
-    ) private pure returns (int256) {
-        if (_chainDecimals > _amountDecimals)
+    function _toWei(int256 _amount, uint8 _amountDecimals, uint8 _chainDecimals) internal pure returns (int256) {
+        if (_chainDecimals > _amountDecimals) {
             return _amount * int256(10 ** (_chainDecimals - _amountDecimals));
-        else return _amount * int256(10 ** (_amountDecimals - _chainDecimals));
+        } else {
+            return _amount * int256(10 ** (_amountDecimals - _chainDecimals));
+        }
     }
 
     /**
@@ -253,7 +242,7 @@ contract IndexFactoryStorage is
      * @return The price in Wei.
      */
     function priceInWei() public view returns (uint256) {
-        (, int price, , , ) = toUsdPriceFeed.latestRoundData();
+        (, int256 price,,,) = toUsdPriceFeed.latestRoundData();
         uint8 priceFeedDecimals = toUsdPriceFeed.decimals();
         price = _toWei(price, priceFeedDecimals, 18);
         return uint256(price);
@@ -266,19 +255,11 @@ contract IndexFactoryStorage is
     //Notice: newFee should be between 1 to 100 (0.01% - 1%)
     function setFeeRate(uint8 _newFee) public onlyOwner {
         uint256 distance = block.timestamp - latestFeeUpdate;
-        require(
-            distance / 60 / 60 > 12,
-            "You should wait at least 12 hours after the latest update"
-        );
-        require(
-            _newFee <= 100 && _newFee >= 1,
-            "The newFee should be between 1 and 100 (0.01% - 1%)"
-        );
+        require(distance / 60 / 60 > 12, "You should wait at least 12 hours after the latest update");
+        require(_newFee <= 100 && _newFee >= 1, "The newFee should be between 1 and 100 (0.01% - 1%)");
         feeRate = _newFee;
         latestFeeUpdate = block.timestamp;
     }
-
-    
 
     /**
      * @dev Concatenates two strings.
@@ -286,10 +267,7 @@ contract IndexFactoryStorage is
      * @param b The second string.
      * @return The concatenated string.
      */
-    function concatenation(
-        string memory a,
-        string memory b
-    ) public pure returns (string memory) {
+    function concatenation(string memory a, string memory b) public pure returns (string memory) {
         return string(bytes.concat(bytes(a), bytes(b)));
     }
 
@@ -298,10 +276,7 @@ contract IndexFactoryStorage is
      * @param _beforeAddress The base URL.
      * @param _afterAddress The URL parameters.
      */
-    function setUrl(
-        string memory _beforeAddress,
-        string memory _afterAddress
-    ) public onlyOwner {
+    function setUrl(string memory _beforeAddress, string memory _afterAddress) public onlyOwner {
         baseUrl = _beforeAddress;
         urlParams = _afterAddress;
     }
@@ -312,21 +287,13 @@ contract IndexFactoryStorage is
      */
     function requestAssetsData() public returns (bytes32) {
         string memory url = concatenation(baseUrl, urlParams);
-        Chainlink.Request memory req = buildChainlinkRequest(
-            externalJobId,
-            address(this),
-            this.fulfillAssetsData.selector
-        );
+        Chainlink.Request memory req =
+            buildChainlinkRequest(externalJobId, address(this), this.fulfillAssetsData.selector);
         req.add("get", url);
         req.add("path1", "results,tokens");
         req.add("path2", "results,marketShares");
         req.add("path3", "results,swapFees");
-        return
-            sendChainlinkRequestTo(
-                chainlinkOracleAddress(),
-                req,
-                oraclePayment
-            );
+        return sendChainlinkRequestTo(chainlinkOracleAddress(), req, oraclePayment);
     }
 
     /**
@@ -343,16 +310,15 @@ contract IndexFactoryStorage is
         uint24[] memory _swapFees
     ) public recordChainlinkFulfillment(requestId) {
         require(
-            _tokens.length == _marketShares.length &&
-                _marketShares.length == _swapFees.length,
+            _tokens.length == _marketShares.length && _marketShares.length == _swapFees.length,
             "The length of the arrays should be the same"
         );
         address[] memory tokens0 = _tokens;
-        uint[] memory marketShares0 = _marketShares;
+        uint256[] memory marketShares0 = _marketShares;
         uint24[] memory _swapFees = _swapFees;
 
         // //save mappings
-        for (uint i = 0; i < tokens0.length; i++) {
+        for (uint256 i = 0; i < tokens0.length; i++) {
             oracleList[i] = tokens0[i];
             tokenOracleListIndex[tokens0[i]] = i;
             tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
@@ -376,17 +342,16 @@ contract IndexFactoryStorage is
      * @param _marketShares The list of market shares.
      * @param _swapFees The list of swap versions.
      */
-    function mockFillAssetsList(
-        address[] memory _tokens,
-        uint256[] memory _marketShares,
-        uint24[] memory _swapFees
-    ) public onlyOwner {
+    function mockFillAssetsList(address[] memory _tokens, uint256[] memory _marketShares, uint24[] memory _swapFees)
+        public
+        onlyOwner
+    {
         address[] memory tokens0 = _tokens;
-        uint[] memory marketShares0 = _marketShares;
+        uint256[] memory marketShares0 = _marketShares;
         uint24[] memory _swapFees = _swapFees;
 
         // //save mappings
-        for (uint i = 0; i < tokens0.length; i++) {
+        for (uint256 i = 0; i < tokens0.length; i++) {
             oracleList[i] = tokens0[i];
             tokenOracleListIndex[tokens0[i]] = i;
             tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
@@ -404,16 +369,14 @@ contract IndexFactoryStorage is
         lastUpdateTime = block.timestamp;
     }
 
-    
     function updateCurrentList() external onlyFactory {
         totalCurrentList = totalOracleList;
-        for(uint i = 0; i < totalOracleList; i++){
+        for (uint256 i = 0; i < totalOracleList; i++) {
             address tokenAddress = oracleList[i];
             currentList[i] = tokenAddress;
             tokenCurrentMarketShare[tokenAddress] = tokenOracleMarketShare[tokenAddress];
         }
     }
-    
 
     /**
      * @dev Gets the amount out for a token swap.
@@ -423,28 +386,19 @@ contract IndexFactoryStorage is
      * @param _swapFee The swap fee.
      * @return finalAmountOut The amount of output token.
      */
-    function getAmountOut(
-        address tokenIn,
-        address tokenOut,
-        uint amountIn,
-        uint24 _swapFee
-    ) public view returns (uint finalAmountOut) {
+    function getAmountOut(address tokenIn, address tokenOut, uint256 amountIn, uint24 _swapFee)
+        public
+        view
+        returns (uint256 finalAmountOut)
+    {
         if (amountIn > 0) {
             if (_swapFee > 0) {
-                finalAmountOut = estimateAmountOut(
-                    tokenIn,
-                    tokenOut,
-                    uint128(amountIn),
-                    _swapFee
-                );
+                finalAmountOut = estimateAmountOut(tokenIn, tokenOut, uint128(amountIn), _swapFee);
             } else {
                 address[] memory path = new address[](2);
                 path[0] = tokenIn;
                 path[1] = tokenOut;
-                uint[] memory v2amountOut = swapRouterV2.getAmountsOut(
-                    amountIn,
-                    path
-                );
+                uint256[] memory v2amountOut = swapRouterV2.getAmountsOut(amountIn, path);
                 finalAmountOut = v2amountOut[1];
             }
         }
@@ -455,15 +409,13 @@ contract IndexFactoryStorage is
      * @dev Gets the portfolio balance in WETH.
      * @return The portfolio balance in WETH.
      */
-    function getPortfolioBalance() public view returns (uint) {
-        uint totalValue;
-        for (uint i = 0; i < totalCurrentList; i++) {
+    function getPortfolioBalance() public view returns (uint256) {
+        uint256 totalValue;
+        for (uint256 i = 0; i < totalCurrentList; i++) {
             if (currentList[i] == address(weth)) {
-                totalValue += IERC20(currentList[i]).balanceOf(
-                    address(vault)
-                );
+                totalValue += IERC20(currentList[i]).balanceOf(address(vault));
             } else {
-                uint value = getAmountOut(
+                uint256 value = getAmountOut(
                     currentList[i],
                     address(weth),
                     IERC20(currentList[i]).balanceOf(address(vault)),
@@ -476,7 +428,7 @@ contract IndexFactoryStorage is
     }
 
     function getPortfolioBalance2(address token) public view returns (address) {
-        uint totalValue;
+        uint256 totalValue;
         // uint value = getAmountOut(
         //             token,
         //             address(weth),
@@ -485,13 +437,7 @@ contract IndexFactoryStorage is
         //         );
         // totalValue += value;
 
-        totalValue = IPriceOracle(priceOracle).estimateAmountOut(
-            address(factoryV3),
-            token,
-            address(weth),
-            1e18,
-            3000
-        );
+        totalValue = IPriceOracle(priceOracle).estimateAmountOut(address(factoryV3), token, address(weth), 1e18, 3000);
         return priceOracle;
     }
 
@@ -502,20 +448,12 @@ contract IndexFactoryStorage is
      * @param amountIn The amount of input token.
      * @return amountOut The estimated amount of output token.
      */
-    function estimateAmountOut(
-        address tokenIn,
-        address tokenOut,
-        uint128 amountIn,
-        uint24 swapFee
-    ) public view returns (uint amountOut) {
-        amountOut = IPriceOracle(priceOracle).estimateAmountOut(
-            address(factoryV3),
-            tokenIn,
-            tokenOut,
-            amountIn,
-            swapFee
-        );
+    function estimateAmountOut(address tokenIn, address tokenOut, uint128 amountIn, uint24 swapFee)
+        public
+        view
+        returns (uint256 amountOut)
+    {
+        amountOut =
+            IPriceOracle(priceOracle).estimateAmountOut(address(factoryV3), tokenIn, tokenOut, amountIn, swapFee);
     }
-
-    
 }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.8.0;
 
-
 import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
@@ -9,9 +8,7 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 /// @title PriceOracle
 /// @author NEX Labs Protocol
 /// @notice The main token contract forPriceOracle (NEX Labs Protocol)
-contract PriceOracle
-{
-
+contract PriceOracle {
     /**
      * @dev Estimates the amount out for a token swap using Uniswap V3.
      * @param tokenIn The address of the input token.
@@ -25,16 +22,10 @@ contract PriceOracle
         address tokenOut,
         uint128 amountIn,
         uint24 swapFee
-    ) external view returns (uint amountOut) {
+    ) external view returns (uint256 amountOut) {
         address _pool = IUniswapV3Factory(factoryAddress).getPool(tokenIn, tokenOut, swapFee);
 
-        (, int24 tick , , , , , ) = IUniswapV3Pool(_pool).slot0();
-        amountOut = OracleLibrary.getQuoteAtTick(
-            tick,
-            amountIn,
-            tokenIn,
-            tokenOut
-        );
+        (, int24 tick,,,,,) = IUniswapV3Pool(_pool).slot0();
+        amountOut = OracleLibrary.getQuoteAtTick(tick, amountIn, tokenIn, tokenOut);
     }
- 
 }
