@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.7;
+pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
 import "../../contracts/token/IndexToken.sol";
@@ -91,8 +91,17 @@ contract CounterTest is Test, ContractDeployer {
         swapVersions[4] = 3000;
         
         link.transfer(address(factoryStorage), 1e17);
-        bytes32 requestId = factoryStorage.requestAssetsData();
-        oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
+        bytes32 requestId = factoryStorage.requestAssetsData(
+            "console.log('Hello, World!');",
+            // FunctionsConsumer.Location.Inline, // Use the imported enum directly
+            abi.encodePacked("default"),
+            new string[](1), // Convert to dynamic array
+            new bytes[](1),  // Convert to dynamic array
+            0,
+            0
+        );
+        bytes memory data = abi.encode(assetList, tokenShares, swapVersions);
+        oracle.fulfillRequest(address(factoryStorage), requestId, data);
     }
 
     function testOracleList() public {
@@ -184,50 +193,6 @@ contract CounterTest is Test, ContractDeployer {
     }
     
     
-
-    
-    /**
-    function testGetPrice() public {
-        
-        address pool = factoryV3.getPool(
-            wethAddress,
-            address(token0),
-            3000
-        );
-        
-       (
-            uint160 sqrtPriceX96,
-            int24 tick,
-            uint16 observationIndex,
-            uint16 observationCardinality,
-            uint16 observationCardinalityNext,
-            uint8 feeProtocol,
-            bool unlocked
-        ) = IUniswapV3Pool(pool).slot0();
-        //swap
-        weth.deposit{value:1e16}();
-        weth.approve(address(swapRouter), 1e16);
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-        .ExactInputSingleParams({
-            tokenIn: wethAddress,
-            tokenOut: address(token0),
-            // pool fee 0.3%
-            fee: 3000,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: 1e16,
-            amountOutMinimum: 0,
-            // NOTE: In production, this value can be used to set the limit
-            // for the price the swap will push the pool to,
-            // which can help protect against price impact
-            sqrtPriceLimitX96: 0
-        });
-        uint finalAmountOut = swapRouter.exactInputSingle(params);
-
-    }
-
-
-    */
 
     
 }

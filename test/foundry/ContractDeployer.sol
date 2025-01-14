@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // pragma solidity ^0.8.13;
-pragma solidity ^0.8.7;
+pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
 
@@ -143,7 +143,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         // TestSwap
     ) {
         LinkToken link = new LinkToken();
-        MockApiOracle oracle = new MockApiOracle(address(link));
+        MockApiOracle oracle = new MockApiOracle();
 
         MockV3Aggregator ethPriceOracle = new MockV3Aggregator(
             18, //decimals
@@ -170,7 +170,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         factoryStorage.initialize(
             payable(address(indexToken)),
             // address(0),
-            address(link),
+            // address(link),
             address(oracle),
             jobId,
             address(ethPriceOracle),

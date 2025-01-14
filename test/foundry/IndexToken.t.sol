@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.7;
+pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
 import "../../contracts/token/IndexToken.sol";
@@ -13,24 +13,7 @@ contract CounterTest is Test, ContractDeployer {
 
 
     uint256 internal constant SCALAR = 1e20;
-    // bytes32 jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
-
-    // IndexToken public indexToken;
-    // MockApiOracle public oracle;
-    // LinkToken link;
-
-    // address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    // address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-    // address public constant SwapRouterV3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
-    // address public constant FactoryV3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-    // address public constant SwapRouterV2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    // address public constant FactoryV2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     
-    // address feeReceiver = vm.addr(1);
-    // address newFeeReceiver = vm.addr(2);
-    // address minter = vm.addr(3);
-    // address newMinter = vm.addr(4);
-    // address methodologist = vm.addr(5);
 
 
     event FeeReceiverSet(address indexed feeReceiver);
@@ -46,32 +29,9 @@ contract CounterTest is Test, ContractDeployer {
     
 
     function setUp() public {
-        // ContractDeployer deployer = new ContractDeployer();
-        // (link, oracle, indexToken) = deployer.deployContracts();
         deployAllContracts(1000000e18);
-        // (link, oracle, indexToken,,,) = deployContracts();
         indexToken.setMinter(minter);
-        /**
-        LinkToken link = new LinkToken();
-        oracle = new MockApiOracle(address(link));
-
-        indexToken = new IndexToken();
-        indexToken.initialize(
-            "Anti Inflation",
-            "ANFI",
-            1e18,
-            feeReceiver,
-            1000000e18,
-            //swap addresses
-            WETH9,
-            QUOTER,
-            SwapRouterV3,
-            FactoryV3,
-            SwapRouterV2,
-            FactoryV2
-        );
-        indexToken.setMinter(minter);
-        */
+        
     }
 
     function testInitialized() public {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
 import "contracts/test/OlympixCoin.sol";
@@ -26,10 +26,6 @@ contract OlympixCoinTest is OlympixUnitTest("OlympixCoin") {
         vm.startPrank(alice);
         coin.transfer(bob, 100);
         vm.stopPrank();
-    
-    //    assertEq(coin.balanceOf(alice), 898);
-    //    assertEq(coin.balanceOf(bob), 1100);
-    //    assertEq(coin.balanceOf(treasury), 350002);
     }
     
 

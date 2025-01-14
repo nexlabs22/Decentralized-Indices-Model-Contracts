@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity 0.8.20;
 
 import "../token/IndexToken.sol";
 import "../proposable/ProposableOwnableUpgradeable.sol";
@@ -9,12 +9,14 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
-import "../chainlink/ChainlinkClient.sol";
+import "../chainlink/FunctionsClient.sol";
+import "../chainlink/ConfirmedOwner.sol";
+import "@chainlink/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IWETH.sol";
 import "../interfaces/IUniswapV2Router02.sol";
 import "../interfaces/IUniswapV2Factory.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import "./IPriceOracle.sol";
 import "../vault/Vault.sol";
 
@@ -26,12 +28,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /// @dev This contract uses an upgradeable pattern
 contract IndexFactoryStorage is
     Initializable,
-    ChainlinkClient,
+    FunctionsClient,
+    ConfirmedOwner,
     ContextUpgradeable,
-    ProposableOwnableUpgradeable,
     PausableUpgradeable
 {
-    using Chainlink for Chainlink.Request;
+    using FunctionsRequest for FunctionsRequest.Request;
 
     IndexToken public indexToken;
 
@@ -41,17 +43,15 @@ contract IndexFactoryStorage is
     // Address that can claim fees accrued.
     address public feeReceiver;
 
-
-
+    bytes32 public donId; // DON ID for the Functions DON to which the requests are sent
+    address public functionsRouterAddress;
     string baseUrl;
     string urlParams;
 
     address public priceOracle;
-    bytes32 public externalJobId;
-    uint256 public oraclePayment;
     AggregatorV3Interface public toUsdPriceFeed;
     uint public lastUpdateTime;
-    
+
     uint public totalOracleList;
     uint public totalCurrentList;
 
@@ -75,26 +75,25 @@ contract IndexFactoryStorage is
     IQuoter public quoter;
     Vault public vault;
 
-
     event FeeReceiverSet(address indexed feeReceiver);
-    
-
-    
 
     /**
      * @dev Throws if the caller is not a factory contract.
      */
     modifier onlyFactory() {
-        require(msg.sender == factoryAddress || msg.sender == factoryBalancerAddress, "Caller is not a factory contract");
+        require(
+            msg.sender == factoryAddress ||
+                msg.sender == factoryBalancerAddress,
+            "Caller is not a factory contract"
+        );
         _;
     }
 
     /**
      * @dev Initializes the contract with the given parameters.
      * @param _token The address of the IndexToken contract.
-     * @param _chainlinkToken The address of the Chainlink token.
-     * @param _oracleAddress The address of the Chainlink oracle.
-     * @param _externalJobId The external job ID for Chainlink requests.
+     * @param _functionsRouterAddress The address of the Chainlink functions router.
+     * @param _newDonId The external don ID for Chainlink requests.
      * @param _toUsdPriceFeed The address of the USD price feed.
      * @param _weth The address of the WETH token.
      * @param _quoter The address of the Uniswap V3 quoter.
@@ -105,9 +104,8 @@ contract IndexFactoryStorage is
      */
     function initialize(
         address payable _token,
-        address _chainlinkToken,
-        address _oracleAddress,
-        bytes32 _externalJobId,
+        address _functionsRouterAddress,
+        bytes32 _newDonId,
         address _toUsdPriceFeed,
         //addresses
         address _weth,
@@ -117,34 +115,18 @@ contract IndexFactoryStorage is
         address _swapRouterV2,
         address _factoryV2
     ) external initializer {
+        require(_token != address(0), "Token address cannot be zero address");
+        require(_newDonId.length > 0, "Don ID cannot be empty");
         require(
-            _token != address(0),
-            "Token address cannot be zero address"
-        );
-        require(
-            _chainlinkToken != address(0),
-            "Chainlink token address cannot be zero address"
-        );
-        require(
-            externalJobId.length > 0,
-            "External job ID cannot be empty"
-        );
-        require(
-            _oracleAddress != address(0),
-            "Oracle address cannot be zero address"
+            _functionsRouterAddress != address(0),
+            "functions router address cannot be zero address"
         );
         require(
             _toUsdPriceFeed != address(0),
             "Price feed address cannot be zero address"
         );
-        require(
-            _weth != address(0),
-            "WETH address cannot be zero address"
-        );
-        require(
-            _quoter != address(0),
-            "Quoter address cannot be zero address"
-        );
+        require(_weth != address(0), "WETH address cannot be zero address");
+        require(_quoter != address(0), "Quoter address cannot be zero address");
         require(
             _swapRouterV3 != address(0),
             "Swap router V3 address cannot be zero address"
@@ -161,14 +143,13 @@ contract IndexFactoryStorage is
             _factoryV2 != address(0),
             "Factory V2 address cannot be zero address"
         );
-        __Ownable_init();
+        // __Ownable_init();
         __Pausable_init();
+        __FunctionsClient_init(_functionsRouterAddress);
+        __ConfirmedOwner_init(msg.sender);
         indexToken = IndexToken(_token);
-        //set oracle data
-        setChainlinkToken(_chainlinkToken);
-        setChainlinkOracle(_oracleAddress);
-        externalJobId = _externalJobId;
-        oraclePayment = ((1 * LINK_DIVISIBILITY) / 10); // n * 10**18
+        donId = _newDonId;
+        functionsRouterAddress = _functionsRouterAddress;
         toUsdPriceFeed = AggregatorV3Interface(_toUsdPriceFeed);
         //set addresses
         weth = IWETH(_weth);
@@ -191,7 +172,9 @@ contract IndexFactoryStorage is
         factoryAddress = _factoryAddress;
     }
 
-    function setFactoryBalancer(address _factoryBalancerAddress) public onlyOwner {
+    function setFactoryBalancer(
+        address _factoryBalancerAddress
+    ) public onlyOwner {
         factoryBalancerAddress = _factoryBalancerAddress;
     }
     /**
@@ -203,12 +186,20 @@ contract IndexFactoryStorage is
         emit FeeReceiverSet(_feeReceiver);
     }
 
-     /**
+    /**
      * @dev Sets the vault address.
      * @param _vaultAddress The address of the vault.
      */
     function setVault(address _vaultAddress) public onlyOwner {
         vault = Vault(_vaultAddress);
+    }
+
+    /**
+     * @notice Set the DON ID
+     * @param newDonId New DON ID
+     */
+    function setDonId(bytes32 newDonId) external onlyOwner {
+        donId = newDonId;
     }
 
     /**
@@ -278,8 +269,6 @@ contract IndexFactoryStorage is
         latestFeeUpdate = block.timestamp;
     }
 
-    
-
     /**
      * @dev Concatenates two strings.
      * @param a The first string.
@@ -306,52 +295,68 @@ contract IndexFactoryStorage is
         urlParams = _afterAddress;
     }
 
-    /**
-     * @dev Requests asset data from the Chainlink oracle.
-     * @return The request ID.
-     */
-    function requestAssetsData() public returns (bytes32) {
-        string memory url = concatenation(baseUrl, urlParams);
-        Chainlink.Request memory req = buildChainlinkRequest(
-            externalJobId,
-            address(this),
-            this.fulfillAssetsData.selector
+    function requestAssetsData(
+        string calldata source,
+        bytes calldata encryptedSecretsReference,
+        string[] calldata args,
+        bytes[] calldata bytesArgs,
+        uint64 subscriptionId,
+        uint32 callbackGasLimit
+    ) public returns (bytes32) {
+        FunctionsRequest.Request memory req;
+        req.initializeRequest(
+            FunctionsRequest.Location.Inline,
+            FunctionsRequest.CodeLanguage.JavaScript,
+            source
         );
-        req.add("get", url);
-        req.add("path1", "results,tokens");
-        req.add("path2", "results,marketShares");
-        req.add("path3", "results,swapFees");
+        req.secretsLocation = FunctionsRequest.Location.Remote;
+        req.encryptedSecretsReference = encryptedSecretsReference;
+        if (args.length > 0) {
+            req.setArgs(args);
+        }
+        if (bytesArgs.length > 0) {
+            req.setBytesArgs(bytesArgs);
+        }
         return
-            sendChainlinkRequestTo(
-                chainlinkOracleAddress(),
-                req,
-                oraclePayment
+            _sendRequest(
+                req.encodeCBOR(),
+                subscriptionId,
+                callbackGasLimit,
+                donId
             );
     }
 
     /**
-     * @dev Fulfills the asset data request from the Chainlink oracle.
-     * @param requestId The request ID.
-     * @param _tokens The list of token addresses.
-     * @param _marketShares The list of market shares.
-     * @param _swapFees The list of swap versions.
+     * @notice Store latest result/error
+     * @param requestId The request ID, returned by sendRequest()
+     * @param response Aggregated response from the user code
+     * @param err Aggregated error from the user code or from the execution pipeline
+     * Either response or error parameter will be set, but never both
      */
-    function fulfillAssetsData(
+    function fulfillRequest(
         bytes32 requestId,
-        address[] memory _tokens,
-        uint256[] memory _marketShares,
-        uint24[] memory _swapFees
-    ) public recordChainlinkFulfillment(requestId) {
+        bytes memory response,
+        bytes memory err
+    ) internal override {
+        (
+            address[] memory _tokens,
+            uint256[] memory _marketShares,
+            uint24[] memory _swapFees
+        ) = abi.decode(response, (address[], uint256[], uint24[]));
         require(
             _tokens.length == _marketShares.length &&
                 _marketShares.length == _swapFees.length,
             "The length of the arrays should be the same"
         );
-        address[] memory tokens0 = _tokens;
-        uint[] memory marketShares0 = _marketShares;
-        uint24[] memory _swapFees = _swapFees;
+        _initData(_tokens, _marketShares, _swapFees);
+    }
 
-        // //save mappings
+    function _initData(
+        address[] memory tokens0,
+        uint256[] memory marketShares0,
+        uint24[] memory _swapFees
+    ) internal {
+        //save mappings
         for (uint i = 0; i < tokens0.length; i++) {
             oracleList[i] = tokens0[i];
             tokenOracleListIndex[tokens0[i]] = i;
@@ -369,6 +374,7 @@ contract IndexFactoryStorage is
         }
         lastUpdateTime = block.timestamp;
     }
+    
 
     /**
      * @dev Mock function to fill the asset list for testing purposes.
@@ -404,16 +410,16 @@ contract IndexFactoryStorage is
         lastUpdateTime = block.timestamp;
     }
 
-    
     function updateCurrentList() external onlyFactory {
         totalCurrentList = totalOracleList;
-        for(uint i = 0; i < totalOracleList; i++){
+        for (uint i = 0; i < totalOracleList; i++) {
             address tokenAddress = oracleList[i];
             currentList[i] = tokenAddress;
-            tokenCurrentMarketShare[tokenAddress] = tokenOracleMarketShare[tokenAddress];
+            tokenCurrentMarketShare[tokenAddress] = tokenOracleMarketShare[
+                tokenAddress
+            ];
         }
     }
-    
 
     /**
      * @dev Gets the amount out for a token swap.
@@ -459,9 +465,7 @@ contract IndexFactoryStorage is
         uint totalValue;
         for (uint i = 0; i < totalCurrentList; i++) {
             if (currentList[i] == address(weth)) {
-                totalValue += IERC20(currentList[i]).balanceOf(
-                    address(vault)
-                );
+                totalValue += IERC20(currentList[i]).balanceOf(address(vault));
             } else {
                 uint value = getAmountOut(
                     currentList[i],
@@ -477,13 +481,6 @@ contract IndexFactoryStorage is
 
     function getPortfolioBalance2(address token) public view returns (address) {
         uint totalValue;
-        // uint value = getAmountOut(
-        //             token,
-        //             address(weth),
-        //             1e18,
-        //             3000
-        //         );
-        // totalValue += value;
 
         totalValue = IPriceOracle(priceOracle).estimateAmountOut(
             address(factoryV3),
@@ -516,6 +513,4 @@ contract IndexFactoryStorage is
             swapFee
         );
     }
-
-    
 }

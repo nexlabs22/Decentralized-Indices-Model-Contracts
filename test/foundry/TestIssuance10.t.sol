@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.7;
+pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
 import "../../contracts/token/IndexToken.sol";
@@ -114,8 +114,18 @@ contract CounterTest is Test, ContractDeployer {
         swapVersions[9] = 3000;
         
         link.transfer(address(factoryStorage), 1e17);
-        bytes32 requestId = factoryStorage.requestAssetsData();
-        oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
+        bytes32 requestId = factoryStorage.requestAssetsData(
+            "console.log('Hello, World!');",
+            // FunctionsConsumer.Location.Inline, // Use the imported enum directly
+            abi.encodePacked("default"),
+            new string[](1), // Convert to dynamic array
+            new bytes[](1),  // Convert to dynamic array
+            0,
+            0
+        );
+        // oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
+        bytes memory data = abi.encode(assetList, tokenShares, swapVersions);
+        oracle.fulfillRequest(address(factoryStorage), requestId, data);
     }
     function testOracleList() public {
         updateOracleList();
