@@ -57,7 +57,7 @@ contract IndexFactoryBalancer is
         int256 _amount,
         uint8 _amountDecimals,
         uint8 _chainDecimals
-    ) private pure returns (int256) {
+    ) internal pure returns (int256) {
         if (_chainDecimals > _amountDecimals)
             return _amount * int256(10 ** (_chainDecimals - _amountDecimals));
         else return _amount * int256(10 ** (_amountDecimals - _chainDecimals));
@@ -113,7 +113,6 @@ contract IndexFactoryBalancer is
         ISwapRouter swapRouterV3 = factoryStorage.swapRouterV3();
         IUniswapV2Router02 swapRouterV2 = factoryStorage.swapRouterV2();
         // Ensure the transfer is successful
-        require(IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn), "Transfer failed");
         outputAmount = SwapHelpers.swap(
             swapRouterV3,
             swapRouterV2,
@@ -137,18 +136,19 @@ contract IndexFactoryBalancer is
         for (uint i; i < totalCurrentList; i++) {
             address tokenAddress = factoryStorage.currentList(i);
             uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
+            uint tokenBalance = IERC20(tokenAddress).balanceOf(address(vault));
             if (tokenAddress != address(weth)) {
                 bool success = vault.withdrawFunds(
                     tokenAddress,
                     address(this),
-                    IERC20(tokenAddress).balanceOf(address(vault))
+                    tokenBalance
                 );
                 require(success, "Vault withdrawal failed");
                 uint outputAmount = swap(
                         tokenAddress,
                         address(weth),
-                        IERC20(tokenAddress).balanceOf(address(vault)),
-                        address(vault),
+                        tokenBalance,
+                        address(this),
                         tokenSwapFee
                     );
                 require(outputAmount > 0, "Swap failed");
@@ -160,12 +160,6 @@ contract IndexFactoryBalancer is
             uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
             uint tokenOracleMarketShare = factoryStorage.tokenOracleMarketShare(tokenAddress);
             if (tokenAddress != address(weth)) {
-                bool success = vault.withdrawFunds(
-                    address(weth),
-                    address(this),
-                    wethBalance
-                );
-                require(success, "Vault withdrawal failed");
                 uint outputAmount = swap(
                     address(weth),
                     tokenAddress,
@@ -176,8 +170,8 @@ contract IndexFactoryBalancer is
                 );
                 require(outputAmount > 0, "Swap failed");
             }
-            //update current list
-            factoryStorage.updateCurrentList();
         }
+        //update current list
+        factoryStorage.updateCurrentList();
     }
 }

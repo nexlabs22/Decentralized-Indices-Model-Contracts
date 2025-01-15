@@ -233,7 +233,7 @@ contract IndexFactoryStorage is
         int256 _amount,
         uint8 _amountDecimals,
         uint8 _chainDecimals
-    ) private pure returns (int256) {
+    ) internal pure returns (int256) {
         if (_chainDecimals > _amountDecimals)
             return _amount * int256(10 ** (_chainDecimals - _amountDecimals));
         else return _amount * int256(10 ** (_amountDecimals - _chainDecimals));

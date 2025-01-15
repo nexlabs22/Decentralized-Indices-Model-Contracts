@@ -15,6 +15,7 @@ import "../../contracts/test/UniswapPositionManagerByteCode.sol";
 import "../../contracts/test/PriceOracleByteCode.sol";
 import "../../contracts/factory/IndexFactory.sol";
 import "../../contracts/factory/IndexFactoryStorage.sol";
+import "../../contracts/factory/IndexFactoryBalancer.sol";
 import "../../contracts/vault/Vault.sol";
 // import "../../contracts/test/TestSwap.sol";
 import "../../contracts/uniswap/Token.sol";
@@ -93,6 +94,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
     // PriceOracle public priceOracle;
     IndexFactory public factory;
     IndexFactoryStorage public factoryStorage;
+    IndexFactoryBalancer public factoryBalancer;
     Vault public vault;
     // TestSwap public testSwap;
     MockV3Aggregator public ethPriceOracle;
@@ -187,6 +189,8 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         factory.initialize(
            payable(address(factoryStorage))
         );
+
+        
         
 
         indexToken.setMinter(address(factory));
@@ -210,6 +214,31 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             factoryStorage,
             vault
             // testSwap
+        );
+
+    }
+
+
+    function deployContracts2() public returns(
+        IndexFactoryBalancer
+    ) {
+        
+        IndexFactoryBalancer factoryBalancer = new IndexFactoryBalancer();
+        factoryBalancer.initialize(
+           payable(address(factoryStorage))
+        );
+        
+        factoryStorage.setFactoryBalancer(address(factoryBalancer));
+        vault.setOperator(address(factoryBalancer), true);
+        
+        
+        
+
+        // TestSwap testSwap = new TestSwap();
+        
+        
+        return (
+            factoryBalancer
         );
 
     }
@@ -255,6 +284,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
         swapRouter = ISwapRouter(router);
         weth = IWETH(wethAddress);
         (link, oracle, indexToken, ethPriceOracle, factory, factoryStorage, vault) = deployContracts();
+        (factoryBalancer) = deployContracts2();
     }
 
     function deployByteCode(bytes memory bytecode) public returns(address){

@@ -104,6 +104,43 @@ contract CounterTest is Test, ContractDeployer {
         oracle.fulfillRequest(address(factoryStorage), requestId, data);
     }
 
+
+    function updateOracleList2() public {
+        address[] memory assetList = new address[](5);
+        assetList[0] = address(token0);
+        assetList[1] = address(token1);
+        assetList[2] = address(token2);
+        assetList[3] = address(token3);
+        assetList[4] = address(token4);
+
+        uint[] memory tokenShares = new uint[](5);
+        tokenShares[0] = 30e18;
+        tokenShares[1] = 20e18;
+        tokenShares[2] = 20e18;
+        tokenShares[3] = 20e18;
+        tokenShares[4] = 10e18;
+
+        uint[] memory swapVersions = new uint[](5);
+        swapVersions[0] = 3000;
+        swapVersions[1] = 3000;
+        swapVersions[2] = 3000;
+        swapVersions[3] = 3000;
+        swapVersions[4] = 3000;
+        
+        // link.transfer(address(factoryStorage), 1e17);
+        bytes32 requestId = factoryStorage.requestAssetsData(
+            "console.log('Hello, World!');",
+            // FunctionsConsumer.Location.Inline, // Use the imported enum directly
+            abi.encodePacked("default"),
+            new string[](1), // Convert to dynamic array
+            new bytes[](1),  // Convert to dynamic array
+            0,
+            0
+        );
+        bytes memory data = abi.encode(assetList, tokenShares, swapVersions);
+        oracle.fulfillRequest(address(factoryStorage), requestId, data);
+    }
+
     function testOracleList() public {
         updateOracleList();
         // token  oracle list
@@ -190,6 +227,34 @@ contract CounterTest is Test, ContractDeployer {
         console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
         console.log("real out", reallOut);
         console.log("usdt after redemption", usdt.balanceOf(add1));
+    }
+
+
+    function testReweighting() public {
+        uint startAmount = 1e14;
+        
+        updateOracleList();
+        
+        factory.proposeOwner(owner);
+        vm.startPrank(owner);
+        factory.transferOwnership(owner);
+        vm.stopPrank();
+        usdt.transfer(add1, 1001e18);
+        vm.startPrank(add1);
+        
+        usdt.approve(address(factory), 1001e18);
+        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
+        vm.stopPrank();
+        //updateOracle
+        updateOracleList2();
+
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token0)), 30e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token1)), 20e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token2)), 20e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token3)), 20e18);
+        assertEq(factoryStorage.tokenOracleMarketShare(address(token4)), 10e18);
+        
+        factoryBalancer.reIndexAndReweight();
     }
     
     
