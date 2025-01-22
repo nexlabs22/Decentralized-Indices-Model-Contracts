@@ -76,6 +76,37 @@ contract CounterTest is Test, ContractDeployer {
         assetList[3] = address(token3);
         assetList[4] = address(token4);
 
+        uint24[] memory feesData = new uint24[](2);
+        feesData[0] = 3000;
+        feesData[1] = 3000;
+
+        bytes[] memory pathData = new bytes[](5);
+        //updating path data for token0
+        address[] memory path0 = new address[](2);
+        path0[0] = address(weth);
+        path0[1] = address(token0);
+        pathData[0] = abi.encodePacked(path0, feesData);
+        //updating path data for token1
+        address[] memory path1 = new address[](2);
+        path1[0] = address(weth);
+        path1[1] = address(token1);
+        pathData[1] = abi.encodePacked(path1, feesData);
+        //updating path data for token2
+        address[] memory path2 = new address[](2);
+        path2[0] = address(weth);
+        path2[1] = address(token2);
+        pathData[2] = abi.encodePacked(path2, feesData);
+        //updating path data for token3
+        address[] memory path3 = new address[](2);
+        path3[0] = address(weth);
+        path3[1] = address(token3);
+        pathData[3] = abi.encodePacked(path3, feesData);
+        //updating path data for token4
+        address[] memory path4 = new address[](2);
+        path4[0] = address(weth);
+        path4[1] = address(token4);
+        pathData[4] = abi.encodePacked(path4, feesData);
+
         uint[] memory tokenShares = new uint[](5);
         tokenShares[0] = 20e18;
         tokenShares[1] = 20e18;
@@ -100,7 +131,7 @@ contract CounterTest is Test, ContractDeployer {
             0,
             0
         );
-        bytes memory data = abi.encode(assetList, tokenShares, swapVersions);
+        bytes memory data = abi.encode(assetList, pathData, tokenShares, swapVersions);
         oracle.fulfillRequest(address(factoryStorage), requestId, data);
     }
 
@@ -186,7 +217,13 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         
         factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+        // redemption input token path data
+        address[] memory path = new address[](2);
+        path[0] = address(weth);
+        path[1] = address(usdt);
+        uint24[] memory fees = new uint24[](1);
+        fees[0] = 3000;
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees, 3);
     }
 
     function testIssuanceWithTokens() public {
@@ -202,8 +239,24 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+
+        //issuance input token path data
+        address[] memory path0 = new address[](2);
+        path0[0] = address(usdt);
+        path0[1] = address(weth);
+        uint24[] memory fees0 = new uint24[](1);
+        fees0[0] = 3000;
+        
+        factory.issuanceIndexTokens(address(usdt), 1000e18, path0, fees0, 3000);
+
+        // redemption input token path data
+        address[] memory path = new address[](2);
+        path[0] = address(weth);
+        path[1] = address(usdt);
+        uint24[] memory fees = new uint24[](1);
+        fees[0] = 3000;
+
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees, 3);
     }
 
     
@@ -219,10 +272,25 @@ contract CounterTest is Test, ContractDeployer {
         usdt.transfer(add1, 1001e18);
         vm.startPrank(add1);
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
+
+        //issuance input token path data
+        address[] memory path0 = new address[](2);
+        path0[0] = address(usdt);
+        path0[1] = address(weth);
+        uint24[] memory fees0 = new uint24[](1);
+        fees0[0] = 3000;
+
+        factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18, 3000);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
-        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3000);
+        // redemption input token path data
+        address[] memory path = new address[](2);
+        path[0] = address(weth);
+        path[1] = address(usdt);
+        uint24[] memory fees = new uint24[](1);
+        fees[0] = 3000;
+
+        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), path, fees, 3000);
         console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
         console.log("real out", reallOut);
@@ -243,7 +311,13 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
+        // issuance input token path data
+        address[] memory path0 = new address[](2);
+        path0[0] = address(usdt);
+        path0[1] = address(weth);
+        uint24[] memory fees0 = new uint24[](1);
+        fees0[0] = 3000;
+        factory.issuanceIndexTokens(address(usdt), 1000e18, path0, fees0, 3000);
         vm.stopPrank();
         //updateOracle
         updateOracleList2();

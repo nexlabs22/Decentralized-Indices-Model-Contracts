@@ -153,7 +153,13 @@ contract CounterTest is Test, ContractDeployer {
         // console.log("FLOKI", IERC20(FLOKI).balanceOf(address(factory)));
         
         factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3000);
+        // redemption path data
+        address[] memory path = new address[](2);
+        path[0] = address(weth);
+        path[1] = address(usdt);
+        uint24[] memory fees = new uint24[](1);
+        fees[0] = 3000;
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees, 3000);
     }
 
     
@@ -170,8 +176,22 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3000);
+
+        //issuance input token path data
+        address[] memory path0 = new address[](2);
+        path0[0] = address(usdt);
+        path0[1] = address(weth);
+        uint24[] memory fees0 = new uint24[](1);
+        fees0[0] = 3000;
+
+        factory.issuanceIndexTokens(address(usdt), 1000e18, path0, fees0, 3000);
+        // redemption path data
+        address[] memory path = new address[](2);
+        path[0] = address(weth);
+        path[1] = address(usdt);
+        uint24[] memory fees = new uint24[](1);
+        fees[0] = 3000;
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees, 3000);
     }
 
 
@@ -188,10 +208,24 @@ contract CounterTest is Test, ContractDeployer {
         usdt.transfer(add1, 1001e18);
         vm.startPrank(add1);
         usdt.approve(address(factory), 1001e18);
-        factory.issuanceIndexTokens(address(usdt), 1000e18, 3000);
+
+        //issuance input token path data
+        address[] memory path0 = new address[](2);
+        path0[0] = address(usdt);
+        path0[1] = address(weth);
+        uint24[] memory fees0 = new uint24[](1);
+        fees0[0] = 3000;
+
+        factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18, 3000);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
-        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), 3000);
+        // redemption path data
+        address[] memory path = new address[](2);
+        path[0] = address(weth);
+        path[1] = address(usdt);
+        uint24[] memory fees = new uint24[](1);
+        fees[0] = 3000;
+        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), path, fees, 3000);
         console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
         console.log("real out", reallOut);

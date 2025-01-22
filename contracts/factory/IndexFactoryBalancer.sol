@@ -96,16 +96,16 @@ contract IndexFactoryBalancer is
     
     /**
      * @dev Internal function to swap tokens.
-     * @param tokenIn The address of the input token.
-     * @param tokenOut The address of the output token.
+     * @param path The path of the swap.
+     * @param fees The fees of the swap.
      * @param amountIn The amount of input token.
      * @param _recipient The address of the recipient.
      * @param _swapFee The swap fee.
      * @return outputAmount The amount of output token.
      */
     function swap(
-        address tokenIn,
-        address tokenOut,
+        address[] memory path,
+        uint24[] memory fees,
         uint amountIn,
         address _recipient,
         uint24 _swapFee
@@ -117,8 +117,8 @@ contract IndexFactoryBalancer is
             swapRouterV3,
             swapRouterV2,
             _swapFee,
-            tokenIn,
-            tokenOut,
+            path,
+            fees,
             amountIn,
             _recipient
         );
@@ -136,6 +136,7 @@ contract IndexFactoryBalancer is
         for (uint i; i < totalCurrentList; i++) {
             address tokenAddress = factoryStorage.currentList(i);
             uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
+            (address[] memory toETHPath, uint24[] memory toETHFees) = factoryStorage.getToETHPathData(tokenAddress);
             uint tokenBalance = IERC20(tokenAddress).balanceOf(address(vault));
             if (tokenAddress != address(weth)) {
                 bool success = vault.withdrawFunds(
@@ -145,8 +146,8 @@ contract IndexFactoryBalancer is
                 );
                 require(success, "Vault withdrawal failed");
                 uint outputAmount = swap(
-                        tokenAddress,
-                        address(weth),
+                        toETHPath,
+                        toETHFees,
                         tokenBalance,
                         address(this),
                         tokenSwapFee
@@ -158,11 +159,12 @@ contract IndexFactoryBalancer is
         for (uint i; i < totalOracleList; i++) {
             address tokenAddress = factoryStorage.oracleList(i);
             uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
+            (address[] memory fromETHPath, uint24[] memory fromETHFees) = factoryStorage.getFromETHPathData(tokenAddress);
             uint tokenOracleMarketShare = factoryStorage.tokenOracleMarketShare(tokenAddress);
             if (tokenAddress != address(weth)) {
                 uint outputAmount = swap(
-                    address(weth),
-                    tokenAddress,
+                    fromETHPath,
+                    fromETHFees,
                     (wethBalance * tokenOracleMarketShare) /
                         100e18,
                     address(vault),

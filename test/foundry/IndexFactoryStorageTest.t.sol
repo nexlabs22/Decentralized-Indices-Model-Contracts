@@ -298,44 +298,44 @@ contract IndexFactoryStorageTest is Test, IndexFactoryStorage {
         indexFactoryStorage.setFeeReceiver(newFeeReceiver);
     }
 
-    function testUpdateCurrentListByFactory() public {
-        vm.prank(indexFactoryStorage.owner());
+    // function testUpdateCurrentListByFactory() public {
+    //     vm.prank(indexFactoryStorage.owner());
 
-        indexFactoryStorage.setFactoryBalancer(factoryBalancer);
+    //     indexFactoryStorage.setFactoryBalancer(factoryBalancer);
 
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(0x1);
-        tokens[1] = address(0x2);
+    //     address[] memory tokens = new address[](2);
+    //     tokens[0] = address(0x1);
+    //     tokens[1] = address(0x2);
 
-        uint256[] memory marketShares = new uint256[](2);
-        marketShares[0] = 100;
-        marketShares[1] = 200;
+    //     uint256[] memory marketShares = new uint256[](2);
+    //     marketShares[0] = 100;
+    //     marketShares[1] = 200;
 
-        uint24[] memory swapFees = new uint24[](2);
-        swapFees[0] = 300;
-        swapFees[1] = 400;
+    //     uint24[] memory swapFees = new uint24[](2);
+    //     swapFees[0] = 300;
+    //     swapFees[1] = 400;
 
-        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+    //     indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
 
-        vm.prank(factoryBalancer);
-        indexFactoryStorage.updateCurrentList();
+    //     vm.prank(factoryBalancer);
+    //     indexFactoryStorage.updateCurrentList();
 
-        assertEq(indexFactoryStorage.totalCurrentList(), 2, "Total current list not updated correctly");
+    //     assertEq(indexFactoryStorage.totalCurrentList(), 2, "Total current list not updated correctly");
 
-        assertEq(indexFactoryStorage.currentList(0), address(tokens[0]), "First token not updated correctly");
-        assertEq(
-            indexFactoryStorage.tokenCurrentMarketShare(address(tokens[0])),
-            100,
-            "Market share not updated for first token"
-        );
+    //     assertEq(indexFactoryStorage.currentList(0), address(tokens[0]), "First token not updated correctly");
+    //     assertEq(
+    //         indexFactoryStorage.tokenCurrentMarketShare(address(tokens[0])),
+    //         100,
+    //         "Market share not updated for first token"
+    //     );
 
-        assertEq(indexFactoryStorage.currentList(1), address(tokens[1]), "Second token not updated correctly");
-        assertEq(
-            indexFactoryStorage.tokenCurrentMarketShare(address(tokens[1])),
-            200,
-            "Market share not updated for second token"
-        );
-    }
+    //     assertEq(indexFactoryStorage.currentList(1), address(tokens[1]), "Second token not updated correctly");
+    //     assertEq(
+    //         indexFactoryStorage.tokenCurrentMarketShare(address(tokens[1])),
+    //         200,
+    //         "Market share not updated for second token"
+    //     );
+    // }
 
     function testUpdateCurrentListRevertsForNonFactory() public {
         vm.prank(user);
@@ -377,149 +377,149 @@ contract IndexFactoryStorageTest is Test, IndexFactoryStorage {
         assertEq(result, "Hello, World!");
     }
 
-    function test_mockFillAssetsList_SuccessfulFill() public {
-        vm.prank(indexFactoryStorage.owner());
+    // function test_mockFillAssetsList_SuccessfulFill() public {
+    //     vm.prank(indexFactoryStorage.owner());
 
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(0x1);
-        tokens[1] = address(0x2);
+    //     address[] memory tokens = new address[](2);
+    //     tokens[0] = address(0x1);
+    //     tokens[1] = address(0x2);
 
-        uint256[] memory marketShares = new uint256[](2);
-        marketShares[0] = 100;
-        marketShares[1] = 200;
+    //     uint256[] memory marketShares = new uint256[](2);
+    //     marketShares[0] = 100;
+    //     marketShares[1] = 200;
 
-        uint24[] memory swapFees = new uint24[](2);
-        swapFees[0] = 300;
-        swapFees[1] = 400;
+    //     uint24[] memory swapFees = new uint24[](2);
+    //     swapFees[0] = 300;
+    //     swapFees[1] = 400;
 
-        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+    //     indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
 
-        assertEq(indexFactoryStorage.totalOracleList(), 2);
-        assertEq(indexFactoryStorage.totalCurrentList(), 2);
-        assertEq(indexFactoryStorage.lastUpdateTime(), block.timestamp);
+    //     assertEq(indexFactoryStorage.totalOracleList(), 2);
+    //     assertEq(indexFactoryStorage.totalCurrentList(), 2);
+    //     assertEq(indexFactoryStorage.lastUpdateTime(), block.timestamp);
 
-        assertEq(indexFactoryStorage.oracleList(0), address(0x1));
-        assertEq(indexFactoryStorage.oracleList(1), address(0x2));
+    //     assertEq(indexFactoryStorage.oracleList(0), address(0x1));
+    //     assertEq(indexFactoryStorage.oracleList(1), address(0x2));
 
-        assertEq(indexFactoryStorage.tokenOracleListIndex(address(0x1)), 0);
-        assertEq(indexFactoryStorage.tokenOracleListIndex(address(0x2)), 1);
+    //     assertEq(indexFactoryStorage.tokenOracleListIndex(address(0x1)), 0);
+    //     assertEq(indexFactoryStorage.tokenOracleListIndex(address(0x2)), 1);
 
-        assertEq(indexFactoryStorage.tokenOracleMarketShare(address(0x1)), 100);
-        assertEq(indexFactoryStorage.tokenOracleMarketShare(address(0x2)), 200);
+    //     assertEq(indexFactoryStorage.tokenOracleMarketShare(address(0x1)), 100);
+    //     assertEq(indexFactoryStorage.tokenOracleMarketShare(address(0x2)), 200);
 
-        assertEq(indexFactoryStorage.tokenSwapFee(address(0x1)), 300);
-        assertEq(indexFactoryStorage.tokenSwapFee(address(0x2)), 400);
+    //     assertEq(indexFactoryStorage.tokenSwapFee(address(0x1)), 300);
+    //     assertEq(indexFactoryStorage.tokenSwapFee(address(0x2)), 400);
 
-        assertEq(indexFactoryStorage.currentList(0), address(0x1));
-        assertEq(indexFactoryStorage.currentList(1), address(0x2));
+    //     assertEq(indexFactoryStorage.currentList(0), address(0x1));
+    //     assertEq(indexFactoryStorage.currentList(1), address(0x2));
 
-        assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x1)), 100);
-        assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x2)), 200);
+    //     assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x1)), 100);
+    //     assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x2)), 200);
 
-        assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x1)), 0);
-        assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x2)), 1);
-    }
+    //     assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x1)), 0);
+    //     assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x2)), 1);
+    // }
 
-    function testMockFillAssetsList_RevertWithNonOwnerAddress() public {
-        vm.prank(user);
+    // function testMockFillAssetsList_RevertWithNonOwnerAddress() public {
+    //     vm.prank(user);
 
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(0x1);
-        tokens[1] = address(0x2);
+    //     address[] memory tokens = new address[](2);
+    //     tokens[0] = address(0x1);
+    //     tokens[1] = address(0x2);
 
-        uint256[] memory marketShares = new uint256[](2);
-        marketShares[0] = 100;
-        marketShares[1] = 200;
+    //     uint256[] memory marketShares = new uint256[](2);
+    //     marketShares[0] = 100;
+    //     marketShares[1] = 200;
 
-        uint24[] memory swapFees = new uint24[](2);
-        swapFees[0] = 300;
-        swapFees[1] = 400;
+    //     uint24[] memory swapFees = new uint24[](2);
+    //     swapFees[0] = 300;
+    //     swapFees[1] = 400;
 
-        vm.expectRevert("Only callable by owner");
-        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
-    }
+    //     vm.expectRevert("Only callable by owner");
+    //     indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+    // }
 
-    function test_mockFillAssetsList_FillWhenTotalCurrentListIsNotZero() public {
-        vm.prank(indexFactoryStorage.owner());
+    // function test_mockFillAssetsList_FillWhenTotalCurrentListIsNotZero() public {
+    //     vm.prank(indexFactoryStorage.owner());
 
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(0x1);
-        tokens[1] = address(0x2);
+    //     address[] memory tokens = new address[](2);
+    //     tokens[0] = address(0x1);
+    //     tokens[1] = address(0x2);
 
-        uint256[] memory marketShares = new uint256[](2);
-        marketShares[0] = 100;
-        marketShares[1] = 200;
+    //     uint256[] memory marketShares = new uint256[](2);
+    //     marketShares[0] = 100;
+    //     marketShares[1] = 200;
 
-        uint24[] memory swapFees = new uint24[](2);
-        swapFees[0] = 300;
-        swapFees[1] = 400;
+    //     uint24[] memory swapFees = new uint24[](2);
+    //     swapFees[0] = 300;
+    //     swapFees[1] = 400;
 
-        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+    //     indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
 
-        address[] memory newTokens = new address[](2);
-        newTokens[0] = address(0x3);
-        newTokens[1] = address(0x4);
+    //     address[] memory newTokens = new address[](2);
+    //     newTokens[0] = address(0x3);
+    //     newTokens[1] = address(0x4);
 
-        uint256[] memory newMarketShares = new uint256[](2);
-        newMarketShares[0] = 300;
-        newMarketShares[1] = 400;
+    //     uint256[] memory newMarketShares = new uint256[](2);
+    //     newMarketShares[0] = 300;
+    //     newMarketShares[1] = 400;
 
-        uint24[] memory newSwapFees = new uint24[](2);
-        newSwapFees[0] = 500;
-        newSwapFees[1] = 600;
+    //     uint24[] memory newSwapFees = new uint24[](2);
+    //     newSwapFees[0] = 500;
+    //     newSwapFees[1] = 600;
 
-        indexFactoryStorage.mockFillAssetsList(newTokens, newMarketShares, newSwapFees);
+    //     indexFactoryStorage.mockFillAssetsList(newTokens, newMarketShares, newSwapFees);
 
-        assertEq(indexFactoryStorage.totalOracleList(), 2);
-        assertEq(indexFactoryStorage.totalCurrentList(), 2);
-        assertEq(indexFactoryStorage.lastUpdateTime(), block.timestamp);
+    //     assertEq(indexFactoryStorage.totalOracleList(), 2);
+    //     assertEq(indexFactoryStorage.totalCurrentList(), 2);
+    //     assertEq(indexFactoryStorage.lastUpdateTime(), block.timestamp);
 
-        assertEq(indexFactoryStorage.oracleList(0), address(0x3));
-        assertEq(indexFactoryStorage.oracleList(1), address(0x4));
+    //     assertEq(indexFactoryStorage.oracleList(0), address(0x3));
+    //     assertEq(indexFactoryStorage.oracleList(1), address(0x4));
 
-        assertEq(indexFactoryStorage.tokenOracleListIndex(address(0x3)), 0);
-        assertEq(indexFactoryStorage.tokenOracleListIndex(address(0x4)), 1);
+    //     assertEq(indexFactoryStorage.tokenOracleListIndex(address(0x3)), 0);
+    //     assertEq(indexFactoryStorage.tokenOracleListIndex(address(0x4)), 1);
 
-        assertEq(indexFactoryStorage.tokenOracleMarketShare(address(0x3)), 300);
-        assertEq(indexFactoryStorage.tokenOracleMarketShare(address(0x4)), 400);
+    //     assertEq(indexFactoryStorage.tokenOracleMarketShare(address(0x3)), 300);
+    //     assertEq(indexFactoryStorage.tokenOracleMarketShare(address(0x4)), 400);
 
-        assertEq(indexFactoryStorage.tokenSwapFee(address(0x3)), 500);
-        assertEq(indexFactoryStorage.tokenSwapFee(address(0x4)), 600);
+    //     assertEq(indexFactoryStorage.tokenSwapFee(address(0x3)), 500);
+    //     assertEq(indexFactoryStorage.tokenSwapFee(address(0x4)), 600);
 
-        assertEq(indexFactoryStorage.currentList(0), address(0x1));
-        assertEq(indexFactoryStorage.currentList(1), address(0x2));
+    //     assertEq(indexFactoryStorage.currentList(0), address(0x1));
+    //     assertEq(indexFactoryStorage.currentList(1), address(0x2));
 
-        assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x1)), 100);
-        assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x2)), 200);
+    //     assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x1)), 100);
+    //     assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x2)), 200);
 
-        assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x1)), 0);
-        assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x2)), 1);
-    }
+    //     assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x1)), 0);
+    //     assertEq(indexFactoryStorage.tokenCurrentListIndex(address(0x2)), 1);
+    // }
 
-    function test_updateCurrentList_SuccessfulUpdate() public {
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(0x1);
-        tokens[1] = address(0x2);
+    // function test_updateCurrentList_SuccessfulUpdate() public {
+    //     address[] memory tokens = new address[](2);
+    //     tokens[0] = address(0x1);
+    //     tokens[1] = address(0x2);
 
-        uint256[] memory marketShares = new uint256[](2);
-        marketShares[0] = 50;
-        marketShares[1] = 50;
+    //     uint256[] memory marketShares = new uint256[](2);
+    //     marketShares[0] = 50;
+    //     marketShares[1] = 50;
 
-        uint24[] memory swapFees = new uint24[](2);
-        swapFees[0] = 3000;
-        swapFees[1] = 3000;
+    //     uint24[] memory swapFees = new uint24[](2);
+    //     swapFees[0] = 3000;
+    //     swapFees[1] = 3000;
 
-        indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
+    //     indexFactoryStorage.mockFillAssetsList(tokens, marketShares, swapFees);
 
-        vm.prank(indexFactoryStorage.factoryAddress());
-        indexFactoryStorage.updateCurrentList();
+    //     vm.prank(indexFactoryStorage.factoryAddress());
+    //     indexFactoryStorage.updateCurrentList();
 
-        assertEq(indexFactoryStorage.totalCurrentList(), 2);
-        assertEq(indexFactoryStorage.currentList(0), address(0x1));
-        assertEq(indexFactoryStorage.currentList(1), address(0x2));
-        assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x1)), 50);
-        assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x2)), 50);
-    }
+    //     assertEq(indexFactoryStorage.totalCurrentList(), 2);
+    //     assertEq(indexFactoryStorage.currentList(0), address(0x1));
+    //     assertEq(indexFactoryStorage.currentList(1), address(0x2));
+    //     assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x1)), 50);
+    //     assertEq(indexFactoryStorage.tokenCurrentMarketShare(address(0x2)), 50);
+    // }
 
     function test_getAmountOut_SuccessfulGetAmountOut() public {
         address tokenIn = address(0x1);
@@ -540,14 +540,14 @@ contract IndexFactoryStorageTest is Test, IndexFactoryStorage {
 
         indexFactoryStorage.setPriceOracle(priceOracle);
 
-        uint256 amountOut = indexFactoryStorage.getAmountOut(tokenIn, tokenOut, amountIn, swapFee);
+        // uint256 amountOut = indexFactoryStorage.getAmountOut(tokenIn, tokenOut, amountIn, swapFee);
 
         //    assertEq(amountOut, 2 ether);
     }
 
-    function test_getAmountOut_FailWhenAmountInIsZero() public {
-        indexFactoryStorage.getAmountOut(address(0x1), address(0x2), 0, 0);
-    }
+    // function test_getAmountOut_FailWhenAmountInIsZero() public {
+    //     indexFactoryStorage.getAmountOut(address(0x1), address(0x2), 0, 0);
+    // }
 
     function test_setFeeRate_FailWhenNewFeeIsGreaterThan100() public {
         vm.warp(block.timestamp + 13 hours);

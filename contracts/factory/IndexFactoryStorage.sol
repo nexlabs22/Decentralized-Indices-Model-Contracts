@@ -65,6 +65,11 @@ contract IndexFactoryStorage is
     mapping(address => uint) public tokenOracleMarketShare;
     mapping(address => uint24) public tokenSwapFee;
 
+    mapping(address => address[]) public fromETHPath;
+    mapping(address => address[]) public toETHPath;
+    mapping(address => uint24[]) public fromETHFees;
+    mapping(address => uint24[]) public toETHFees;
+
     address public factoryAddress;
     address public factoryBalancerAddress;
     ISwapRouter public swapRouterV3;
@@ -340,19 +345,21 @@ contract IndexFactoryStorage is
     ) internal override {
         (
             address[] memory _tokens,
+            bytes[] memory _pathBytes,
             uint256[] memory _marketShares,
             uint24[] memory _swapFees
-        ) = abi.decode(response, (address[], uint256[], uint24[]));
+        ) = abi.decode(response, (address[], bytes[], uint256[], uint24[]));
         require(
             _tokens.length == _marketShares.length &&
                 _marketShares.length == _swapFees.length,
             "The length of the arrays should be the same"
         );
-        _initData(_tokens, _marketShares, _swapFees);
+        _initData(_tokens, _pathBytes, _marketShares, _swapFees);
     }
 
     function _initData(
         address[] memory tokens0,
+        bytes[] memory pathBytes0,
         uint256[] memory marketShares0,
         uint24[] memory _swapFees
     ) internal {
@@ -362,6 +369,8 @@ contract IndexFactoryStorage is
             tokenOracleListIndex[tokens0[i]] = i;
             tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
             tokenSwapFee[tokens0[i]] = _swapFees[i];
+            //update path
+            _initPathData(tokens0[i], pathBytes0[i]);
             if (totalCurrentList == 0) {
                 currentList[i] = tokens0[i];
                 tokenCurrentMarketShare[tokens0[i]] = marketShares0[i];
@@ -374,8 +383,37 @@ contract IndexFactoryStorage is
         }
         lastUpdateTime = block.timestamp;
     }
-    
 
+    function _initPathData(address _tokenAddress, bytes memory _pathBytes) internal {
+        // decode pathBytes to get fromETHPath and fromETHFees
+        (address[] memory _fromETHPath, uint24[] memory _fromETHFees) = abi.decode(_pathBytes, (address[], uint24[]));
+        fromETHPath[_tokenAddress] = _fromETHPath;
+        fromETHFees[_tokenAddress] = _fromETHFees;
+        // update toETHPath and toETHFees
+        (address[] memory _toETHPath, uint24[] memory _toETHFees) = reverseArrays(_fromETHPath, _fromETHFees);
+        toETHPath[_tokenAddress] = _toETHPath;
+        toETHFees[_tokenAddress] = _toETHFees;
+        
+    }
+    
+    function reverseArrays(address[] memory addresses, uint24[] memory values)
+        public
+        pure
+        returns (address[] memory, uint24[] memory)
+    {
+        require(addresses.length == values.length, "Arrays must have the same length");
+        
+        uint256 length = addresses.length;
+        for (uint256 i = 0; i < length / 2; i++) {
+            // Swap elements in the addresses array
+            (addresses[i], addresses[length - 1 - i]) = (addresses[length - 1 - i], addresses[i]);
+            
+            // Swap elements in the values array
+            (values[i], values[length - 1 - i]) = (values[length - 1 - i], values[i]);
+        }
+        return (addresses, values);
+    }
+    
     /**
      * @dev Mock function to fill the asset list for testing purposes.
      * @param _tokens The list of token addresses.
@@ -384,6 +422,7 @@ contract IndexFactoryStorage is
      */
     function mockFillAssetsList(
         address[] memory _tokens,
+        bytes[] memory _pathBytes,
         uint256[] memory _marketShares,
         uint24[] memory _swapFees
     ) public onlyOwner {
@@ -397,6 +436,8 @@ contract IndexFactoryStorage is
             tokenOracleListIndex[tokens0[i]] = i;
             tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
             tokenSwapFee[tokens0[i]] = _swapFees[i];
+            //update path
+            _initPathData(tokens0[i], _pathBytes[i]);
             if (totalCurrentList == 0) {
                 currentList[i] = tokens0[i];
                 tokenCurrentMarketShare[tokens0[i]] = marketShares0[i];
@@ -410,6 +451,13 @@ contract IndexFactoryStorage is
         lastUpdateTime = block.timestamp;
     }
 
+    function getFromETHPathData(address _tokenAddress) public view returns (address[] memory, uint24[] memory) {
+        return (fromETHPath[_tokenAddress], fromETHFees[_tokenAddress]);
+    }
+
+    function getToETHPathData(address _tokenAddress) public view returns (address[] memory, uint24[] memory) {
+        return (toETHPath[_tokenAddress], toETHFees[_tokenAddress]);
+    }
     function updateCurrentList() external onlyFactory {
         totalCurrentList = totalOracleList;
         for (uint i = 0; i < totalOracleList; i++) {
@@ -423,35 +471,31 @@ contract IndexFactoryStorage is
 
     /**
      * @dev Gets the amount out for a token swap.
-     * @param tokenIn The address of the input token.
-     * @param tokenOut The address of the output token.
+     * @param path The path of the token swap.
+     * @param fees The fees of the token swap.
      * @param amountIn The amount of input token.
      * @param _swapFee The swap fee.
      * @return finalAmountOut The amount of output token.
      */
     function getAmountOut(
-        address tokenIn,
-        address tokenOut,
+        address[] memory path,
+        uint24[] memory fees,
         uint amountIn,
         uint24 _swapFee
     ) public view returns (uint finalAmountOut) {
         if (amountIn > 0) {
             if (_swapFee > 0) {
-                finalAmountOut = estimateAmountOut(
-                    tokenIn,
-                    tokenOut,
-                    uint128(amountIn),
-                    _swapFee
+                finalAmountOut = estimateAmountOutWithPath(
+                    path,
+                    fees,
+                    amountIn
                 );
             } else {
-                address[] memory path = new address[](2);
-                path[0] = tokenIn;
-                path[1] = tokenOut;
                 uint[] memory v2amountOut = swapRouterV2.getAmountsOut(
                     amountIn,
                     path
                 );
-                finalAmountOut = v2amountOut[1];
+                finalAmountOut = v2amountOut[v2amountOut.length - 1];
             }
         }
         return finalAmountOut;
@@ -464,14 +508,15 @@ contract IndexFactoryStorage is
     function getPortfolioBalance() public view returns (uint) {
         uint totalValue;
         for (uint i = 0; i < totalCurrentList; i++) {
-            if (currentList[i] == address(weth)) {
-                totalValue += IERC20(currentList[i]).balanceOf(address(vault));
+            address tokenAddress = currentList[i];
+            if (tokenAddress == address(weth)) {
+                totalValue += IERC20(tokenAddress).balanceOf(address(vault));
             } else {
                 uint value = getAmountOut(
-                    currentList[i],
-                    address(weth),
-                    IERC20(currentList[i]).balanceOf(address(vault)),
-                    tokenSwapFee[currentList[i]]
+                    toETHPath[tokenAddress],
+                    toETHFees[tokenAddress],
+                    IERC20(tokenAddress).balanceOf(address(vault)),
+                    tokenSwapFee[tokenAddress]
                 );
                 totalValue += value;
             }
@@ -479,18 +524,7 @@ contract IndexFactoryStorage is
         return totalValue;
     }
 
-    function getPortfolioBalance2(address token) public view returns (address) {
-        uint totalValue;
-
-        totalValue = IPriceOracle(priceOracle).estimateAmountOut(
-            address(factoryV3),
-            token,
-            address(weth),
-            1e18,
-            3000
-        );
-        return priceOracle;
-    }
+    
 
     /**
      * @dev Estimates the amount out for a token swap using Uniswap V3.
@@ -512,5 +546,23 @@ contract IndexFactoryStorage is
             amountIn,
             swapFee
         );
+    }
+
+    function estimateAmountOutWithPath(
+        address[] memory path,
+        uint24[] memory fees,
+        uint amountIn
+    ) public view returns (uint amountOut) {
+        uint lastAmount = amountIn;
+        for(uint i = 0; i < path.length - 1; i++) {
+            lastAmount = IPriceOracle(priceOracle).estimateAmountOut(
+                address(factoryV3),
+                path[i],
+                path[i+1],
+                uint128(lastAmount),
+                fees[i]
+            );
+        }
+        amountOut = lastAmount;
     }
 }

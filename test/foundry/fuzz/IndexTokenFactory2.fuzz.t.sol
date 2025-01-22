@@ -168,8 +168,23 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         vm.startPrank(add1);
 
         usdt.approve(address(factory), amount + amount*10/10000);
-        factory.issuanceIndexTokens(address(usdt), amount, 3000);
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), 3);
+        //issuance input token path data
+        address[] memory path0 = new address[](2);
+        path0[0] = address(usdt);
+        path0[1] = address(weth);
+        uint24[] memory fees0 = new uint24[](1);
+        fees0[0] = 3000;
+
+        factory.issuanceIndexTokens(address(usdt), amount, path0, fees0, 3000);
+
+         // redemption path data
+        address[] memory path = new address[](2);
+        path[0] = address(weth);
+        path[1] = address(usdt);
+        uint24[] memory fees = new uint24[](1);
+        fees[0] = 3000;
+
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees, 3);
         assertEq(indexToken.balanceOf(add1), 0);
 
     }
