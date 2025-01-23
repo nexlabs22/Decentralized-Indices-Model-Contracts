@@ -9,8 +9,6 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import "../../../contracts/vault/Vault.sol";
 
 contract DeployVault is Script {
-    Vault vaultImplementation;
-
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
@@ -18,7 +16,7 @@ contract DeployVault is Script {
 
         ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
 
-        vaultImplementation = new Vault();
+        Vault vaultImplementation = new Vault();
 
         bytes memory data = abi.encodeWithSignature("initialize()");
 
@@ -30,10 +28,5 @@ contract DeployVault is Script {
         console.log("ProxyAdmin for Vault deployed at:", address(proxyAdmin));
 
         vm.stopBroadcast();
-    }
-
-    function setValues(address _factory, address _indexFactoryBalancer) public {
-        vaultImplementation.setOperator(_factory, true);
-        vaultImplementation.setOperator(_indexFactoryBalancer, true);
     }
 }

@@ -171,13 +171,15 @@ contract DeployAllContracts is Script {
         // Set Values
         ///////////
         // ----------------------------------------------------------------
-        indexTokenImplementation.setMinter(address(indexFactoryProxy));
-        indexFactoryStorageImplementation.setFeeReceiver(address(feeReceiver));
-        indexFactoryStorageImplementation.setPriceOracle(address(priceOracle));
-        indexFactoryStorageImplementation.setVault(address(vaultProxy));
-        indexFactoryStorageImplementation.setFactoryBalancer(address(indexFactoryBalancerProxy));
-        vaultImplementation.setOperator(address(indexFactoryProxy));
-        vaultImplementation.setOperator(address(indexFactoryBalancerProxy));
+        IndexToken(address(indexTokenProxy)).setMinter(address(indexFactoryProxy));
+
+        IndexFactoryStorage(address(indexFactoryStorageProxy)).setFeeReceiver(address(feeReceiver));
+        IndexFactoryStorage(address(indexFactoryStorageProxy)).setPriceOracle(address(priceOracle));
+        IndexFactoryStorage(address(indexFactoryStorageProxy)).setVault(address(vaultProxy));
+        IndexFactoryStorage(address(indexFactoryStorageProxy)).setFactoryBalancer(address(indexFactoryBalancerProxy));
+
+        Vault(address(vaultProxy)).setOperator(address(indexFactoryProxy));
+        Vault(address(vaultProxy)).setOperator(address(indexFactoryBalancerProxy));
 
         vm.stopBroadcast();
     }

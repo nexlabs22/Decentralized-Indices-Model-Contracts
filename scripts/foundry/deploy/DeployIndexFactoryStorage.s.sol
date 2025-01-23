@@ -9,8 +9,6 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import "../../../contracts/factory/IndexFactoryStorage.sol";
 
 contract DeployIndexFactoryStorage is Script {
-    IndexFactoryStorage indexFactoryStorageImplementation;
-
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
@@ -29,7 +27,7 @@ contract DeployIndexFactoryStorage is Script {
 
         ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
 
-        indexFactoryStorageImplementation = new IndexFactoryStorage();
+        IndexFactoryStorage indexFactoryStorageImplementation = new IndexFactoryStorage();
 
         bytes memory data = abi.encodeWithSignature(
             "initialize(address,address,bytes32,address,address,address,address,address,address,address)",
@@ -53,14 +51,5 @@ contract DeployIndexFactoryStorage is Script {
         console.log("ProxyAdmin for IndexFactoryStorage deployed at:", address(proxyAdmin));
 
         vm.stopBroadcast();
-    }
-
-    function setValues(address _feeReceiver, address _priceOracleAddress, address _vault, address _indexFactoryBalancer)
-        public
-    {
-        indexFactoryStorageImplementation.setFeeReceiver(_feeReceiver);
-        indexFactoryStorageImplementation.setPriceOracle(_priceOracleAddress);
-        indexFactoryStorageImplementation.setVault(_vault);
-        indexFactoryStorageImplementation.setFactoryBalancer(_indexFactoryBalancer);
     }
 }
