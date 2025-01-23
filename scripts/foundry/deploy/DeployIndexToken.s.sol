@@ -9,6 +9,8 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import "../../../contracts/token/IndexToken.sol";
 
 contract DeployIndexToken is Script {
+    IndexToken indexTokenImplementation;
+
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
@@ -22,7 +24,7 @@ contract DeployIndexToken is Script {
 
         ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
 
-        IndexToken indexTokenImplementation = new IndexToken();
+        indexTokenImplementation = new IndexToken();
 
         bytes memory data = abi.encodeWithSignature(
             "initialize(string,string,uint256,address,uint256)",
@@ -41,5 +43,9 @@ contract DeployIndexToken is Script {
         console.log("ProxyAdmin for IndexToken deployed at:", address(proxyAdmin));
 
         vm.stopBroadcast();
+    }
+
+    function setValues(address _indexFactoryAddress) public {
+        indexTokenImplementation.setMinter(_indexFactoryAddress);
     }
 }
