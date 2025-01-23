@@ -387,31 +387,37 @@ contract IndexFactoryStorage is
     function _initPathData(address _tokenAddress, bytes memory _pathBytes) internal {
         // decode pathBytes to get fromETHPath and fromETHFees
         (address[] memory _fromETHPath, uint24[] memory _fromETHFees) = abi.decode(_pathBytes, (address[], uint24[]));
+        require(_fromETHPath.length == _fromETHFees.length + 1, "Invalid input arrays");
         fromETHPath[_tokenAddress] = _fromETHPath;
         fromETHFees[_tokenAddress] = _fromETHFees;
         // update toETHPath and toETHFees
-        (address[] memory _toETHPath, uint24[] memory _toETHFees) = reverseArrays(_fromETHPath, _fromETHFees);
+        address[] memory _toETHPath = reverseAddressArray(_fromETHPath);
+        uint24[] memory _toETHFees = reverseUint24Array(_fromETHFees);
         toETHPath[_tokenAddress] = _toETHPath;
         toETHFees[_tokenAddress] = _toETHFees;
         
     }
     
-    function reverseArrays(address[] memory addresses, uint24[] memory values)
-        public
-        pure
-        returns (address[] memory, uint24[] memory)
-    {
-        require(addresses.length == values.length, "Arrays must have the same length");
-        
-        uint256 length = addresses.length;
+    function reverseUint24Array(uint24[] memory input) public pure returns (uint24[] memory) {
+        uint256 length = input.length;
+
         for (uint256 i = 0; i < length / 2; i++) {
-            // Swap elements in the addresses array
-            (addresses[i], addresses[length - 1 - i]) = (addresses[length - 1 - i], addresses[i]);
-            
-            // Swap elements in the values array
-            (values[i], values[length - 1 - i]) = (values[length - 1 - i], values[i]);
+            // Swap elements
+            (input[i], input[length - 1 - i]) = (input[length - 1 - i], input[i]);
         }
-        return (addresses, values);
+
+        return input;
+    }
+
+    function reverseAddressArray(address[] memory input) public pure returns (address[] memory) {
+        uint256 length = input.length;
+
+        for (uint256 i = 0; i < length / 2; i++) {
+            // Swap elements
+            (input[i], input[length - 1 - i]) = (input[length - 1 - i], input[i]);
+        }
+
+        return input;
     }
     
     /**

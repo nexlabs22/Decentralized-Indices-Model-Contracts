@@ -93,6 +93,36 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         swapVersions[2] = 3000;
         swapVersions[3] = 3000;
         swapVersions[4] = 3000;
+
+        uint24[] memory feesData = new uint24[](1);
+        feesData[0] = 3000;
+
+        bytes[] memory pathData = new bytes[](5);
+        //updating path data for token0
+        address[] memory path0 = new address[](2);
+        path0[0] = address(weth);
+        path0[1] = address(token0);
+        pathData[0] = abi.encode(path0, feesData);
+        //updating path data for token1
+        address[] memory path1 = new address[](2);
+        path1[0] = address(weth);
+        path1[1] = address(token1);
+        pathData[1] = abi.encode(path1, feesData);
+        //updating path data for token2
+        address[] memory path2 = new address[](2);
+        path2[0] = address(weth);
+        path2[1] = address(token2);
+        pathData[2] = abi.encode(path2, feesData);
+        //updating path data for token3
+        address[] memory path3 = new address[](2);
+        path3[0] = address(weth);
+        path3[1] = address(token3);
+        pathData[3] = abi.encode(path3, feesData);
+        //updating path data for token4
+        address[] memory path4 = new address[](2);
+        path4[0] = address(weth);
+        path4[1] = address(token4);
+        pathData[4] = abi.encode(path4, feesData);
         
         link.transfer(address(factoryStorage), 1e17);
         bytes32 requestId = factoryStorage.requestAssetsData(
@@ -104,7 +134,7 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
             0,
             0
         );
-        bytes memory data = abi.encode(assetList, tokenShares, swapVersions);
+        bytes memory data = abi.encode(assetList, pathData, tokenShares, swapVersions);
         oracle.fulfillRequest(address(factoryStorage), requestId, data);
     }
 
@@ -135,6 +165,50 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         assertEq(factoryStorage.tokenSwapFee(address(token2)), 3000);
         assertEq(factoryStorage.tokenSwapFee(address(token3)), 3000);
         assertEq(factoryStorage.tokenSwapFee(address(token4)), 3000);
+
+        // token from eth path data
+        (address[] memory path0, uint24[] memory fees0) = factoryStorage.getFromETHPathData(address(token0));
+        assertEq(path0[0], address(weth));
+        assertEq(path0[1], address(token0));
+        assertEq(fees0[0], 3000);
+        (address[] memory path1, uint24[] memory fees1) = factoryStorage.getFromETHPathData(address(token1));
+        assertEq(path1[0], address(weth));
+        assertEq(path1[1], address(token1));
+        assertEq(fees1[0], 3000);
+        (address[] memory path2, uint24[] memory fees2) = factoryStorage.getFromETHPathData(address(token2));
+        assertEq(path2[0], address(weth));
+        assertEq(path2[1], address(token2));
+        assertEq(fees2[0], 3000);
+        (address[] memory path3, uint24[] memory fees3) = factoryStorage.getFromETHPathData(address(token3));
+        assertEq(path3[0], address(weth));
+        assertEq(path3[1], address(token3));
+        assertEq(fees3[0], 3000);
+        (address[] memory path4, uint24[] memory fees4) = factoryStorage.getFromETHPathData(address(token4));
+        assertEq(path4[0], address(weth));
+        assertEq(path4[1], address(token4));
+        assertEq(fees4[0], 3000);
+
+        // token to eth path data
+        (address[] memory path5, uint24[] memory fees5) = factoryStorage.getToETHPathData(address(token0));
+        assertEq(path5[0], address(token0));
+        assertEq(path5[1], address(weth));
+        assertEq(fees5[0], 3000);
+        (address[] memory path6, uint24[] memory fees6) = factoryStorage.getToETHPathData(address(token1));
+        assertEq(path6[0], address(token1));
+        assertEq(path6[1], address(weth));
+        assertEq(fees6[0], 3000);
+        (address[] memory path7, uint24[] memory fees7) = factoryStorage.getToETHPathData(address(token2));
+        assertEq(path7[0], address(token2));
+        assertEq(path7[1], address(weth));
+        assertEq(fees7[0], 3000);
+        (address[] memory path8, uint24[] memory fees8) = factoryStorage.getToETHPathData(address(token3));
+        assertEq(path8[0], address(token3));
+        assertEq(path8[1], address(weth));
+        assertEq(fees8[0], 3000);
+        (address[] memory path9, uint24[] memory fees9) = factoryStorage.getToETHPathData(address(token4));
+        assertEq(path9[0], address(token4));
+        assertEq(path9[1], address(weth));
+        assertEq(fees9[0], 3000);
         
     }
 
@@ -151,7 +225,13 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         vm.startPrank(add1);
 
         usdt.approve(address(factory), amount + amount*10/10000);
-        factory.issuanceIndexTokens(address(usdt), amount, 3000);
+        //issuance input token path data
+        address[] memory path0 = new address[](2);
+        path0[0] = address(usdt);
+        path0[1] = address(weth);
+        uint24[] memory fees0 = new uint24[](1);
+        fees0[0] = 3000;
+        factory.issuanceIndexTokens(address(usdt), path0, fees0, amount, 3000);
 
     }
 
@@ -175,7 +255,7 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         uint24[] memory fees0 = new uint24[](1);
         fees0[0] = 3000;
 
-        factory.issuanceIndexTokens(address(usdt), amount, path0, fees0, 3000);
+        factory.issuanceIndexTokens(address(usdt), path0, fees0, amount, 3000);
 
          // redemption path data
         address[] memory path = new address[](2);
