@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 import {IndexFactory} from "../../../contracts/factory/IndexFactory.sol";
 import {IndexFactoryBalancer} from "../../../contracts/factory/IndexFactoryBalancer.sol";
@@ -17,10 +17,6 @@ contract DeployAllContracts is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
-        // ----------------------------------------------------------------
-        // ENV variables for IndexFactoryStorage
-        // ----------------------------------------------------------------
-        address payable indexTokenAddress = vm.envAddress("INDEX_TOKEN_ADDRESS");
         address functionsRouterAddress = vm.envAddress("FUNCTIONS_ROUTER_ADDRESS");
         bytes32 newDonId = vm.envBytes32("NEW_DON_ID");
         address toUsdPriceFeed = vm.envAddress("TO_USD_PRICE_FEED");
@@ -41,80 +37,7 @@ contract DeployAllContracts is Script {
 
         // ----------------------------------------------------------------
         ///////////
-        // IndexFactoryStorage
-        ///////////
-        // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryStorageProxyAdmin = new ProxyAdmin(msg.sender);
-
-        IndexFactoryStorage indexFactoryStorageImplementation = new IndexFactoryStorage();
-        bytes memory indexFactoryStorageData = abi.encodeWithSignature(
-            "initialize(address,address,bytes32,address,address,address,address,address,address,address)",
-            indexTokenAddress,
-            functionsRouterAddress,
-            newDonId,
-            toUsdPriceFeed,
-            wethAddress,
-            quoterAddress,
-            swapRouterV3,
-            factoryV3,
-            swapRouterV2,
-            factoryV2
-        );
-
-        TransparentUpgradeableProxy indexFactoryStorageProxy = new TransparentUpgradeableProxy(
-            address(indexFactoryStorageImplementation), address(indexFactoryStorageProxyAdmin), indexFactoryStorageData
-        );
-
-        console.log("///////// IndexFactoryStorage //////////");
-        console.log("IndexFactoryStorage impl:", address(indexFactoryStorageImplementation));
-        console.log("IndexFactoryStorage proxy:", address(indexFactoryStorageProxy));
-        console.log("IndexFactoryStorage ProxyAdmin:", address(indexFactoryStorageProxyAdmin));
-
-        // ----------------------------------------------------------------
-        ///////////
-        // IndexFactory
-        ///////////
-        // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryProxyAdmin = new ProxyAdmin(msg.sender);
-
-        IndexFactory indexFactoryImplementation = new IndexFactory();
-        bytes memory indexFactoryData =
-            abi.encodeWithSignature("initialize(address)", address(indexFactoryStorageProxy));
-
-        TransparentUpgradeableProxy indexFactoryProxy = new TransparentUpgradeableProxy(
-            address(indexFactoryImplementation), address(indexFactoryProxyAdmin), indexFactoryData
-        );
-
-        console.log("///////// IndexFactory //////////");
-        console.log("IndexFactory impl:", address(indexFactoryImplementation));
-        console.log("IndexFactory proxy:", address(indexFactoryProxy));
-        console.log("IndexFactory ProxyAdmin:", address(indexFactoryProxyAdmin));
-
-        // ----------------------------------------------------------------
-        ///////////
-        // IndexFactoryBalancer
-        ///////////
-        // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryBalancerProxyAdmin = new ProxyAdmin(msg.sender);
-
-        IndexFactoryBalancer indexFactoryBalancerImplementation = new IndexFactoryBalancer();
-        bytes memory indexFactoryBalancerData =
-            abi.encodeWithSignature("initialize(address)", address(indexFactoryStorageProxy));
-
-        TransparentUpgradeableProxy indexFactoryBalancerProxy = new TransparentUpgradeableProxy(
-            address(indexFactoryBalancerImplementation),
-            address(indexFactoryBalancerProxyAdmin),
-            indexFactoryBalancerData
-        );
-
-        console.log("///////// IndexFactoryBalancer //////////");
-        console.log("IndexFactoryBalancer impl:", address(indexFactoryBalancerImplementation));
-        console.log("IndexFactoryBalancer proxy:", address(indexFactoryBalancerProxy));
-        console.log("IndexFactoryBalancer ProxyAdmin:", address(indexFactoryBalancerProxyAdmin));
-
-        // ----------------------------------------------------------------
-        ///////////
-        // IndexToken
+        // 1) Deploy IndexToken (Proxy)
         ///////////
         // ----------------------------------------------------------------
         ProxyAdmin indexTokenProxyAdmin = new ProxyAdmin(msg.sender);
@@ -140,7 +63,80 @@ contract DeployAllContracts is Script {
 
         // ----------------------------------------------------------------
         ///////////
-        // PriceOracle
+        // 2) Deploy IndexFactoryStorage (Proxy)
+        ///////////
+        // ----------------------------------------------------------------
+        ProxyAdmin indexFactoryStorageProxyAdmin = new ProxyAdmin(msg.sender);
+
+        IndexFactoryStorage indexFactoryStorageImplementation = new IndexFactoryStorage();
+        bytes memory indexFactoryStorageData = abi.encodeWithSignature(
+            "initialize(address,address,bytes32,address,address,address,address,address,address,address)",
+            payable(address(indexTokenProxy)),
+            functionsRouterAddress,
+            newDonId,
+            toUsdPriceFeed,
+            wethAddress,
+            quoterAddress,
+            swapRouterV3,
+            factoryV3,
+            swapRouterV2,
+            factoryV2
+        );
+
+        TransparentUpgradeableProxy indexFactoryStorageProxy = new TransparentUpgradeableProxy(
+            address(indexFactoryStorageImplementation), address(indexFactoryStorageProxyAdmin), indexFactoryStorageData
+        );
+
+        console.log("///////// IndexFactoryStorage //////////");
+        console.log("IndexFactoryStorage impl:", address(indexFactoryStorageImplementation));
+        console.log("IndexFactoryStorage proxy:", address(indexFactoryStorageProxy));
+        console.log("IndexFactoryStorage ProxyAdmin:", address(indexFactoryStorageProxyAdmin));
+
+        // ----------------------------------------------------------------
+        ///////////
+        // 3) Deploy IndexFactory (Proxy)
+        ///////////
+        // ----------------------------------------------------------------
+        ProxyAdmin indexFactoryProxyAdmin = new ProxyAdmin(msg.sender);
+
+        IndexFactory indexFactoryImplementation = new IndexFactory();
+        bytes memory indexFactoryData =
+            abi.encodeWithSignature("initialize(address)", address(indexFactoryStorageProxy));
+
+        TransparentUpgradeableProxy indexFactoryProxy = new TransparentUpgradeableProxy(
+            address(indexFactoryImplementation), address(indexFactoryProxyAdmin), indexFactoryData
+        );
+
+        console.log("///////// IndexFactory //////////");
+        console.log("IndexFactory impl:", address(indexFactoryImplementation));
+        console.log("IndexFactory proxy:", address(indexFactoryProxy));
+        console.log("IndexFactory ProxyAdmin:", address(indexFactoryProxyAdmin));
+
+        // ----------------------------------------------------------------
+        ///////////
+        // 4) Deploy IndexFactoryBalancer (Proxy)
+        ///////////
+        // ----------------------------------------------------------------
+        ProxyAdmin indexFactoryBalancerProxyAdmin = new ProxyAdmin(msg.sender);
+
+        IndexFactoryBalancer indexFactoryBalancerImplementation = new IndexFactoryBalancer();
+        bytes memory indexFactoryBalancerData =
+            abi.encodeWithSignature("initialize(address)", address(indexFactoryStorageProxy));
+
+        TransparentUpgradeableProxy indexFactoryBalancerProxy = new TransparentUpgradeableProxy(
+            address(indexFactoryBalancerImplementation),
+            address(indexFactoryBalancerProxyAdmin),
+            indexFactoryBalancerData
+        );
+
+        console.log("///////// IndexFactoryBalancer //////////");
+        console.log("IndexFactoryBalancer impl:", address(indexFactoryBalancerImplementation));
+        console.log("IndexFactoryBalancer proxy:", address(indexFactoryBalancerProxy));
+        console.log("IndexFactoryBalancer ProxyAdmin:", address(indexFactoryBalancerProxyAdmin));
+
+        // ----------------------------------------------------------------
+        ///////////
+        // 5) Deploy PriceOracle (Direct)
         ///////////
         // ----------------------------------------------------------------
         PriceOracle priceOracle = new PriceOracle();
@@ -150,7 +146,7 @@ contract DeployAllContracts is Script {
 
         // ----------------------------------------------------------------
         ///////////
-        // Vault
+        // 6) Deploy Vault (Proxy)
         ///////////
         // ----------------------------------------------------------------
         ProxyAdmin vaultProxyAdmin = new ProxyAdmin(msg.sender);
@@ -168,12 +164,12 @@ contract DeployAllContracts is Script {
 
         // ----------------------------------------------------------------
         ///////////
-        // Set Values
+        // 7) Set Values via Proxy
         ///////////
         // ----------------------------------------------------------------
         IndexToken(address(indexTokenProxy)).setMinter(address(indexFactoryProxy));
 
-        IndexFactoryStorage(address(indexFactoryStorageProxy)).setFeeReceiver(address(feeReceiver));
+        IndexFactoryStorage(address(indexFactoryStorageProxy)).setFeeReceiver(feeReceiver);
         IndexFactoryStorage(address(indexFactoryStorageProxy)).setPriceOracle(address(priceOracle));
         IndexFactoryStorage(address(indexFactoryStorageProxy)).setVault(address(vaultProxy));
         IndexFactoryStorage(address(indexFactoryStorageProxy)).setFactoryBalancer(address(indexFactoryBalancerProxy));

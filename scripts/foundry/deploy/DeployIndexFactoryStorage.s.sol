@@ -14,7 +14,7 @@ contract DeployIndexFactoryStorage is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        address payable token = vm.envAddress("INDEX_TOKEN_ADDRESS");
+        address payable token = vm.envAddress("INDEX_TOKEN_PROXY_ADDRESS");
         address functionsRouterAddress = vm.envAddress("FUNCTIONS_ROUTER_ADDRESS");
         bytes32 memory newDonId = vm.envBytes32("NEW_DON_ID");
         address toUsdPriceFeed = vm.envAddress("TO_USD_PRICE_FEED");
