@@ -166,6 +166,19 @@ contract DeployAllContracts is Script {
         console.log("Vault proxy:", address(vaultProxy));
         console.log("Vault ProxyAdmin:", address(vaultProxyAdmin));
 
+        // ----------------------------------------------------------------
+        ///////////
+        // Set Values
+        ///////////
+        // ----------------------------------------------------------------
+        indexTokenImplementation.setMinter(address(indexFactoryProxy));
+        indexFactoryStorageImplementation.setFeeReceiver(address(feeReceiver));
+        indexFactoryStorageImplementation.setPriceOracle(address(priceOracle));
+        indexFactoryStorageImplementation.setVault(address(vaultProxy));
+        indexFactoryStorageImplementation.setFactoryBalancer(address(indexFactoryBalancerProxy));
+        vaultImplementation.setOperator(address(indexFactoryProxy));
+        vaultImplementation.setOperator(address(indexFactoryBalancerProxy));
+
         vm.stopBroadcast();
     }
 }
