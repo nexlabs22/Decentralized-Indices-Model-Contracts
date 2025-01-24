@@ -13,37 +13,97 @@ import {IndexToken} from "../../../contracts/token/IndexToken.sol";
 import {Vault} from "../../../contracts/vault/Vault.sol";
 import {PriceOracleByteCode} from "../../../contracts/test/PriceOracleByteCode.sol";
 
+/**
+ * @dev This script organizes deployment steps into separate functions
+ * to reduce local variable usage in a single function body.
+ */
 contract DeployAllContracts is Script, PriceOracleByteCode {
+    uint256 internal deployerPrivateKey;
+    address internal functionsRouterAddress;
+    bytes32 internal newDonId;
+    address internal toUsdPriceFeed;
+    address internal wethAddress;
+    address internal quoterAddress;
+    address internal swapRouterV3;
+    address internal factoryV3;
+    address internal swapRouterV2;
+    address internal factoryV2;
+
+    string internal tokenName;
+    string internal tokenSymbol;
+    uint256 internal feeRatePerDayScaled;
+    address internal feeReceiver;
+    uint256 internal supplyCeiling;
+
+    address internal indexTokenProxy;
+    address internal indexFactoryStorageProxy;
+    address internal indexFactoryProxy;
+    address internal indexFactoryBalancerProxy;
+    address internal priceOracle;
+    address internal vaultProxy;
+
+    IndexToken internal indexTokenImplementation;
+    ProxyAdmin internal indexTokenProxyAdmin;
+
+    IndexFactoryStorage internal indexFactoryStorageImplementation;
+    ProxyAdmin internal indexFactoryStorageProxyAdmin;
+
+    IndexFactory internal indexFactoryImplementation;
+    ProxyAdmin internal indexFactoryProxyAdmin;
+
+    IndexFactoryBalancer internal indexFactoryBalancerImplementation;
+    ProxyAdmin internal indexFactoryBalancerProxyAdmin;
+
+    Vault internal vaultImplementation;
+    ProxyAdmin internal vaultProxyAdmin;
+
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        // 2.1 Load environment vars
+        readEnvVars();
 
-        address functionsRouterAddress = vm.envAddress("FUNCTIONS_ROUTER_ADDRESS");
-        bytes32 newDonId = vm.envBytes32("NEW_DON_ID");
-        address toUsdPriceFeed = vm.envAddress("TO_USD_PRICE_FEED");
-        address wethAddress = vm.envAddress("WETH_ADDRESS");
-        address quoterAddress = vm.envAddress("QUOTER_ADDRESS");
-        address swapRouterV3 = vm.envAddress("ROUTER_V3_ADDRESS");
-        address factoryV3 = vm.envAddress("FACTORY_V3_ADDRESS");
-        address swapRouterV2 = vm.envAddress("ROUTER_V2_ADDRESS");
-        address factoryV2 = vm.envAddress("FACTORY_V2_ADDRESS");
-
-        string memory tokenName = "Arbitrum Ecosystem Index";
-        string memory tokenSymbol = "ARBEI";
-        uint256 feeRatePerDayScaled = vm.envUint("FEE_RATE_PER_DAY_SCALED");
-        address feeReceiver = vm.envAddress("FEE_RECEIVER");
-        uint256 supplyCeiling = vm.envUint("SUPPLY_CEILING");
-
+        // 2.2 Start broadcast
         vm.startBroadcast(deployerPrivateKey);
 
-        // ----------------------------------------------------------------
-        ///////////
-        // 1) Deploy IndexToken (Proxy)
-        ///////////
-        // ----------------------------------------------------------------
-        ProxyAdmin indexTokenProxyAdmin = new ProxyAdmin();
+        // 2.3 Deploy everything step by step
+        deployIndexToken();
+        deployIndexFactoryStorage();
+        deployIndexFactory();
+        deployIndexFactoryBalancer();
+        deployPriceOracle();
+        deployVault();
 
-        IndexToken indexTokenImplementation = new IndexToken();
-        bytes memory indexTokenData = abi.encodeWithSignature(
+        // 2.4 Set the necessary values after deployment
+        setProxyValues();
+
+        // 2.5 End broadcast
+        vm.stopBroadcast();
+    }
+
+    function readEnvVars() internal {
+        deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+
+        functionsRouterAddress = vm.envAddress("FUNCTIONS_ROUTER_ADDRESS");
+        newDonId = vm.envBytes32("NEW_DON_ID");
+        toUsdPriceFeed = vm.envAddress("TO_USD_PRICE_FEED");
+        wethAddress = vm.envAddress("WETH_ADDRESS");
+        quoterAddress = vm.envAddress("QUOTER_ADDRESS");
+        swapRouterV3 = vm.envAddress("ROUTER_V3_ADDRESS");
+        factoryV3 = vm.envAddress("FACTORY_V3_ADDRESS");
+        swapRouterV2 = vm.envAddress("ROUTER_V2_ADDRESS");
+        factoryV2 = vm.envAddress("FACTORY_V2_ADDRESS");
+
+        tokenName = "Arbitrum Ecosystem Index";
+        tokenSymbol = "ARBEI";
+        feeRatePerDayScaled = vm.envUint("FEE_RATE_PER_DAY_SCALED");
+        feeReceiver = vm.envAddress("FEE_RECEIVER");
+        supplyCeiling = vm.envUint("SUPPLY_CEILING");
+    }
+
+    function deployIndexToken() internal {
+        indexTokenProxyAdmin = new ProxyAdmin();
+        indexTokenImplementation = new IndexToken();
+
+        bytes memory initData = abi.encodeWithSignature(
             "initialize(string,string,uint256,address,uint256)",
             tokenName,
             tokenSymbol,
@@ -52,26 +112,24 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
             supplyCeiling
         );
 
-        TransparentUpgradeableProxy indexTokenProxy = new TransparentUpgradeableProxy(
-            address(indexTokenImplementation), address(indexTokenProxyAdmin), indexTokenData
-        );
+        TransparentUpgradeableProxy proxy =
+            new TransparentUpgradeableProxy(address(indexTokenImplementation), address(indexTokenProxyAdmin), initData);
+
+        indexTokenProxy = address(proxy);
 
         console.log("///////// IndexToken //////////");
         console.log("IndexToken impl:", address(indexTokenImplementation));
-        console.log("IndexToken proxy:", address(indexTokenProxy));
+        console.log("IndexToken proxy:", indexTokenProxy);
         console.log("IndexToken ProxyAdmin:", address(indexTokenProxyAdmin));
+    }
 
-        // ----------------------------------------------------------------
-        ///////////
-        // 2) Deploy IndexFactoryStorage (Proxy)
-        ///////////
-        // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryStorageProxyAdmin = new ProxyAdmin();
+    function deployIndexFactoryStorage() internal {
+        indexFactoryStorageProxyAdmin = new ProxyAdmin();
+        indexFactoryStorageImplementation = new IndexFactoryStorage();
 
-        IndexFactoryStorage indexFactoryStorageImplementation = new IndexFactoryStorage();
-        bytes memory indexFactoryStorageData = abi.encodeWithSignature(
+        bytes memory initData = abi.encodeWithSignature(
             "initialize(address,address,bytes32,address,address,address,address,address,address,address)",
-            payable(address(indexTokenProxy)),
+            payable(indexTokenProxy),
             functionsRouterAddress,
             newDonId,
             toUsdPriceFeed,
@@ -83,110 +141,96 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
             factoryV2
         );
 
-        TransparentUpgradeableProxy indexFactoryStorageProxy = new TransparentUpgradeableProxy(
-            address(indexFactoryStorageImplementation), address(indexFactoryStorageProxyAdmin), indexFactoryStorageData
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(indexFactoryStorageImplementation), address(indexFactoryStorageProxyAdmin), initData
         );
+
+        indexFactoryStorageProxy = address(proxy);
 
         console.log("///////// IndexFactoryStorage //////////");
         console.log("IndexFactoryStorage impl:", address(indexFactoryStorageImplementation));
-        console.log("IndexFactoryStorage proxy:", address(indexFactoryStorageProxy));
+        console.log("IndexFactoryStorage proxy:", indexFactoryStorageProxy);
         console.log("IndexFactoryStorage ProxyAdmin:", address(indexFactoryStorageProxyAdmin));
+    }
 
-        // ----------------------------------------------------------------
-        ///////////
-        // 3) Deploy IndexFactory (Proxy)
-        ///////////
-        // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryProxyAdmin = new ProxyAdmin();
+    function deployIndexFactory() internal {
+        indexFactoryProxyAdmin = new ProxyAdmin();
+        indexFactoryImplementation = new IndexFactory();
 
-        IndexFactory indexFactoryImplementation = new IndexFactory();
-        bytes memory indexFactoryData =
-            abi.encodeWithSignature("initialize(address)", address(indexFactoryStorageProxy));
+        bytes memory initData = abi.encodeWithSignature("initialize(address)", indexFactoryStorageProxy);
 
-        TransparentUpgradeableProxy indexFactoryProxy = new TransparentUpgradeableProxy(
-            address(indexFactoryImplementation), address(indexFactoryProxyAdmin), indexFactoryData
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(indexFactoryImplementation), address(indexFactoryProxyAdmin), initData
         );
+
+        indexFactoryProxy = address(proxy);
 
         console.log("///////// IndexFactory //////////");
         console.log("IndexFactory impl:", address(indexFactoryImplementation));
-        console.log("IndexFactory proxy:", address(indexFactoryProxy));
+        console.log("IndexFactory proxy:", indexFactoryProxy);
         console.log("IndexFactory ProxyAdmin:", address(indexFactoryProxyAdmin));
+    }
 
-        // ----------------------------------------------------------------
-        ///////////
-        // 4) Deploy IndexFactoryBalancer (Proxy)
-        ///////////
-        // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryBalancerProxyAdmin = new ProxyAdmin();
+    function deployIndexFactoryBalancer() internal {
+        indexFactoryBalancerProxyAdmin = new ProxyAdmin();
+        indexFactoryBalancerImplementation = new IndexFactoryBalancer();
 
-        IndexFactoryBalancer indexFactoryBalancerImplementation = new IndexFactoryBalancer();
-        bytes memory indexFactoryBalancerData =
-            abi.encodeWithSignature("initialize(address)", address(indexFactoryStorageProxy));
+        bytes memory initData = abi.encodeWithSignature("initialize(address)", indexFactoryStorageProxy);
 
-        TransparentUpgradeableProxy indexFactoryBalancerProxy = new TransparentUpgradeableProxy(
-            address(indexFactoryBalancerImplementation),
-            address(indexFactoryBalancerProxyAdmin),
-            indexFactoryBalancerData
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(indexFactoryBalancerImplementation), address(indexFactoryBalancerProxyAdmin), initData
         );
+
+        indexFactoryBalancerProxy = address(proxy);
 
         console.log("///////// IndexFactoryBalancer //////////");
         console.log("IndexFactoryBalancer impl:", address(indexFactoryBalancerImplementation));
-        console.log("IndexFactoryBalancer proxy:", address(indexFactoryBalancerProxy));
+        console.log("IndexFactoryBalancer proxy:", indexFactoryBalancerProxy);
         console.log("IndexFactoryBalancer ProxyAdmin:", address(indexFactoryBalancerProxyAdmin));
+    }
 
-        // ----------------------------------------------------------------
-        ///////////
-        // 5) Deploy PriceOracle (Direct)
-        ///////////
-        // ----------------------------------------------------------------
-        address priceOracle = deployByteCode(priceOracleByteCode);
+    function deployPriceOracle() internal {
+        address deployed = deployByteCode(priceOracleByteCode);
+        priceOracle = deployed;
 
         console.log("///////// PriceOracle //////////");
-        console.log("PriceOracle deployed at:", address(priceOracle));
+        console.log("PriceOracle deployed at:", priceOracle);
+    }
 
-        // ----------------------------------------------------------------
-        ///////////
-        // 6) Deploy Vault (Proxy)
-        ///////////
-        // ----------------------------------------------------------------
-        ProxyAdmin vaultProxyAdmin = new ProxyAdmin();
+    function deployVault() internal {
+        vaultProxyAdmin = new ProxyAdmin();
+        vaultImplementation = new Vault();
 
-        Vault vaultImplementation = new Vault();
-        bytes memory vaultData = abi.encodeWithSignature("initialize()");
+        bytes memory initData = abi.encodeWithSignature("initialize()");
 
-        TransparentUpgradeableProxy vaultProxy =
-            new TransparentUpgradeableProxy(address(vaultImplementation), address(vaultProxyAdmin), vaultData);
+        TransparentUpgradeableProxy proxy =
+            new TransparentUpgradeableProxy(address(vaultImplementation), address(vaultProxyAdmin), initData);
+
+        vaultProxy = address(proxy);
 
         console.log("///////// Vault //////////");
         console.log("Vault impl:", address(vaultImplementation));
-        console.log("Vault proxy:", address(vaultProxy));
+        console.log("Vault proxy:", vaultProxy);
         console.log("Vault ProxyAdmin:", address(vaultProxyAdmin));
+    }
 
-        // ----------------------------------------------------------------
-        ///////////
-        // 7) Set Values via Proxy
-        ///////////
-        // ----------------------------------------------------------------
-        IndexToken(address(indexTokenProxy)).setMinter(address(indexFactoryProxy));
+    function setProxyValues() internal {
+        IndexToken(indexTokenProxy).setMinter(indexFactoryProxy);
 
-        IndexFactoryStorage(address(indexFactoryStorageProxy)).setFeeReceiver(feeReceiver);
-        IndexFactoryStorage(address(indexFactoryStorageProxy)).setPriceOracle(address(priceOracle));
-        IndexFactoryStorage(address(indexFactoryStorageProxy)).setVault(address(vaultProxy));
-        IndexFactoryStorage(address(indexFactoryStorageProxy)).setFactoryBalancer(address(indexFactoryBalancerProxy));
+        IndexFactoryStorage(indexFactoryStorageProxy).setFeeReceiver(feeReceiver);
+        IndexFactoryStorage(indexFactoryStorageProxy).setPriceOracle(priceOracle);
+        IndexFactoryStorage(indexFactoryStorageProxy).setVault(vaultProxy);
+        IndexFactoryStorage(indexFactoryStorageProxy).setFactoryBalancer(indexFactoryBalancerProxy);
 
-        Vault(address(vaultProxy)).setOperator(address(indexFactoryProxy), true);
-        Vault(address(vaultProxy)).setOperator(address(indexFactoryBalancerProxy), true);
-
-        vm.stopBroadcast();
+        Vault(vaultProxy).setOperator(indexFactoryProxy, true);
+        Vault(vaultProxy).setOperator(indexFactoryBalancerProxy, true);
     }
 
     function deployByteCode(bytes memory bytecode) public returns (address) {
-        bytes memory bytecodeWithArgs = bytecode;
         address deployedContract;
         assembly {
-            deployedContract := create(0, add(bytecodeWithArgs, 0x20), mload(bytecodeWithArgs))
+            deployedContract := create(0, add(bytecode, 0x20), mload(bytecode))
         }
-
         return deployedContract;
     }
 }
