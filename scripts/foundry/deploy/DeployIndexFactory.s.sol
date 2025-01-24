@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity 0.8.20;
 
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
@@ -16,7 +16,7 @@ contract DeployIndexFactory is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
+        ProxyAdmin proxyAdmin = new ProxyAdmin();
 
         IndexFactory indexFactoryImplementation = new IndexFactory();
 

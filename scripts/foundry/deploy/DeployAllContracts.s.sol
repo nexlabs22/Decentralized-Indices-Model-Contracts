@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity 0.8.20;
 
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
@@ -9,7 +9,6 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import {IndexFactory} from "../../../contracts/factory/IndexFactory.sol";
 import {IndexFactoryBalancer} from "../../../contracts/factory/IndexFactoryBalancer.sol";
 import {IndexFactoryStorage} from "../../../contracts/factory/IndexFactoryStorage.sol";
-import {PriceOracle} from "../../../contracts/factory/PriceOracle.sol";
 import {IndexToken} from "../../../contracts/token/IndexToken.sol";
 import {Vault} from "../../../contracts/vault/Vault.sol";
 import {PriceOracleByteCode} from "../../../contracts/test/PriceOracleByteCode.sol";
@@ -41,7 +40,7 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 1) Deploy IndexToken (Proxy)
         ///////////
         // ----------------------------------------------------------------
-        ProxyAdmin indexTokenProxyAdmin = new ProxyAdmin(msg.sender);
+        ProxyAdmin indexTokenProxyAdmin = new ProxyAdmin();
 
         IndexToken indexTokenImplementation = new IndexToken();
         bytes memory indexTokenData = abi.encodeWithSignature(
@@ -67,7 +66,7 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 2) Deploy IndexFactoryStorage (Proxy)
         ///////////
         // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryStorageProxyAdmin = new ProxyAdmin(msg.sender);
+        ProxyAdmin indexFactoryStorageProxyAdmin = new ProxyAdmin();
 
         IndexFactoryStorage indexFactoryStorageImplementation = new IndexFactoryStorage();
         bytes memory indexFactoryStorageData = abi.encodeWithSignature(
@@ -98,7 +97,7 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 3) Deploy IndexFactory (Proxy)
         ///////////
         // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryProxyAdmin = new ProxyAdmin(msg.sender);
+        ProxyAdmin indexFactoryProxyAdmin = new ProxyAdmin();
 
         IndexFactory indexFactoryImplementation = new IndexFactory();
         bytes memory indexFactoryData =
@@ -118,7 +117,7 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 4) Deploy IndexFactoryBalancer (Proxy)
         ///////////
         // ----------------------------------------------------------------
-        ProxyAdmin indexFactoryBalancerProxyAdmin = new ProxyAdmin(msg.sender);
+        ProxyAdmin indexFactoryBalancerProxyAdmin = new ProxyAdmin();
 
         IndexFactoryBalancer indexFactoryBalancerImplementation = new IndexFactoryBalancer();
         bytes memory indexFactoryBalancerData =
@@ -140,7 +139,6 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 5) Deploy PriceOracle (Direct)
         ///////////
         // ----------------------------------------------------------------
-        // PriceOracle priceOracle = new PriceOracle();
         address priceOracle = deployByteCode(priceOracleByteCode);
 
         console.log("///////// PriceOracle //////////");
@@ -151,7 +149,7 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 6) Deploy Vault (Proxy)
         ///////////
         // ----------------------------------------------------------------
-        ProxyAdmin vaultProxyAdmin = new ProxyAdmin(msg.sender);
+        ProxyAdmin vaultProxyAdmin = new ProxyAdmin();
 
         Vault vaultImplementation = new Vault();
         bytes memory vaultData = abi.encodeWithSignature("initialize()");
@@ -176,8 +174,8 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         IndexFactoryStorage(address(indexFactoryStorageProxy)).setVault(address(vaultProxy));
         IndexFactoryStorage(address(indexFactoryStorageProxy)).setFactoryBalancer(address(indexFactoryBalancerProxy));
 
-        Vault(address(vaultProxy)).setOperator(address(indexFactoryProxy));
-        Vault(address(vaultProxy)).setOperator(address(indexFactoryBalancerProxy));
+        Vault(address(vaultProxy)).setOperator(address(indexFactoryProxy), true);
+        Vault(address(vaultProxy)).setOperator(address(indexFactoryBalancerProxy), true);
 
         vm.stopBroadcast();
     }

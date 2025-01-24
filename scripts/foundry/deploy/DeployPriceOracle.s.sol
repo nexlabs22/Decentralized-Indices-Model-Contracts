@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity 0.8.20;
 
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
 
-import "../../../contracts/factory/PriceOracle.sol";
 import {PriceOracleByteCode} from "../../../contracts/test/PriceOracleByteCode.sol";
 
 contract DeployPriceOracle is Script, PriceOracleByteCode {
