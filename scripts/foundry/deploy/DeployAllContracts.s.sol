@@ -12,8 +12,9 @@ import {IndexFactoryStorage} from "../../../contracts/factory/IndexFactoryStorag
 import {PriceOracle} from "../../../contracts/factory/PriceOracle.sol";
 import {IndexToken} from "../../../contracts/token/IndexToken.sol";
 import {Vault} from "../../../contracts/vault/Vault.sol";
+import {PriceOracleByteCode} from "../../../contracts/test/PriceOracleByteCode.sol";
 
-contract DeployAllContracts is Script {
+contract DeployAllContracts is Script, PriceOracleByteCode {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
@@ -139,7 +140,8 @@ contract DeployAllContracts is Script {
         // 5) Deploy PriceOracle (Direct)
         ///////////
         // ----------------------------------------------------------------
-        PriceOracle priceOracle = new PriceOracle();
+        // PriceOracle priceOracle = new PriceOracle();
+        address priceOracle = deployByteCode(priceOracleByteCode);
 
         console.log("///////// PriceOracle //////////");
         console.log("PriceOracle deployed at:", address(priceOracle));
@@ -178,5 +180,15 @@ contract DeployAllContracts is Script {
         Vault(address(vaultProxy)).setOperator(address(indexFactoryBalancerProxy));
 
         vm.stopBroadcast();
+    }
+
+    function deployByteCode(bytes memory bytecode) public returns (address) {
+        bytes memory bytecodeWithArgs = bytecode;
+        address deployedContract;
+        assembly {
+            deployedContract := create(0, add(bytecodeWithArgs, 0x20), mload(bytecodeWithArgs))
+        }
+
+        return deployedContract;
     }
 }
