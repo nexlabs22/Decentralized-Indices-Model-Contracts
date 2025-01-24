@@ -6,7 +6,7 @@ import {console} from "forge-std/Test.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import "../../../contracts/token/IndexToken.sol";
+import {IndexToken} from "../../../contracts/token/IndexToken.sol";
 
 contract DeployIndexToken is Script {
     function run() external {
