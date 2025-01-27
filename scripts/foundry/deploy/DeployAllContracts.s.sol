@@ -75,6 +75,8 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 2.4 Set the necessary values after deployment
         setProxyValues();
 
+        fillMockAssetsListZeroData();
+
         // 2.5 End broadcast
         vm.stopBroadcast();
     }
@@ -224,6 +226,13 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
 
         Vault(vaultProxy).setOperator(indexFactoryProxy, true);
         Vault(vaultProxy).setOperator(indexFactoryBalancerProxy, true);
+    }
+
+    function fillMockAssetsListZeroData() internal {
+        IndexFactoryStorage(indexFactoryStorageProxy).mockFillAssetsList(
+            new address[](0), new bytes[](0), new uint256[](0), new uint24[](0)
+        );
+        console.log("Called mockFillAssetsList() with zero-data arrays.");
     }
 
     function deployByteCode(bytes memory bytecode) public returns (address) {

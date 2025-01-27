@@ -33,6 +33,8 @@ contract SetValues is Script {
         Vault(vaultProxy).setOperator(indexFactoryProxy);
         Vault(vaultProxy).setOperator(indexFactoryBalancerProxy);
 
+        mockFillAssetsListZeroData(indexFactoryStorageProxy);
+
         vm.stopBroadcast();
 
         console.log("SetValues script finished. Key addresses used:");
@@ -43,5 +45,13 @@ contract SetValues is Script {
         console.log("IndexFactoryBalancerProxy:  ", indexFactoryBalancerProxy);
         console.log("PriceOracle:                ", priceOracle);
         console.log("FeeReceiver:                ", feeReceiver);
+    }
+
+    function mockFillAssetsListZeroData(address _indexFactoryStorageProxy) internal {
+        IndexFactoryStorage(_indexFactoryStorageProxy).mockFillAssetsList(
+            new address[](0), new bytes[](0), new uint256[](0), new uint24[](0)
+        );
+
+        console.log("mockFillAssetsList() called with zero-data arrays on", _indexFactoryStorageProxy);
     }
 }
