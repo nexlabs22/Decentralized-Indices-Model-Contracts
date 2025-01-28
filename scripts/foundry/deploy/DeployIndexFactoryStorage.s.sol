@@ -14,16 +14,16 @@ contract DeployIndexFactoryStorage is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        address payable token = vm.envAddress("INDEX_TOKEN_PROXY_ADDRESS");
-        address functionsRouterAddress = vm.envAddress("FUNCTIONS_ROUTER_ADDRESS");
-        bytes32 memory newDonId = vm.envBytes32("NEW_DON_ID");
-        address toUsdPriceFeed = vm.envAddress("TO_USD_PRICE_FEED");
-        address wethAddress = vm.envAddress("WETH_ADDRESS");
-        address quoterAddress = vm.envAddress("QUOTER_ADDRESS");
-        address swapRouterV3 = vm.envAddress("ROUTER_V3_ADDRESS");
-        address factoryV3 = vm.envAddress("FACTORY_V3_ADDRESS");
-        address swapRouterV2 = vm.envAddress("ROUTER_V2_ADDRESS");
-        address factoryV2 = vm.envAddress("FACTORY_V2_ADDRESS");
+        address payable token = vm.envAddress("SEPOLIA_INDEX_TOKEN_PROXY_ADDRESS");
+        address functionsRouterAddress = vm.envAddress("SEPOLIA_FUNCTIONS_ROUTER_ADDRESS");
+        bytes32 memory newDonId = vm.envBytes32("SEPOLIA_NEW_DON_ID");
+        address toUsdPriceFeed = vm.envAddress("SEPOLIA_TO_USD_PRICE_FEED");
+        address wethAddress = vm.envAddress("SEPOLIA_WETH_ADDRESS");
+        address quoterAddress = vm.envAddress("SEPOLIA_QUOTER_ADDRESS");
+        address swapRouterV3 = vm.envAddress("SEPOLIA_ROUTER_V3_ADDRESS");
+        address factoryV3 = vm.envAddress("SEPOLIA_FACTORY_V3_ADDRESS");
+        address swapRouterV2 = vm.envAddress("SEPOLIA_ROUTER_V2_ADDRESS");
+        address factoryV2 = vm.envAddress("SEPOLIA_FACTORY_V2_ADDRESS");
 
         ProxyAdmin proxyAdmin = new ProxyAdmin();
 

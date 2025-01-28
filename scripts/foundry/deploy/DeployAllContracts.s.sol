@@ -84,21 +84,21 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
     function readEnvVars() internal {
         deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
-        functionsRouterAddress = vm.envAddress("FUNCTIONS_ROUTER_ADDRESS");
-        newDonId = vm.envBytes32("NEW_DON_ID");
-        toUsdPriceFeed = vm.envAddress("TO_USD_PRICE_FEED");
-        wethAddress = vm.envAddress("WETH_ADDRESS");
-        quoterAddress = vm.envAddress("QUOTER_ADDRESS");
-        swapRouterV3 = vm.envAddress("ROUTER_V3_ADDRESS");
-        factoryV3 = vm.envAddress("FACTORY_V3_ADDRESS");
-        swapRouterV2 = vm.envAddress("ROUTER_V2_ADDRESS");
-        factoryV2 = vm.envAddress("FACTORY_V2_ADDRESS");
+        functionsRouterAddress = vm.envAddress("SEPOLIA_FUNCTIONS_ROUTER_ADDRESS");
+        newDonId = vm.envBytes32("SEPOLIA_NEW_DON_ID");
+        toUsdPriceFeed = vm.envAddress("SEPOLIA_TO_USD_PRICE_FEED");
+        wethAddress = vm.envAddress("SEPOLIA_WETH_ADDRESS");
+        quoterAddress = vm.envAddress("SEPOLIA_QUOTER_ADDRESS");
+        swapRouterV3 = vm.envAddress("SEPOLIA_ROUTER_V3_ADDRESS");
+        factoryV3 = vm.envAddress("SEPOLIA_FACTORY_V3_ADDRESS");
+        swapRouterV2 = vm.envAddress("SEPOLIA_ROUTER_V2_ADDRESS");
+        factoryV2 = vm.envAddress("SEPOLIA_FACTORY_V2_ADDRESS");
 
         tokenName = "Arbitrum Ecosystem Index";
         tokenSymbol = "ARBEI";
-        feeRatePerDayScaled = vm.envUint("FEE_RATE_PER_DAY_SCALED");
-        feeReceiver = vm.envAddress("FEE_RECEIVER");
-        supplyCeiling = vm.envUint("SUPPLY_CEILING");
+        feeRatePerDayScaled = vm.envUint("SEPOLIA_FEE_RATE_PER_DAY_SCALED");
+        feeReceiver = vm.envAddress("SEPOLIA_FEE_RECEIVER");
+        supplyCeiling = vm.envUint("SEPOLIA_SUPPLY_CEILING");
     }
 
     function deployIndexToken() internal {

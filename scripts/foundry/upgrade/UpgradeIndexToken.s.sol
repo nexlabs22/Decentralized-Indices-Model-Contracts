@@ -13,8 +13,8 @@ contract UpgradeIndexToken is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        address proxyAdminAddress = vm.envAddress("INDEX_TOKEN_PROXY_ADMIN_ADDRESS");
-        address indexTokenProxyAddress = vm.envAddress("INDEX_TOKEN_PROXY_ADDRESS");
+        address proxyAdminAddress = vm.envAddress("SEPOLIA_INDEX_TOKEN_PROXY_ADMIN_ADDRESS");
+        address indexTokenProxyAddress = vm.envAddress("SEPOLIA_INDEX_TOKEN_PROXY_ADDRESS");
 
         IndexToken newIndexTokenImplementation = new IndexToken();
         console.log("New IndexToken implementation deployed at:", address(newIndexTokenImplementation));

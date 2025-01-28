@@ -13,8 +13,8 @@ contract UpgradeVault is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        address proxyAdminAddress = vm.envAddress("VAULT_PROXY_ADMIN_ADDRESS");
-        address vaultProxyAddress = vm.envAddress("VAULT_PROXY_ADDRESS");
+        address proxyAdminAddress = vm.envAddress("SEPOLIA_VAULT_PROXY_ADMIN_ADDRESS");
+        address vaultProxyAddress = vm.envAddress("SEPOLIA_VAULT_PROXY_ADDRESS");
 
         Vault newVaultImplementation = new Vault();
         console.log("New Vault implementation deployed at:", address(newVaultImplementation));

@@ -13,8 +13,8 @@ contract UpgradeIndexFactoryStorage is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        address proxyAdminAddress = vm.envAddress("INDEX_FACTORY_STORAGE_PROXY_ADMIN_ADDRESS");
-        address indexFactoryStorageProxyAddress = vm.envAddress("INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
+        address proxyAdminAddress = vm.envAddress("SEPOLIA_INDEX_FACTORY_STORAGE_PROXY_ADMIN_ADDRESS");
+        address indexFactoryStorageProxyAddress = vm.envAddress("SEPOLIA_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
 
         IndexFactoryStorage newIndexFactoryStorageImplementation = new IndexFactoryStorage();
         console.log(
