@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity 0.8.20;
 
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -26,7 +26,7 @@ contract Vault is Initializable, OwnableUpgradeable {
         isOperator[_operator] = _status;
     }
 
-    function withdrawFunds(address _token, address _to, uint256 _amount) external onlyOperator returns(bool success) {
+    function withdrawFunds(address _token, address _to, uint256 _amount) external onlyOperator returns (bool success) {
         require(_token != address(0), "NexVault: token address is zero");
         require(_to != address(0), "NexVault: recipient address is zero");
         require(_amount > 0, "NexVault: amount is zero");
