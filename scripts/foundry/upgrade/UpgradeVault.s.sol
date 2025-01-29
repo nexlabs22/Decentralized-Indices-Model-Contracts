@@ -6,7 +6,6 @@ import {console} from "forge-std/console.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-// import {Vault} from "../../../contracts/vault/Vault.sol";
 import "../../../contracts/vault/Vault.sol";
 
 contract UpgradeVault is Script {

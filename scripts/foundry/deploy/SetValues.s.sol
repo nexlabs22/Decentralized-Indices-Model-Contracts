@@ -34,7 +34,6 @@ contract SetValues is Script {
         Vault(vaultProxy).setOperator(indexFactoryBalancerProxy);
 
         fillMockAssetsList(indexFactoryStorageProxy);
-        // mockFillAssetsListZeroData(indexFactoryStorageProxy);
 
         vm.stopBroadcast();
 
@@ -75,8 +74,8 @@ contract SetValues is Script {
         marketShares[9] = 6250000000000000000;
         marketShares[10] = 6250000000000000000;
 
-        uint256[] memory swapVersions = new uint256[](11);
-        for (uint256 i = 0; i < 11; i++) {
+        uint24[] memory swapVersions = new uint24[](11);
+        for (uint24 i = 0; i < 11; i++) {
             swapVersions[i] = 3;
         }
 
@@ -97,12 +96,4 @@ contract SetValues is Script {
 
         console.log("Called mockFillAssetsList() with your 11 assets data.");
     }
-
-    // function mockFillAssetsListZeroData(address _indexFactoryStorageProxy) internal {
-    //     IndexFactoryStorage(_indexFactoryStorageProxy).mockFillAssetsList(
-    //         new address[](0), new bytes[](0), new uint256[](0), new uint24[](0)
-    //     );
-
-    //     console.log("mockFillAssetsList() called with zero-data arrays on", _indexFactoryStorageProxy);
-    // }
 }

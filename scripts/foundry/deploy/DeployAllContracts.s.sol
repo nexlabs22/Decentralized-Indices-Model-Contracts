@@ -75,8 +75,6 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 2.4 Set the necessary values after deployment
         setProxyValues();
 
-        // fillMockAssetsListZeroData();
-
         fillMockAssetsList();
 
         // 2.5 End broadcast
@@ -257,8 +255,8 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         marketShares[9] = 6250000000000000000;
         marketShares[10] = 6250000000000000000;
 
-        uint256[] memory swapVersions = new uint256[](11);
-        for (uint256 i = 0; i < 11; i++) {
+        uint24[] memory swapVersions = new uint24[](11);
+        for (uint24 i = 0; i < 11; i++) {
             swapVersions[i] = 3;
         }
 
@@ -279,13 +277,6 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
 
         console.log("Called mockFillAssetsList() with your 11 assets data.");
     }
-
-    // function fillMockAssetsListZeroData() internal {
-    //     IndexFactoryStorage(indexFactoryStorageProxy).mockFillAssetsList(
-    //         new address[](0), new bytes[](0), new uint256[](0), new uint24[](0)
-    //     );
-    //     console.log("Called mockFillAssetsList() with zero-data arrays.");
-    // }
 
     function deployByteCode(bytes memory bytecode) public returns (address) {
         address deployedContract;
