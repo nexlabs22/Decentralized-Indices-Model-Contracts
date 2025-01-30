@@ -104,22 +104,12 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
             abi.encodeWithSelector(indexFactoryStorage.currentList.selector, 0),
             abi.encode(someNonWeth1)
         );
-        vm.mockCall(
-            address(indexFactoryStorage),
-            abi.encodeWithSelector(indexFactoryStorage.tokenSwapFee.selector, someNonWeth1),
-            abi.encode(uint24(3000))
-        );
 
         address someNonWeth2 = address(0xABC2);
         vm.mockCall(
             address(indexFactoryStorage),
             abi.encodeWithSelector(indexFactoryStorage.oracleList.selector, 0),
             abi.encode(someNonWeth2)
-        );
-        vm.mockCall(
-            address(indexFactoryStorage),
-            abi.encodeWithSelector(indexFactoryStorage.tokenSwapFee.selector, someNonWeth2),
-            abi.encode(uint24(3000))
         );
 
         vm.mockCall(
@@ -258,11 +248,6 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
             abi.encode(someNonWeth1)
         );
 
-        vm.mockCall(
-            address(indexFactoryStorage),
-            abi.encodeWithSelector(indexFactoryStorage.tokenSwapFee.selector, someNonWeth1),
-            abi.encode(uint24(3000))
-        );
 
         address someNonWeth2 = address(0xABC2);
         vm.mockCall(
@@ -270,11 +255,7 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
             abi.encodeWithSelector(indexFactoryStorage.oracleList.selector, 0),
             abi.encode(someNonWeth2)
         );
-        vm.mockCall(
-            address(indexFactoryStorage),
-            abi.encodeWithSelector(indexFactoryStorage.tokenSwapFee.selector, someNonWeth2),
-            abi.encode(uint24(3000))
-        );
+        
 
         vm.mockCall(
             address(indexFactoryStorage),
@@ -564,9 +545,6 @@ contract IndexFactoryBalancerTest is Test, IndexFactoryBalancer {
         // SwapHelpers.swap(
         //     ISwapRouter(address(0)), IUniswapV2Router02(address(0)), 3000, address(0), address(0), 100, ownerAddr
         // );
-        SwapHelpers.swap(
-            ISwapRouter(address(0)), IUniswapV2Router02(address(0)), 3000, new address[](0), new uint24[](0), 100, ownerAddr
-        );
         vm.stopPrank();
     }
 

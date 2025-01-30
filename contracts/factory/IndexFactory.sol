@@ -104,22 +104,19 @@ contract IndexFactory is
      * @param fees The fees of the tokens to swap.
      * @param amountIn The amount of input token.
      * @param _recipient The address of the recipient.
-     * @param _swapFee The swap version (2 for Uniswap V2, 3 for Uniswap V3).
      * @return outputAmount The amount of output token.
      */
     function swap(
         address[] memory path,
         uint24[] memory fees,
         uint amountIn,
-        address _recipient,
-        uint24 _swapFee
+        address _recipient
     ) internal returns (uint outputAmount) {
         ISwapRouter swapRouterV3 = factoryStorage.swapRouterV3();
         IUniswapV2Router02 swapRouterV2 = factoryStorage.swapRouterV2();
         outputAmount = SwapHelpers.swap(
             swapRouterV3,
             swapRouterV2,
-            _swapFee,
             path,
             fees,
             amountIn,
@@ -160,7 +157,6 @@ contract IndexFactory is
             uint marketShare = factoryStorage.tokenCurrentMarketShare(
                 tokenAddress
             );
-            uint24 swapFee = factoryStorage.tokenSwapFee(tokenAddress);
             (address[] memory fromETHPath, uint24[] memory fromETHFees) = factoryStorage.getFromETHPathData(
                 tokenAddress
             );
@@ -169,8 +165,7 @@ contract IndexFactory is
                     fromETHPath,
                     fromETHFees,
                     (_wethAmount * marketShare) / 100e18,
-                    address(_vault),
-                    swapFee
+                    address(_vault)
                 );
                 require(outputAmount > 0, "Swap failed");
             } else {
@@ -197,15 +192,15 @@ contract IndexFactory is
     /**
      * @dev Issues index tokens by swapping the input token.
      * @param _tokenIn The address of the input token.
+     * @param _tokenInPath The path of the input token.
+     * @param _tokenInFees The fees of the input token.
      * @param _amountIn The amount of input token.
-     * @param _tokenInSwapFee The swap version of the input token.
      */
     function issuanceIndexTokens(
         address _tokenIn,
         address[] memory _tokenInPath,
         uint24[] memory _tokenInFees,
-        uint _amountIn,
-        uint24 _tokenInSwapFee
+        uint _amountIn
     ) public nonReentrant {
         require(_tokenIn != address(0), "Invalid token address");
         require(_amountIn > 0, "Invalid amount");
@@ -229,8 +224,7 @@ contract IndexFactory is
             _tokenInPath,
             _tokenInFees,
             _amountIn + feeAmount,
-            address(this),
-            _tokenInSwapFee
+            address(this)
         );
         address feeReceiver = factoryStorage.feeReceiver();
         uint feeWethAmount = (wethAmountBeforFee * feeRate) / 10000;
@@ -283,7 +277,6 @@ contract IndexFactory is
         address _tokenOut,
         address[] memory _tokenOutPath,
         uint24[] memory _tokenOutFees,
-        uint24 _tokenOutSwapFee,
         uint feeRate,
         address feeReceiver
     ) internal returns (uint realOut) {
@@ -310,8 +303,7 @@ contract IndexFactory is
                 _tokenOutPath,
                 _tokenOutFees,
                 _outputAmount - ownerFee,
-                msg.sender,
-                _tokenOutSwapFee
+                msg.sender
             );
             emit Redemption(
                 msg.sender,
@@ -332,7 +324,6 @@ contract IndexFactory is
         IWETH weth = factoryStorage.weth();
         for (uint i = 0; i < _totalCurrentList; i++) {
             address tokenAddress = factoryStorage.currentList(i);
-            uint24 swapFee = factoryStorage.tokenSwapFee(tokenAddress);
             (address[] memory toETHPath, uint24[] memory toETHFees) = factoryStorage.getToETHPathData(
                 tokenAddress
             );
@@ -344,8 +335,7 @@ contract IndexFactory is
                     toETHPath,
                     toETHFees,
                     swapAmount,
-                    address(this),
-                    swapFee
+                    address(this)
                 );
                 outputAmount += swapAmountOut;
             } else {
@@ -362,7 +352,6 @@ contract IndexFactory is
         address _tokenOut,
         address[] memory _tokenOutPath,
         uint24[] memory _tokenOutFees,
-        uint24 _tokenOutSwapFee,
         uint feeRate,
         address feeReceiver
     ) internal returns (uint realOut) {
@@ -380,7 +369,6 @@ contract IndexFactory is
             _tokenOut,
             _tokenOutPath,
             _tokenOutFees,
-            _tokenOutSwapFee,
             feeRate,
             feeReceiver
         );
@@ -390,15 +378,14 @@ contract IndexFactory is
      * @dev Redeems index tokens for the specified output token.
      * @param amountIn The amount of index tokens to redeem.
      * @param _tokenOut The address of the output token.
-     * @param _tokenOutSwapFee The swap version of the output token.
-     * @return The amount of output token.
+        * @param _tokenOutPath The path of the output token.
+        * @param _tokenOutFees The fees of the output token.
      */
     function redemption(
         uint amountIn,
         address _tokenOut,
         address[] memory _tokenOutPath,
-        uint24[] memory _tokenOutFees,
-        uint24 _tokenOutSwapFee
+        uint24[] memory _tokenOutFees
     ) public nonReentrant returns (uint) {
         Vault vault = factoryStorage.vault();
         uint totalCurrentList = factoryStorage.totalCurrentList();
@@ -416,7 +403,6 @@ contract IndexFactory is
             _tokenOut,
             _tokenOutPath,
             _tokenOutFees,
-            _tokenOutSwapFee,
             feeRate,
             feeReceiver
         );

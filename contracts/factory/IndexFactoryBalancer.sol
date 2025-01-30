@@ -100,15 +100,13 @@ contract IndexFactoryBalancer is
      * @param fees The fees of the swap.
      * @param amountIn The amount of input token.
      * @param _recipient The address of the recipient.
-     * @param _swapFee The swap fee.
      * @return outputAmount The amount of output token.
      */
     function swap(
         address[] memory path,
         uint24[] memory fees,
         uint amountIn,
-        address _recipient,
-        uint24 _swapFee
+        address _recipient
     ) internal returns (uint outputAmount) {
         ISwapRouter swapRouterV3 = factoryStorage.swapRouterV3();
         IUniswapV2Router02 swapRouterV2 = factoryStorage.swapRouterV2();
@@ -116,7 +114,6 @@ contract IndexFactoryBalancer is
         outputAmount = SwapHelpers.swap(
             swapRouterV3,
             swapRouterV2,
-            _swapFee,
             path,
             fees,
             amountIn,
@@ -135,7 +132,6 @@ contract IndexFactoryBalancer is
         uint totalOracleList = factoryStorage.totalOracleList();
         for (uint i; i < totalCurrentList; i++) {
             address tokenAddress = factoryStorage.currentList(i);
-            uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
             (address[] memory toETHPath, uint24[] memory toETHFees) = factoryStorage.getToETHPathData(tokenAddress);
             uint tokenBalance = IERC20(tokenAddress).balanceOf(address(vault));
             if (tokenAddress != address(weth)) {
@@ -149,8 +145,7 @@ contract IndexFactoryBalancer is
                         toETHPath,
                         toETHFees,
                         tokenBalance,
-                        address(this),
-                        tokenSwapFee
+                        address(this)
                     );
                 require(outputAmount > 0, "Swap failed");
             }
@@ -158,7 +153,6 @@ contract IndexFactoryBalancer is
         uint wethBalance = weth.balanceOf(address(this));
         for (uint i; i < totalOracleList; i++) {
             address tokenAddress = factoryStorage.oracleList(i);
-            uint24 tokenSwapFee = factoryStorage.tokenSwapFee(tokenAddress);
             (address[] memory fromETHPath, uint24[] memory fromETHFees) = factoryStorage.getFromETHPathData(tokenAddress);
             uint tokenOracleMarketShare = factoryStorage.tokenOracleMarketShare(tokenAddress);
             if (tokenAddress != address(weth)) {
@@ -167,8 +161,7 @@ contract IndexFactoryBalancer is
                     fromETHFees,
                     (wethBalance * tokenOracleMarketShare) /
                         100e18,
-                    address(vault),
-                    tokenSwapFee
+                    address(vault)
                 );
                 require(outputAmount > 0, "Swap failed");
             }

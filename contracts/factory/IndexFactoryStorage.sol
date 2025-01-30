@@ -63,7 +63,6 @@ contract IndexFactoryStorage is
 
     mapping(address => uint) public tokenCurrentMarketShare;
     mapping(address => uint) public tokenOracleMarketShare;
-    mapping(address => uint24) public tokenSwapFee;
 
     mapping(address => address[]) public fromETHPath;
     mapping(address => address[]) public toETHPath;
@@ -346,29 +345,26 @@ contract IndexFactoryStorage is
         (
             address[] memory _tokens,
             bytes[] memory _pathBytes,
-            uint256[] memory _marketShares,
-            uint24[] memory _swapFees
-        ) = abi.decode(response, (address[], bytes[], uint256[], uint24[]));
+            uint256[] memory _marketShares
+        ) = abi.decode(response, (address[], bytes[], uint256[]));
         require(
             _tokens.length == _marketShares.length &&
-                _marketShares.length == _swapFees.length,
+                _marketShares.length == _pathBytes.length,
             "The length of the arrays should be the same"
         );
-        _initData(_tokens, _pathBytes, _marketShares, _swapFees);
+        _initData(_tokens, _pathBytes, _marketShares);
     }
 
     function _initData(
         address[] memory tokens0,
         bytes[] memory pathBytes0,
-        uint256[] memory marketShares0,
-        uint24[] memory _swapFees
+        uint256[] memory marketShares0
     ) internal {
         //save mappings
         for (uint i = 0; i < tokens0.length; i++) {
             oracleList[i] = tokens0[i];
             tokenOracleListIndex[tokens0[i]] = i;
             tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
-            tokenSwapFee[tokens0[i]] = _swapFees[i];
             //update path
             _initPathData(tokens0[i], pathBytes0[i]);
             if (totalCurrentList == 0) {
@@ -423,25 +419,22 @@ contract IndexFactoryStorage is
     /**
      * @dev Mock function to fill the asset list for testing purposes.
      * @param _tokens The list of token addresses.
+    * @param _pathBytes The list of path bytes.
      * @param _marketShares The list of market shares.
-     * @param _swapFees The list of swap versions.
      */
     function mockFillAssetsList(
         address[] memory _tokens,
         bytes[] memory _pathBytes,
-        uint256[] memory _marketShares,
-        uint24[] memory _swapFees
+        uint256[] memory _marketShares
     ) public onlyOwner {
         address[] memory tokens0 = _tokens;
         uint[] memory marketShares0 = _marketShares;
-        uint24[] memory _swapFees = _swapFees;
 
-        // //save mappings
+        //save mappings
         for (uint i = 0; i < tokens0.length; i++) {
             oracleList[i] = tokens0[i];
             tokenOracleListIndex[tokens0[i]] = i;
             tokenOracleMarketShare[tokens0[i]] = marketShares0[i];
-            tokenSwapFee[tokens0[i]] = _swapFees[i];
             //update path
             _initPathData(tokens0[i], _pathBytes[i]);
             if (totalCurrentList == 0) {
@@ -480,17 +473,15 @@ contract IndexFactoryStorage is
      * @param path The path of the token swap.
      * @param fees The fees of the token swap.
      * @param amountIn The amount of input token.
-     * @param _swapFee The swap fee.
      * @return finalAmountOut The amount of output token.
      */
     function getAmountOut(
         address[] memory path,
         uint24[] memory fees,
-        uint amountIn,
-        uint24 _swapFee
+        uint amountIn
     ) public view returns (uint finalAmountOut) {
         if (amountIn > 0) {
-            if (_swapFee > 0) {
+            if (fees.length > 0) {
                 finalAmountOut = estimateAmountOutWithPath(
                     path,
                     fees,
@@ -521,8 +512,7 @@ contract IndexFactoryStorage is
                 uint value = getAmountOut(
                     toETHPath[tokenAddress],
                     toETHFees[tokenAddress],
-                    IERC20(tokenAddress).balanceOf(address(vault)),
-                    tokenSwapFee[tokenAddress]
+                    IERC20(tokenAddress).balanceOf(address(vault))
                 );
                 totalValue += value;
             }
