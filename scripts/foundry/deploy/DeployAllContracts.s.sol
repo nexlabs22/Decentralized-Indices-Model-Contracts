@@ -75,7 +75,11 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         // 2.4 Set the necessary values after deployment
         setProxyValues();
 
-        fillMockAssetsList();
+        // Mainnet Mock
+        fillMockAssetsListMainnet();
+
+        // Testnet Mock
+        // fillMockAssetsListTestnet();
 
         // 2.5 End broadcast
         vm.stopBroadcast();
@@ -244,7 +248,7 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         Vault(vaultProxy).setOperator(indexFactoryBalancerProxy, true);
     }
 
-    function fillMockAssetsList() internal {
+    function fillMockAssetsListMainnet() internal {
         address[] memory assetList = new address[](5);
         assetList[0] = 0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8; // PENDLE
         assetList[1] = 0x6694340fc020c5E6B96567843da2df01b2CE1eb6; // STARGATE
@@ -282,7 +286,7 @@ contract DeployAllContracts is Script, PriceOracleByteCode {
         console.log("Called mockFillAssetsList() with your 5 assets data.");
     }
 
-    // function fillMockAssetsList() internal {
+    // function fillMockAssetsListTestnet() internal {
     //     address[] memory assetList = new address[](11);
     //     assetList[0] = 0x9CD4f9Bec89e00A560840174Dc8054Fb4b3e1858; // sepoliaTestArbitrumAddress
     //     assetList[1] = 0x8B0D01137979e409Bba15098aA5665c647774003; // sepoliaTestAAVEAddress

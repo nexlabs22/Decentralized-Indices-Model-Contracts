@@ -11,17 +11,17 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract OnchainTest is Script {
     IndexToken indexToken;
 
-    address user = 0x11a8E23DAfbE058e9758c899dAEe0e43f287A96D;
-    address weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-    address usdt = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
-    // address user = 0x51256F5459C1DdE0C794818AF42569030901a098;
-    // address weth = 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14;
-    // address usdt = 0xE8888fE3Bde6f287BDd0922bEA6E0bF6e5f418e7;
+    // Mainnet
+    address user = vm.envAddress("USER");
+    address weth = vm.envAddress("ARBITRUM_WETH_ADDRESS");
+    address usdt = vm.envAddress("SEPOLIA_USDC_ADDRESS");
+    address indexFactoryProxy = vm.envAddress("ARBITRUM_INDEX_FACTORY_PROXY_ADDRESS");
+    address indexTokenProxy = vm.envAddress("ARBITRUM_INDEX_TOKEN_PROXY_ADDRESS");
 
-    address indexFactoryProxy = 0xC261547547fb4b108db504FE200e20Db7612D5E9;
-    address indexTokenProxy = 0x4386741db5Aadec9201c997b9fD197b598ef1323;
-    // address indexFactoryProxy = vm.envAddress("ARBITRUM_INDEX_FACTORY_PROXY_ADDRESS");
-    // address indexTokenProxy = vm.envAddress("ARBITRUM_INDEX_TOKEN_PROXY_ADDRESS");
+    // Testnet
+    // address user = vm.envAddress("USER");
+    // address weth = vm.envAddress("SEPOLIA_WETH_ADDRESS");
+    // address usdt = vm.envAddress("SEPOLIA_USDT_ADDRESS");
     // address indexFactoryProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_PROXY_ADDRESS");
     // address indexTokenProxy = vm.envAddress("SEPOLIA_INDEX_TOKEN_PROXY_ADDRESS");
 
@@ -30,15 +30,17 @@ contract OnchainTest is Script {
         vm.startBroadcast(deployerPrivateKey);
         indexToken = IndexToken(indexTokenProxy);
 
+        // Issuance With ETH
         issuanceAndRedemptionWithEth();
 
-        // issuanceAndRedemptionWithUsdt();
+        // Issuance with ERC20 Token
+        issuanceAndRedemptionWithUsdt();
 
         vm.stopBroadcast();
     }
 
     function issuanceAndRedemptionWithEth() public {
-        // IndexFactory(payable(indexFactoryProxy)).issuanceIndexTokensWithEth{value: (1e14 * 1001) / 1000}(1e14);
+        IndexFactory(payable(indexFactoryProxy)).issuanceIndexTokensWithEth{value: (1e14 * 1001) / 1000}(1e14);
 
         address[] memory path = new address[](2);
         path[0] = weth;

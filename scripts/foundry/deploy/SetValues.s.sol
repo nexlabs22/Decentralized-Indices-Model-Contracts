@@ -9,6 +9,7 @@ import {IndexFactoryStorage} from "../../../contracts/factory/IndexFactoryStorag
 import {Vault} from "../../../contracts/vault/Vault.sol";
 
 contract SetValues is Script {
+    // Mainnet
     address indexTokenProxy = vm.envAddress("ARBITRUM_INDEX_TOKEN_PROXY_ADDRESS");
     address indexFactoryStorageProxy = vm.envAddress("ARBITRUM_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
     address vaultProxy = vm.envAddress("ARBITRUM_VAULT_PROXY_ADDRESS");
@@ -18,17 +19,17 @@ contract SetValues is Script {
     address priceOracle = vm.envAddress("ARBITRUM_PRICE_ORACLE_ADDRESS");
     address feeReceiver = vm.envAddress("ARBITRUM_FEE_RECEIVER");
 
+    // Testnet
+    // address indexTokenProxy = vm.envAddress("SEPOLIA_INDEX_TOKEN_PROXY_ADDRESS");
+    // address indexFactoryStorageProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
+    // address vaultProxy = vm.envAddress("SEPOLIA_VAULT_PROXY_ADDRESS");
+
+    // address indexFactoryProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_PROXY_ADDRESS");
+    // address indexFactoryBalancerProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_BALANCER_PROXY_ADDRESS");
+    // address priceOracle = vm.envAddress("SEPOLIA_PRICE_ORACLE_ADDRESS");
+    // address feeReceiver = vm.envAddress("SEPOLIA_FEE_RECEIVER");
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-
-        // address indexTokenProxy = vm.envAddress("SEPOLIA_INDEX_TOKEN_PROXY_ADDRESS");
-        // address indexFactoryStorageProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
-        // address vaultProxy = vm.envAddress("SEPOLIA_VAULT_PROXY_ADDRESS");
-
-        // address indexFactoryProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_PROXY_ADDRESS");
-        // address indexFactoryBalancerProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_BALANCER_PROXY_ADDRESS");
-        // address priceOracle = vm.envAddress("SEPOLIA_PRICE_ORACLE_ADDRESS");
-        // address feeReceiver = vm.envAddress("SEPOLIA_FEE_RECEIVER");
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -42,8 +43,11 @@ contract SetValues is Script {
         Vault(vaultProxy).setOperator(indexFactoryProxy, true);
         Vault(vaultProxy).setOperator(indexFactoryBalancerProxy, true);
 
-        fillMockAssetsList();
-        // fillMockAssetsList(indexFactoryStorageProxy);
+        // Mainnet Mock
+        fillMockAssetsListMainnet();
+
+        // Testnet Mock
+        // fillMockAssetsListTestnet();
 
         vm.stopBroadcast();
 
@@ -57,7 +61,7 @@ contract SetValues is Script {
         console.log("FeeReceiver:                ", feeReceiver);
     }
 
-    function fillMockAssetsList() internal {
+    function fillMockAssetsListMainnet() internal {
         address wethAddress = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
 
         address[] memory assetList = new address[](5);
@@ -68,11 +72,11 @@ contract SetValues is Script {
         assetList[4] = 0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a; // GMX
 
         uint256[] memory marketShares = new uint256[](5);
-        marketShares[0] = 280000000000000000;
-        marketShares[1] = 230000000000000000;
-        marketShares[2] = 180000000000000000;
-        marketShares[3] = 180000000000000000;
-        marketShares[4] = 130000000000000000;
+        marketShares[0] = 280000000000000000; // 28
+        marketShares[1] = 230000000000000000; // 23
+        marketShares[2] = 180000000000000000; // 18
+        marketShares[3] = 180000000000000000; // 18
+        marketShares[4] = 130000000000000000; // 13
 
         uint24[] memory swapVersions = new uint24[](5);
         for (uint24 i = 0; i < 5; i++) {
@@ -97,7 +101,7 @@ contract SetValues is Script {
         console.log("Called mockFillAssetsList() with your 5 assets data.");
     }
 
-    // function fillMockAssetsList(address _indexFactoryStorageProxy) internal {
+    // function fillMockAssetsListTestnet() internal {
     //     address[] memory assetList = new address[](11);
     //     assetList[0] = 0x9CD4f9Bec89e00A560840174Dc8054Fb4b3e1858; // sepoliaTestArbitrumAddress
     //     assetList[1] = 0x8B0D01137979e409Bba15098aA5665c647774003; // sepoliaTestAAVEAddress
@@ -140,7 +144,7 @@ contract SetValues is Script {
     //         pathData[i] = abi.encode(path, feesData);
     //     }
 
-    //     IndexFactoryStorage(_indexFactoryStorageProxy).mockFillAssetsList(
+    //     IndexFactoryStorage(indexFactoryStorageProxy).mockFillAssetsList(
     //         assetList, pathData, marketShares, swapVersions
     //     );
 

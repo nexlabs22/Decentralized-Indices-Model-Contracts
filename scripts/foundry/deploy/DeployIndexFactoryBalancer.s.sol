@@ -12,7 +12,8 @@ contract DeployIndexFactoryBalancer is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
-        address indexFactoryStorageAddress = vm.envAddress("SEPOLIA_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
+        // address indexFactoryStorageAddress = vm.envAddress("SEPOLIA_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
+        address indexFactoryStorageAddress = vm.envAddress("ARBITRUM_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
 
         vm.startBroadcast(deployerPrivateKey);
 

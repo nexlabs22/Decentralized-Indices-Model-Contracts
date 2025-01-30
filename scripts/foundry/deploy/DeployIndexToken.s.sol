@@ -14,9 +14,12 @@ contract DeployIndexToken is Script {
 
         string memory tokenName = "Arbitrum Ecosystem Index";
         string memory tokenSymbol = "ARBEI";
-        uint256 feeRatePerDayScaled = vm.envUint("SEPOLIA_FEE_RATE_PER_DAY_SCALED");
-        address feeReceiver = vm.envAddress("SEPOLIA_FEE_RECEIVER");
-        uint256 supplyCeiling = vm.envUint("SEPOLIA_SUPPLY_CEILING");
+        uint256 feeRatePerDayScaled = vm.envUint("ARBITRUM_FEE_RATE_PER_DAY_SCALED");
+        address feeReceiver = vm.envAddress("ARBITRUM_FEE_RECEIVER");
+        uint256 supplyCeiling = vm.envUint("ARBITRUM_SUPPLY_CEILING");
+        // uint256 feeRatePerDayScaled = vm.envUint("SEPOLIA_FEE_RATE_PER_DAY_SCALED");
+        // address feeReceiver = vm.envAddress("SEPOLIA_FEE_RECEIVER");
+        // uint256 supplyCeiling = vm.envUint("SEPOLIA_SUPPLY_CEILING");
 
         vm.startBroadcast(deployerPrivateKey);
 
