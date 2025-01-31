@@ -13,7 +13,6 @@ contract SetValues is Script {
     address indexTokenProxy = vm.envAddress("ARBITRUM_INDEX_TOKEN_PROXY_ADDRESS");
     address indexFactoryStorageProxy = vm.envAddress("ARBITRUM_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
     address vaultProxy = vm.envAddress("ARBITRUM_VAULT_PROXY_ADDRESS");
-
     address indexFactoryProxy = vm.envAddress("ARBITRUM_INDEX_FACTORY_PROXY_ADDRESS");
     address indexFactoryBalancerProxy = vm.envAddress("ARBITRUM_INDEX_FACTORY_BALANCER_PROXY_ADDRESS");
     address priceOracle = vm.envAddress("ARBITRUM_PRICE_ORACLE_ADDRESS");
@@ -23,11 +22,11 @@ contract SetValues is Script {
     // address indexTokenProxy = vm.envAddress("SEPOLIA_INDEX_TOKEN_PROXY_ADDRESS");
     // address indexFactoryStorageProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_STORAGE_PROXY_ADDRESS");
     // address vaultProxy = vm.envAddress("SEPOLIA_VAULT_PROXY_ADDRESS");
-
     // address indexFactoryProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_PROXY_ADDRESS");
     // address indexFactoryBalancerProxy = vm.envAddress("SEPOLIA_INDEX_FACTORY_BALANCER_PROXY_ADDRESS");
     // address priceOracle = vm.envAddress("SEPOLIA_PRICE_ORACLE_ADDRESS");
     // address feeReceiver = vm.envAddress("SEPOLIA_FEE_RECEIVER");
+
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
