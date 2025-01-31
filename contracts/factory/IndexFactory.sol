@@ -36,6 +36,7 @@ contract IndexFactory is
         address indexed inputToken,
         uint inputAmount,
         uint outputAmount,
+        uint price,
         uint time
     );
 
@@ -44,6 +45,7 @@ contract IndexFactory is
         address indexed outputToken,
         uint inputAmount,
         uint outputAmount,
+        uint price,
         uint time
     );
 
@@ -126,15 +128,15 @@ contract IndexFactory is
 
     function _mintIndexTokensForIssuance(
         uint _wethAmount,
-        uint _firstPortfolioValue
+        uint _firstPortfolioValue,
+        uint _secondPortfolioValue
     ) internal returns (uint amountToMint) {
         //mint index tokens
         IndexToken indexToken = factoryStorage.indexToken();
         uint totalSupply = indexToken.totalSupply();
         if (totalSupply > 0) {
-            amountToMint =
-                (totalSupply * _wethAmount) /
-                _firstPortfolioValue;
+            uint newTotalSupply = (totalSupply * _secondPortfolioValue) / _firstPortfolioValue;
+            amountToMint = newTotalSupply - totalSupply;
         } else {
             uint price = factoryStorage.priceInWei();
             amountToMint = (_wethAmount * price) / 1e16;
@@ -175,16 +177,19 @@ contract IndexFactory is
                 );
             }
         }
+        uint secondPortfolioValue = factoryStorage.getPortfolioBalance();
         //mint index tokens
         uint amountToMint = _mintIndexTokensForIssuance(
             _wethAmount,
-            _firstPortfolioValue
-        );
+            _firstPortfolioValue,
+            secondPortfolioValue
+        ); 
         emit Issuanced(
             msg.sender,
             _tokenIn,
             _amountIn,
             amountToMint,
+            factoryStorage.getIndexTokenPrice(),
             block.timestamp
         );
     }
@@ -294,6 +299,7 @@ contract IndexFactory is
                 _tokenOut,
                 _amountIn,
                 _outputAmount - ownerFee,
+                factoryStorage.getIndexTokenPrice(),
                 block.timestamp
             );
             return _outputAmount - ownerFee;
@@ -310,6 +316,7 @@ contract IndexFactory is
                 _tokenOut,
                 _amountIn,
                 realOut,
+                factoryStorage.getIndexTokenPrice(),
                 block.timestamp
             );
             return realOut;

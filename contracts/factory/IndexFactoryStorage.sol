@@ -498,6 +498,17 @@ contract IndexFactoryStorage is
         return finalAmountOut;
     }
 
+    function getIndexTokenPrice() public view returns(uint) {
+        uint portfoliaValue = getPortfolioBalance();
+        uint totalSupply = indexToken.totalSupply();
+        uint ethusdPrice = priceInWei();
+        if(portfoliaValue == 0 || totalSupply == 0){
+            return 0;
+        }else{
+        return (portfoliaValue*ethusdPrice)/(totalSupply);
+        }
+    }
+
     /**
      * @dev Gets the portfolio balance in WETH.
      * @return The portfolio balance in WETH.

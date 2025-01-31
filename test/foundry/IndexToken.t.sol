@@ -41,7 +41,7 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(indexToken.feeTimestamp(), block.timestamp);
         assertEq(indexToken.feeReceiver(), feeReceiver);
         assertEq(indexToken.methodology(), "");
-        assertEq(indexToken.supplyCeiling(), 1000000e18);
+        assertEq(indexToken.supplyCeiling(), 1000000000e18);
         assertEq(indexToken.minter(), minter);
     }
 
@@ -268,7 +268,7 @@ contract CounterTest is Test, ContractDeployer {
         vm.expectEmit(true, true, true, true);
         emit SupplyCeilingSet(2000000e18);
         //set data
-        assertEq(indexToken.supplyCeiling(), 1000000e18);
+        assertEq(indexToken.supplyCeiling(), 1000000000e18);
         indexToken.setSupplyCeiling(2000000e18);
         assertEq(indexToken.supplyCeiling(), 2000000e18);
     }

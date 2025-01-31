@@ -18,7 +18,7 @@ import "../../contracts/test/MockV3Aggregator.sol";
 
 import "./ContractDeployer.sol";
 
-contract CounterTest is Test, ContractDeployer {
+contract IndexTokenFactoryTest is Test, ContractDeployer {
 
     using stdStorage for StdStorage;
 
@@ -47,12 +47,12 @@ contract CounterTest is Test, ContractDeployer {
     function setUp() public {
         
         deployAllContracts(1000000e18);
-        addLiquidityETH(positionManager, factoryAddress, token0, wethAddress, 1000e18, 1e18);
-        addLiquidityETH(positionManager, factoryAddress, token1, wethAddress, 1000e18, 1e18);
-        addLiquidityETH(positionManager, factoryAddress, token2, wethAddress, 1000e18, 1e18);
-        addLiquidityETH(positionManager, factoryAddress, token3, wethAddress, 1000e18, 1e18);
-        addLiquidityETH(positionManager, factoryAddress, token4, wethAddress, 1000e18, 1e18);
-        addLiquidityETH(positionManager, factoryAddress, usdt, wethAddress, 1000e18, 1e18);
+        addLiquidityETH(positionManager, factoryAddress, token0, wethAddress, 100000e18, 100e18);
+        addLiquidityETH(positionManager, factoryAddress, token1, wethAddress, 100000e18, 100e18);
+        addLiquidityETH(positionManager, factoryAddress, token2, wethAddress, 100000e18, 100e18);
+        addLiquidityETH(positionManager, factoryAddress, token3, wethAddress, 100000e18, 100e18);
+        addLiquidityETH(positionManager, factoryAddress, token4, wethAddress, 100000e18, 100e18);
+        addLiquidityETH(positionManager, factoryAddress, usdt, wethAddress, 100000e18, 100e18);
         
     }
 
@@ -63,7 +63,7 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(indexToken.feeTimestamp(), block.timestamp);
         assertEq(indexToken.feeReceiver(), feeReceiver);
         assertEq(indexToken.methodology(), "");
-        assertEq(indexToken.supplyCeiling(), 1000000e18);
+        assertEq(indexToken.supplyCeiling(), 1000000000e18);
         assertEq(indexToken.minter(), address(factory));
     }
 
@@ -280,6 +280,7 @@ contract CounterTest is Test, ContractDeployer {
         vm.startPrank(add1);
         
         factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
+        factory.issuanceIndexTokensWithEth{value: (1e18*1001)/1000}(1e18);
         // redemption input token path data
         address[] memory path = new address[](2);
         path[0] = address(weth);
@@ -311,7 +312,9 @@ contract CounterTest is Test, ContractDeployer {
         fees0[0] = 3000;
         
         factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18);
-
+        console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
+        console.log("index token price after isssuance", factoryStorage.getIndexTokenPrice());
+        console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
         // redemption input token path data
         address[] memory path = new address[](2);
         path[0] = address(weth);
@@ -319,7 +322,10 @@ contract CounterTest is Test, ContractDeployer {
         uint24[] memory fees = new uint24[](1);
         fees[0] = 3000;
 
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees);
+        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees);
+        console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
+        console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
+        console.log("real out", reallOut);
     }
 
     
@@ -345,6 +351,7 @@ contract CounterTest is Test, ContractDeployer {
 
         factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
+        console.log("index token price after isssuance", factoryStorage.getIndexTokenPrice());
         console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
         // redemption input token path data
         address[] memory path = new address[](2);

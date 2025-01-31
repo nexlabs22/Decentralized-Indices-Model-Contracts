@@ -67,7 +67,7 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(indexToken.feeTimestamp(), block.timestamp);
         assertEq(indexToken.feeReceiver(), feeReceiver);
         assertEq(indexToken.methodology(), "");
-        assertEq(indexToken.supplyCeiling(), 1000000e18);
+        assertEq(indexToken.supplyCeiling(), 1000000000e18);
         assertEq(indexToken.minter(), address(factory));
     }
 
@@ -340,6 +340,7 @@ contract CounterTest is Test, ContractDeployer {
 
         factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
+        console.log("index token price after isssuance", factoryStorage.getIndexTokenPrice());
         console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
         // redemption path data
         address[] memory path = new address[](2);
