@@ -67,7 +67,7 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(indexToken.feeTimestamp(), block.timestamp);
         assertEq(indexToken.feeReceiver(), feeReceiver);
         assertEq(indexToken.methodology(), "");
-        assertEq(indexToken.supplyCeiling(), 1000000e18);
+        assertEq(indexToken.supplyCeiling(), 1000000000e18);
         assertEq(indexToken.minter(), address(factory));
     }
 
@@ -158,17 +158,6 @@ contract CounterTest is Test, ContractDeployer {
         tokenShares[8] = 10e18;
         tokenShares[9] = 10e18;
 
-        uint[] memory swapVersions = new uint[](10);
-        swapVersions[0] = 3000;
-        swapVersions[1] = 3000;
-        swapVersions[2] = 3000;
-        swapVersions[3] = 3000;
-        swapVersions[4] = 3000;
-        swapVersions[5] = 3000;
-        swapVersions[6] = 3000;
-        swapVersions[7] = 3000;
-        swapVersions[8] = 3000;
-        swapVersions[9] = 3000;
         
         
         bytes[] memory pathData = returnPathData();
@@ -184,7 +173,7 @@ contract CounterTest is Test, ContractDeployer {
             0
         );
         // oracle.fulfillOracleFundingRateRequest(requestId, assetList, tokenShares, swapVersions);
-        bytes memory data = abi.encode(assetList, pathData, tokenShares, swapVersions);
+        bytes memory data = abi.encode(assetList, pathData, tokenShares);
         oracle.fulfillRequest(address(factoryStorage), requestId, data);
     }
     function testOracleList() public {
@@ -211,13 +200,7 @@ contract CounterTest is Test, ContractDeployer {
         assertEq(factoryStorage.tokenOracleMarketShare(address(token4)), 10e18);
         assertEq(factoryStorage.tokenOracleMarketShare(address(token9)), 10e18);
         
-        // token shares
-        assertEq(factoryStorage.tokenSwapFee(address(token0)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token1)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token2)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token3)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token4)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token9)), 3000);
+        
 
         // token from eth path data
         (address[] memory path0, uint24[] memory fees0) = factoryStorage.getFromETHPathData(address(token0));
@@ -296,7 +279,7 @@ contract CounterTest is Test, ContractDeployer {
         path[1] = address(usdt);
         uint24[] memory fees = new uint24[](1);
         fees[0] = 3000;
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees, 3000);
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees);
     }
 
 
@@ -321,7 +304,7 @@ contract CounterTest is Test, ContractDeployer {
         uint24[] memory fees0 = new uint24[](1);
         fees0[0] = 3000;
 
-        factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18, 3000);
+        factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18);
 
         // redemption path data
         address[] memory path = new address[](2);
@@ -330,7 +313,7 @@ contract CounterTest is Test, ContractDeployer {
         uint24[] memory fees = new uint24[](1);
         fees[0] = 3000;
 
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees, 3000);
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees);
     }
 
 
@@ -355,8 +338,9 @@ contract CounterTest is Test, ContractDeployer {
         uint24[] memory fees0 = new uint24[](1);
         fees0[0] = 3000;
 
-        factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18, 3000);
+        factory.issuanceIndexTokens(address(usdt), path0, fees0, 1000e18);
         console.log("index token balance after isssuance", indexToken.balanceOf(address(add1)));
+        console.log("index token price after isssuance", factoryStorage.getIndexTokenPrice());
         console.log("portfolio value after issuance", factoryStorage.getPortfolioBalance());
         // redemption path data
         address[] memory path = new address[](2);
@@ -364,7 +348,7 @@ contract CounterTest is Test, ContractDeployer {
         path[1] = address(usdt);
         uint24[] memory fees = new uint24[](1);
         fees[0] = 3000;
-        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), path, fees, 3000);
+        uint reallOut = factory.redemption(indexToken.balanceOf(address(add1)), address(usdt), path, fees);
         console.log("index token balance after redemption", indexToken.balanceOf(address(add1)));
         console.log("portfolio value after redemption", factoryStorage.getPortfolioBalance());
         console.log("real out", reallOut);

@@ -161,7 +161,7 @@ contract ContractDeployer is Test, UniswapFactoryByteCode, UniswapWETHByteCode, 
             "ANFI",
             1e18,
             feeReceiver,
-            1000000e18
+            1000000000e18
         );
         
         Vault vault = new Vault();

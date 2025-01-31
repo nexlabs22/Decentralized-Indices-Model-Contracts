@@ -87,12 +87,6 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         tokenShares[3] = 20e18;
         tokenShares[4] = 20e18;
 
-        uint[] memory swapVersions = new uint[](5);
-        swapVersions[0] = 3000;
-        swapVersions[1] = 3000;
-        swapVersions[2] = 3000;
-        swapVersions[3] = 3000;
-        swapVersions[4] = 3000;
 
         uint24[] memory feesData = new uint24[](1);
         feesData[0] = 3000;
@@ -134,7 +128,7 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
             0,
             0
         );
-        bytes memory data = abi.encode(assetList, pathData, tokenShares, swapVersions);
+        bytes memory data = abi.encode(assetList, pathData, tokenShares);
         oracle.fulfillRequest(address(factoryStorage), requestId, data);
     }
 
@@ -159,13 +153,6 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         assertEq(factoryStorage.tokenOracleMarketShare(address(token3)), 20e18);
         assertEq(factoryStorage.tokenOracleMarketShare(address(token4)), 20e18);
         
-        // token shares
-        assertEq(factoryStorage.tokenSwapFee(address(token0)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token1)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token2)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token3)), 3000);
-        assertEq(factoryStorage.tokenSwapFee(address(token4)), 3000);
-
         // token from eth path data
         (address[] memory path0, uint24[] memory fees0) = factoryStorage.getFromETHPathData(address(token0));
         assertEq(path0[0], address(weth));
@@ -231,7 +218,7 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         path0[1] = address(weth);
         uint24[] memory fees0 = new uint24[](1);
         fees0[0] = 3000;
-        factory.issuanceIndexTokens(address(usdt), path0, fees0, amount, 3000);
+        factory.issuanceIndexTokens(address(usdt), path0, fees0, amount);
 
     }
 
@@ -255,7 +242,7 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         uint24[] memory fees0 = new uint24[](1);
         fees0[0] = 3000;
 
-        factory.issuanceIndexTokens(address(usdt), path0, fees0, amount, 3000);
+        factory.issuanceIndexTokens(address(usdt), path0, fees0, amount);
 
          // redemption path data
         address[] memory path = new address[](2);
@@ -264,7 +251,7 @@ contract IndexTokenFactoryFuzzTests2 is Test, ContractDeployer {
         uint24[] memory fees = new uint24[](1);
         fees[0] = 3000;
 
-        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees, 3);
+        factory.redemption(indexToken.balanceOf(address(add1)), address(weth), path, fees);
         assertEq(indexToken.balanceOf(add1), 0);
 
     }

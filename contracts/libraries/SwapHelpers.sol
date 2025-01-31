@@ -26,7 +26,6 @@ library SwapHelpers {
 
     function swapVersion3(
         ISwapRouter uniswapRouter,
-        uint24 poolFee,
         address[] memory path,
         uint24[] memory fees,
         uint256 amountIn,
@@ -41,17 +40,6 @@ library SwapHelpers {
             amountOutMinimum: 0
         });
         amountOut = uniswapRouter.exactInput(params);
-        // ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-        //     tokenIn: tokenIn,
-        //     tokenOut: tokenOut,
-        //     fee: poolFee,
-        //     recipient: recipient,
-        //     deadline: block.timestamp + 300,
-        //     amountIn: amountIn,
-        //     amountOutMinimum: 0,
-        //     sqrtPriceLimitX96: 0
-        // });
-        // amountOut = uniswapRouter.exactInputSingle(params);
     }
 
     function swapTokensV2(
@@ -75,14 +63,13 @@ library SwapHelpers {
     function swap(
         ISwapRouter uniswapRouter,
         IUniswapV2Router02 uniswapRouterV2,
-        uint24 poolFee,
         address[] memory path,
         uint24[] memory fees,
         uint256 amountIn,
         address recipient
     ) internal returns (uint256 amountOut) {
-        if (poolFee > 0) {
-            amountOut = swapVersion3(uniswapRouter, poolFee, path, fees, amountIn, recipient);
+        if (fees.length > 0) {
+            amountOut = swapVersion3(uniswapRouter, path, fees, amountIn, recipient);
         } else {
             amountOut = swapTokensV2(uniswapRouterV2, path, amountIn, recipient);
         }
