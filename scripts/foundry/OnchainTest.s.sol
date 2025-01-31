@@ -49,7 +49,7 @@ contract OnchainTest is Script {
         fees[0] = 3000;
 
         IndexFactory(payable(indexFactoryProxy)).redemption(
-            indexToken.balanceOf(address(user)), address(weth), path, fees, 3
+            indexToken.balanceOf(address(user)), address(weth), path, fees
         );
     }
 
@@ -62,7 +62,7 @@ contract OnchainTest is Script {
         uint24[] memory fees0 = new uint24[](1);
         fees0[0] = 3000;
 
-        IndexFactory(payable(indexFactoryProxy)).issuanceIndexTokens(address(usdt), path0, fees0, 100e18, 3000);
+        IndexFactory(payable(indexFactoryProxy)).issuanceIndexTokens(address(usdt), path0, fees0, 100e18);
 
         address[] memory path = new address[](2);
         path[0] = weth;
@@ -71,7 +71,7 @@ contract OnchainTest is Script {
         fees[0] = 3000;
 
         IndexFactory(payable(indexFactoryProxy)).redemption(
-            indexToken.balanceOf(address(user)), address(weth), path, fees, 3
+            indexToken.balanceOf(address(user)), address(weth), path, fees
         );
     }
 }

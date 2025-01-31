@@ -78,11 +78,6 @@ contract SetValues is Script {
         marketShares[3] = 180000000000000000; // 18
         marketShares[4] = 130000000000000000; // 13
 
-        uint24[] memory swapVersions = new uint24[](5);
-        for (uint24 i = 0; i < 5; i++) {
-            swapVersions[i] = 3;
-        }
-
         uint24[] memory feesData = new uint24[](1);
         feesData[0] = 3000;
 
@@ -94,9 +89,7 @@ contract SetValues is Script {
             pathData[i] = abi.encode(path, feesData);
         }
 
-        IndexFactoryStorage(indexFactoryStorageProxy).mockFillAssetsList(
-            assetList, pathData, marketShares, swapVersions
-        );
+        IndexFactoryStorage(indexFactoryStorageProxy).mockFillAssetsList(assetList, pathData, marketShares);
 
         console.log("Called mockFillAssetsList() with your 5 assets data.");
     }
@@ -128,11 +121,6 @@ contract SetValues is Script {
     //     marketShares[9] = 6250000000000000000;
     //     marketShares[10] = 6250000000000000000;
 
-    //     uint24[] memory swapVersions = new uint24[](11);
-    //     for (uint24 i = 0; i < 11; i++) {
-    //         swapVersions[i] = 3;
-    //     }
-
     //     uint24[] memory feesData = new uint24[](1);
     //     feesData[0] = 3000;
 
@@ -145,7 +133,7 @@ contract SetValues is Script {
     //     }
 
     //     IndexFactoryStorage(indexFactoryStorageProxy).mockFillAssetsList(
-    //         assetList, pathData, marketShares, swapVersions
+    //         assetList, pathData, marketShares
     //     );
 
     //     console.log("Called mockFillAssetsList() with your 11 assets data.");
