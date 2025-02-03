@@ -69,7 +69,7 @@ contract CounterTest is Test, ContractDeployer {
     function testMintExceedSupply() public {
         vm.startPrank(minter);
         vm.expectRevert("will exceed supply ceiling");
-        indexToken.mint(address(this), 1000000e18 +1);
+        indexToken.mint(address(this), 1000000000e18 +1);
         assertEq(indexToken.balanceOf(address(this)), 0);
         indexToken.mint(address(this), 1000000e18);
         assertEq(indexToken.balanceOf(address(this)), 1000000e18);

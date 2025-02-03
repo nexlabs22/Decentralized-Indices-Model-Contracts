@@ -80,6 +80,7 @@ contract IndexFactoryStorage is
     Vault public vault;
 
     event FeeReceiverSet(address indexed feeReceiver);
+    event VaultSet(address indexed vault);
 
     /**
      * @dev Throws if the caller is not a factory contract.
@@ -190,12 +191,23 @@ contract IndexFactoryStorage is
         emit FeeReceiverSet(_feeReceiver);
     }
 
+    function setFunctionsRouter(address _functionsRouterAddress) public onlyOwner {
+        functionsRouterAddress = _functionsRouterAddress;
+    }
+
+
+
     /**
      * @dev Sets the vault address.
      * @param _vaultAddress The address of the vault.
      */
     function setVault(address _vaultAddress) public onlyOwner {
         vault = Vault(_vaultAddress);
+        emit VaultSet(_vaultAddress);
+    }
+
+    function setIndexToken(address _indexToken) public onlyOwner {
+        indexToken = IndexToken(_indexToken);
     }
 
     /**
@@ -224,6 +236,48 @@ contract IndexFactoryStorage is
             "Price oracle address cannot be zero address"
         );
         priceOracle = _priceOracle;
+    }
+
+    function setUniswapV3Router(address _swapRouterV3) external onlyOwner {
+        require(
+            _swapRouterV3 != address(0),
+            "Swap router V3 address cannot be zero address"
+        );
+        swapRouterV3 = ISwapRouter(_swapRouterV3);
+    }
+
+    function setUniswapV3Factory(address _factoryV3) external onlyOwner {
+        require(
+            _factoryV3 != address(0),
+            "Factory V3 address cannot be zero address"
+        );
+        factoryV3 = IUniswapV3Factory(_factoryV3);
+    }
+
+    function setUniswapV2Router(address _swapRouterV2) external onlyOwner {
+        require(
+            _swapRouterV2 != address(0),
+            "Swap router V2 address cannot be zero address"
+        );
+        swapRouterV2 = IUniswapV2Router02(_swapRouterV2);
+    }
+
+    function setUniswapV2Factory(address _factoryV2) external onlyOwner {
+        require(
+            _factoryV2 != address(0),
+            "Factory V2 address cannot be zero address"
+        );
+        factoryV2 = IUniswapV2Factory(_factoryV2);
+    }
+
+    function setWETH(address _weth) external onlyOwner {
+        require(_weth != address(0), "WETH address cannot be zero address");
+        weth = IWETH(_weth);
+    }
+
+    function setQuoter(address _quoter) external onlyOwner {
+        require(_quoter != address(0), "Quoter address cannot be zero address");
+        quoter = IQuoter(_quoter);
     }
 
     /**

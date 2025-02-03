@@ -58,7 +58,7 @@ contract TestSwap is Test, ContractDeployer {
         assertEq(indexToken.feeTimestamp(), block.timestamp);
         assertEq(indexToken.feeReceiver(), feeReceiver);
         assertEq(indexToken.methodology(), "");
-        assertEq(indexToken.supplyCeiling(), 1000000e18);
+        assertEq(indexToken.supplyCeiling(), 1000000000e18);
         assertEq(indexToken.minter(), address(factory));
     }
 

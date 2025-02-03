@@ -100,6 +100,11 @@ contract IndexFactory is
         _unpause();
     }
 
+    function setFactoryStorage(address _factoryStorage) external onlyOwner {
+        require(_factoryStorage != address(0), "Invalid factory storage address");
+        factoryStorage = IndexFactoryStorage(_factoryStorage);
+    }
+
     /**
      * @dev Internal function to swap tokens.
      * @param path The path of the tokens to swap.

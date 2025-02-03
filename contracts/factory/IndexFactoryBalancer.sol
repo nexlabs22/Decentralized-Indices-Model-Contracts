@@ -93,6 +93,11 @@ contract IndexFactoryBalancer is
     function unpause() external onlyOwner {
         _unpause();
     }
+
+    function setFactoryStorage(address _factoryStorage) external onlyOwner {
+        require(_factoryStorage != address(0), "Invalid factory storage address");
+        factoryStorage = IndexFactoryStorage(_factoryStorage);
+    }
     
     /**
      * @dev Internal function to swap tokens.
