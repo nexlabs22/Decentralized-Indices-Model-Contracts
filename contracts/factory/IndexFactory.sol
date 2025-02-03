@@ -34,19 +34,19 @@ contract IndexFactory is
     event Issuanced(
         address indexed user,
         address indexed inputToken,
-        uint inputAmount,
-        uint outputAmount,
-        uint price,
-        uint time
+        uint256 inputAmount,
+        uint256 outputAmount,
+        uint256 price,
+        uint256 time
     );
 
     event Redemption(
         address indexed user,
         address indexed outputToken,
-        uint inputAmount,
-        uint outputAmount,
-        uint price,
-        uint time
+        uint256 inputAmount,
+        uint256 outputAmount,
+        uint256 price,
+        uint256 time
     );
 
     /**
@@ -68,14 +68,12 @@ contract IndexFactory is
      * @param _chainDecimals The decimals of the chain.
      * @return The amount in Wei.
      */
-    function _toWei(
-        int256 _amount,
-        uint8 _amountDecimals,
-        uint8 _chainDecimals
-    ) private pure returns (int256) {
-        if (_chainDecimals > _amountDecimals)
+    function _toWei(int256 _amount, uint8 _amountDecimals, uint8 _chainDecimals) private pure returns (int256) {
+        if (_chainDecimals > _amountDecimals) {
             return _amount * int256(10 ** (_chainDecimals - _amountDecimals));
-        else return _amount * int256(10 ** (_amountDecimals - _chainDecimals));
+        } else {
+            return _amount * int256(10 ** (_amountDecimals - _chainDecimals));
+        }
     }
 
     /**
@@ -113,37 +111,28 @@ contract IndexFactory is
      * @param _recipient The address of the recipient.
      * @return outputAmount The amount of output token.
      */
-    function swap(
-        address[] memory path,
-        uint24[] memory fees,
-        uint amountIn,
-        address _recipient
-    ) internal returns (uint outputAmount) {
+    function swap(address[] memory path, uint24[] memory fees, uint256 amountIn, address _recipient)
+        internal
+        returns (uint256 outputAmount)
+    {
         ISwapRouter swapRouterV3 = factoryStorage.swapRouterV3();
         IUniswapV2Router02 swapRouterV2 = factoryStorage.swapRouterV2();
-        outputAmount = SwapHelpers.swap(
-            swapRouterV3,
-            swapRouterV2,
-            path,
-            fees,
-            amountIn,
-            _recipient
-        );
+        outputAmount = SwapHelpers.swap(swapRouterV3, swapRouterV2, path, fees, amountIn, _recipient);
     }
 
     function _mintIndexTokensForIssuance(
-        uint _wethAmount,
-        uint _firstPortfolioValue,
-        uint _secondPortfolioValue
-    ) internal returns (uint amountToMint) {
+        uint256 _wethAmount,
+        uint256 _firstPortfolioValue,
+        uint256 _secondPortfolioValue
+    ) internal returns (uint256 amountToMint) {
         //mint index tokens
         IndexToken indexToken = factoryStorage.indexToken();
-        uint totalSupply = indexToken.totalSupply();
+        uint256 totalSupply = indexToken.totalSupply();
         if (totalSupply > 0) {
-            uint newTotalSupply = (totalSupply * _secondPortfolioValue) / _firstPortfolioValue;
+            uint256 newTotalSupply = (totalSupply * _secondPortfolioValue) / _firstPortfolioValue;
             amountToMint = newTotalSupply - totalSupply;
         } else {
-            uint price = factoryStorage.priceInWei();
+            uint256 price = factoryStorage.priceInWei();
             amountToMint = (_wethAmount * price) / 1e16;
         }
         indexToken.mint(msg.sender, amountToMint);
@@ -151,51 +140,32 @@ contract IndexFactory is
 
     function _issuance(
         address _tokenIn,
-        uint _amountIn,
-        uint _totalCurrentList,
+        uint256 _amountIn,
+        uint256 _totalCurrentList,
         Vault _vault,
-        uint _wethAmount,
-        uint _firstPortfolioValue
+        uint256 _wethAmount,
+        uint256 _firstPortfolioValue
     ) internal {
         IWETH weth = factoryStorage.weth();
         //swap
-        for (uint i = 0; i < _totalCurrentList; i++) {
+        for (uint256 i = 0; i < _totalCurrentList; i++) {
             address tokenAddress = factoryStorage.currentList(i);
-            uint marketShare = factoryStorage.tokenCurrentMarketShare(
-                tokenAddress
-            );
-            (address[] memory fromETHPath, uint24[] memory fromETHFees) = factoryStorage.getFromETHPathData(
-                tokenAddress
-            );
+            uint256 marketShare = factoryStorage.tokenCurrentMarketShare(tokenAddress);
+            (address[] memory fromETHPath, uint24[] memory fromETHFees) =
+                factoryStorage.getFromETHPathData(tokenAddress);
             if (tokenAddress != address(weth)) {
-                uint outputAmount = swap(
-                    fromETHPath,
-                    fromETHFees,
-                    (_wethAmount * marketShare) / 100e18,
-                    address(_vault)
-                );
+                uint256 outputAmount =
+                    swap(fromETHPath, fromETHFees, (_wethAmount * marketShare) / 100e18, address(_vault));
                 require(outputAmount > 0, "Swap failed");
             } else {
-                weth.transfer(
-                    address(_vault),
-                    (_wethAmount * marketShare) / 100e18
-                );
+                weth.transfer(address(_vault), (_wethAmount * marketShare) / 100e18);
             }
         }
-        uint secondPortfolioValue = factoryStorage.getPortfolioBalance();
+        uint256 secondPortfolioValue = factoryStorage.getPortfolioBalance();
         //mint index tokens
-        uint amountToMint = _mintIndexTokensForIssuance(
-            _wethAmount,
-            _firstPortfolioValue,
-            secondPortfolioValue
-        ); 
+        uint256 amountToMint = _mintIndexTokensForIssuance(_wethAmount, _firstPortfolioValue, secondPortfolioValue);
         emit Issuanced(
-            msg.sender,
-            _tokenIn,
-            _amountIn,
-            amountToMint,
-            factoryStorage.getIndexTokenPrice(),
-            block.timestamp
+            msg.sender, _tokenIn, _amountIn, amountToMint, factoryStorage.getIndexTokenPrice(), block.timestamp
         );
     }
 
@@ -210,94 +180,66 @@ contract IndexFactory is
         address _tokenIn,
         address[] memory _tokenInPath,
         uint24[] memory _tokenInFees,
-        uint _amountIn
+        uint256 _amountIn
     ) public nonReentrant {
         require(_tokenIn != address(0), "Invalid token address");
         require(_amountIn > 0, "Invalid amount");
         IWETH weth = factoryStorage.weth();
         Vault vault = factoryStorage.vault();
-        uint totalCurrentList = factoryStorage.totalCurrentList();
-        uint feeRate = factoryStorage.feeRate();
-        uint feeAmount = (_amountIn * feeRate) / 10000;
+        uint256 totalCurrentList = factoryStorage.totalCurrentList();
+        uint256 feeRate = factoryStorage.feeRate();
+        uint256 feeAmount = (_amountIn * feeRate) / 10000;
 
-        uint firstPortfolioValue = factoryStorage.getPortfolioBalance();
+        uint256 firstPortfolioValue = factoryStorage.getPortfolioBalance();
 
         require(
-            IERC20(_tokenIn).transferFrom(
-                msg.sender,
-                address(this),
-                _amountIn + feeAmount
-            ),
-            "Token transfer failed"
+            IERC20(_tokenIn).transferFrom(msg.sender, address(this), _amountIn + feeAmount), "Token transfer failed"
         );
-        uint wethAmountBeforFee = swap(
-            _tokenInPath,
-            _tokenInFees,
-            _amountIn + feeAmount,
-            address(this)
-        );
+        uint256 wethAmountBeforFee = swap(_tokenInPath, _tokenInFees, _amountIn + feeAmount, address(this));
         address feeReceiver = factoryStorage.feeReceiver();
-        uint feeWethAmount = (wethAmountBeforFee * feeRate) / 10000;
-        uint wethAmount = wethAmountBeforFee - feeWethAmount;
+        uint256 feeWethAmount = (wethAmountBeforFee * feeRate) / 10000;
+        uint256 wethAmount = wethAmountBeforFee - feeWethAmount;
 
         //giving fee to the fee receiver
         require(weth.transfer(address(feeReceiver), feeWethAmount), "fee transfer failed");
-        _issuance(
-            _tokenIn,
-            _amountIn,
-            totalCurrentList,
-            vault,
-            wethAmount,
-            firstPortfolioValue
-        );
+        _issuance(_tokenIn, _amountIn, totalCurrentList, vault, wethAmount, firstPortfolioValue);
     }
 
     /**
      * @dev Issues index tokens with ETH.
      * @param _inputAmount The amount of ETH input.
      */
-    function issuanceIndexTokensWithEth(
-        uint _inputAmount
-    ) public payable nonReentrant {
+    function issuanceIndexTokensWithEth(uint256 _inputAmount) public payable nonReentrant {
         require(_inputAmount > 0, "Invalid amount");
         Vault vault = factoryStorage.vault();
         IWETH weth = factoryStorage.weth();
         address feeReceiver = factoryStorage.feeReceiver();
-        uint feeRate = factoryStorage.feeRate();
-        uint feeAmount = (_inputAmount * feeRate) / 10000;
-        uint finalAmount = _inputAmount + feeAmount;
+        uint256 feeRate = factoryStorage.feeRate();
+        uint256 feeAmount = (_inputAmount * feeRate) / 10000;
+        uint256 finalAmount = _inputAmount + feeAmount;
         require(msg.value >= finalAmount, "lower than required amount");
         weth.deposit{value: finalAmount}();
         require(weth.transfer(address(feeReceiver), feeAmount), "fee transfer failed");
-        uint totalCurrentList = factoryStorage.totalCurrentList();
-        uint firstPortfolioValue = factoryStorage.getPortfolioBalance();
-        _issuance(
-            address(weth),
-            _inputAmount,
-            totalCurrentList,
-            vault,
-            _inputAmount,
-            firstPortfolioValue
-        );
+        uint256 totalCurrentList = factoryStorage.totalCurrentList();
+        uint256 firstPortfolioValue = factoryStorage.getPortfolioBalance();
+        _issuance(address(weth), _inputAmount, totalCurrentList, vault, _inputAmount, firstPortfolioValue);
     }
 
     function _swapToOutputToken(
-        uint _amountIn,
-        uint _outputAmount,
+        uint256 _amountIn,
+        uint256 _outputAmount,
         address _tokenOut,
         address[] memory _tokenOutPath,
         uint24[] memory _tokenOutFees,
-        uint feeRate,
+        uint256 feeRate,
         address feeReceiver
-    ) internal returns (uint realOut) {
+    ) internal returns (uint256 realOut) {
         IWETH weth = factoryStorage.weth();
-        uint ownerFee = (_outputAmount * feeRate) / 10000;
+        uint256 ownerFee = (_outputAmount * feeRate) / 10000;
         if (_tokenOut == address(weth)) {
             weth.withdraw(_outputAmount - ownerFee);
             weth.transfer(address(feeReceiver), ownerFee);
-            (bool _userSuccess, ) = payable(msg.sender).call{
-                value: _outputAmount - ownerFee
-            }("");
+            (bool _userSuccess,) = payable(msg.sender).call{value: _outputAmount - ownerFee}("");
             require(_userSuccess, "transfer eth fee to the user failed");
             emit Redemption(
                 msg.sender,
@@ -310,45 +252,26 @@ contract IndexFactory is
             return _outputAmount - ownerFee;
         } else {
             weth.transfer(address(feeReceiver), ownerFee);
-            uint realOut = swap(
-                _tokenOutPath,
-                _tokenOutFees,
-                _outputAmount - ownerFee,
-                msg.sender
-            );
+            uint256 realOut = swap(_tokenOutPath, _tokenOutFees, _outputAmount - ownerFee, msg.sender);
             emit Redemption(
-                msg.sender,
-                _tokenOut,
-                _amountIn,
-                realOut,
-                factoryStorage.getIndexTokenPrice(),
-                block.timestamp
+                msg.sender, _tokenOut, _amountIn, realOut, factoryStorage.getIndexTokenPrice(), block.timestamp
             );
             return realOut;
         }
     }
 
-    function _redemptionSwaps(
-        uint _burnPercent,
-        uint _totalCurrentList,
-        Vault _vault
-    ) internal returns (uint outputAmount) {
+    function _redemptionSwaps(uint256 _burnPercent, uint256 _totalCurrentList, Vault _vault)
+        internal
+        returns (uint256 outputAmount)
+    {
         IWETH weth = factoryStorage.weth();
-        for (uint i = 0; i < _totalCurrentList; i++) {
+        for (uint256 i = 0; i < _totalCurrentList; i++) {
             address tokenAddress = factoryStorage.currentList(i);
-            (address[] memory toETHPath, uint24[] memory toETHFees) = factoryStorage.getToETHPathData(
-                tokenAddress
-            );
-            uint swapAmount = (_burnPercent *
-                IERC20(tokenAddress).balanceOf(address(_vault))) / 1e18;
+            (address[] memory toETHPath, uint24[] memory toETHFees) = factoryStorage.getToETHPathData(tokenAddress);
+            uint256 swapAmount = (_burnPercent * IERC20(tokenAddress).balanceOf(address(_vault))) / 1e18;
             if (tokenAddress != address(weth)) {
                 _vault.withdrawFunds(tokenAddress, address(this), swapAmount);
-                uint swapAmountOut = swap(
-                    toETHPath,
-                    toETHFees,
-                    swapAmount,
-                    address(this)
-                );
+                uint256 swapAmountOut = swap(toETHPath, toETHFees, swapAmount, address(this));
                 outputAmount += swapAmountOut;
             } else {
                 _vault.withdrawFunds(address(weth), address(this), swapAmount);
@@ -358,31 +281,21 @@ contract IndexFactory is
     }
 
     function _redemption(
-        uint _totalCurrentList,
+        uint256 _totalCurrentList,
         Vault _vault,
-        uint _burnPercent,
+        uint256 _burnPercent,
         address _tokenOut,
         address[] memory _tokenOutPath,
         uint24[] memory _tokenOutFees,
-        uint feeRate,
+        uint256 feeRate,
         address feeReceiver
-    ) internal returns (uint realOut) {
+    ) internal returns (uint256 realOut) {
         IndexToken indexToken = factoryStorage.indexToken();
-        uint outputAmount;
+        uint256 outputAmount;
         //swap
-        outputAmount = _redemptionSwaps(
-            _burnPercent,
-            _totalCurrentList,
-            _vault
-        );
+        outputAmount = _redemptionSwaps(_burnPercent, _totalCurrentList, _vault);
         realOut = _swapToOutputToken(
-            _burnPercent,
-            outputAmount,
-            _tokenOut,
-            _tokenOutPath,
-            _tokenOutFees,
-            feeRate,
-            feeReceiver
+            _burnPercent, outputAmount, _tokenOut, _tokenOutPath, _tokenOutFees, feeRate, feeReceiver
         );
     }
 
@@ -390,25 +303,25 @@ contract IndexFactory is
      * @dev Redeems index tokens for the specified output token.
      * @param amountIn The amount of index tokens to redeem.
      * @param _tokenOut The address of the output token.
-        * @param _tokenOutPath The path of the output token.
-        * @param _tokenOutFees The fees of the output token.
+     * @param _tokenOutPath The path of the output token.
+     * @param _tokenOutFees The fees of the output token.
      */
     function redemption(
-        uint amountIn,
+        uint256 amountIn,
         address _tokenOut,
         address[] memory _tokenOutPath,
         uint24[] memory _tokenOutFees
-    ) public nonReentrant returns (uint) {
+    ) public nonReentrant returns (uint256) {
         Vault vault = factoryStorage.vault();
-        uint totalCurrentList = factoryStorage.totalCurrentList();
-        uint feeRate = factoryStorage.feeRate();
+        uint256 totalCurrentList = factoryStorage.totalCurrentList();
+        uint256 feeRate = factoryStorage.feeRate();
         address feeReceiver = factoryStorage.feeReceiver();
         IndexToken indexToken = factoryStorage.indexToken();
-        uint burnPercent = (amountIn * 1e18) / indexToken.totalSupply();
+        uint256 burnPercent = (amountIn * 1e18) / indexToken.totalSupply();
 
         indexToken.burn(msg.sender, amountIn);
 
-        uint realOut = _redemption(
+        uint256 realOut = _redemption(
             factoryStorage.totalCurrentList(),
             vault,
             burnPercent,
